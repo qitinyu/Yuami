@@ -60,8 +60,8 @@ export const siteConfig = {
   // Live2D 看板娘配置
   live2d: {
     enabled: true,
-    modelPath: '/public/live2/models/jk/jk.cdi3.json',
-    modelName: 'jk',
+    modelPath: '/mod/',
+    modelName: 'shizuku',
     position: 'left',
     bottom: 0,
     left: 10,
@@ -71,15 +71,16 @@ export const siteConfig = {
     mobileOff: true,
   },
   // 站点统计配置
-  // 注意：totalPosts、totalWords、lastEdit 会在构建时由页面组件自动从 content 动态计算
-  // 这里只需设置 startDate
   siteStats: {
-    startDate: '2026-05-21', // 站点创建日期，用于计算运行时长
+    startDate: '2026-01-01', // 站点创建日期，用于计算运行时长
+    totalPosts: 6,           // 总文章数（posts + diary）
+    totalWords: 12000,       // 总字数（近似值）
+    lastEdit: '2026-05-01',  // 最后编辑日期
   },
-  // 站点推荐
-  siteRecommendations: [
-    { name: 'Astro 官方文档', url: 'https://docs.astro.build', desc: '现代静态站点生成框架' },
-    { name: 'Font Awesome', url: 'https://fontawesome.com', desc: '海量图标库' },
-    { name: 'MDN Web Docs', url: 'https://developer.mozilla.org', desc: 'Web 开发权威文档' },
+  // 站点公告
+  siteAnnouncements: [
+    { date: '2026-05-21', text: '博客功能持续更新中，欢迎反馈建议！' },
+    { date: '2026-05-18', text: '博客正式上线，欢迎访问！' },
+    { date: '2026-05-01', text: 'Yuami Blog v1.0 构建完成，基于 Astro 框架。' },
   ],
 };

@@ -1,28 +1,16 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { siteConfig } from '../../../config';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
-  const allDiary = await getCollection('diary');
-  const allContent = [...posts, ...allDiary];
-  const totalPosts = allContent.length;
-  const totalWords = allContent.reduce((sum, entry) => {
-    const text = entry.body || '';
-    return sum + text.replace(/\s/g, '').length;
-  }, 0);
-  const lastEdit = allContent
-    .map(e => e.data.date)
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || '--';
-
   return posts.map(post => ({
     params: { slug: post.slug },
-    props: { post, totalPosts, totalWords, lastEdit },
+    props: { post },
   }));
 }
 
-const { post, totalPosts, totalWords, lastEdit } = Astro.props;
+const { post } = Astro.props;
 const { Content } = await post.render();
 const { title, date, tags } = post.data;
 ---
@@ -47,14 +35,14 @@ const { title, date, tags } = post.data;
       <div class="sidebar-panel">
         <div class="panel-header"><i class="fa-solid fa-chart-bar"></i><span>站内统计</span></div>
         <div class="panel-body">
-          <div class="stat-list" data-start-date={siteConfig.siteStats.startDate}>
+          <div class="stat-list">
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 文章篇数</span>
-              <span class="stat-value">{totalPosts} 篇</span>
+              <span class="stat-value" id="statPostCount">--</span>
             </div>
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-font"></i> 文章总字数</span>
-              <span class="stat-value">{totalWords >= 10000 ? '约 ' + (totalWords / 10000).toFixed(1) + ' 万字' : totalWords + ' 字'}</span>
+              <span class="stat-value" id="statWordCount">--</span>
             </div>
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
@@ -62,7 +50,7 @@ const { title, date, tags } = post.data;
             </div>
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
-              <span class="stat-value">{lastEdit}</span>
+              <span class="stat-value" id="statLastEdit">--</span>
             </div>
           </div>
         </div>
@@ -514,21 +502,53 @@ const { title, date, tags } = post.data;
 </style>
 
 <script>
-  // Stats - 动态计算
-  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
-  if (statList) {
-    const startDate = statList.dataset.startDate || '2026-01-01';
-    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  // Stats - 从localStorage获取站点统计或动态计算
+  const startDate = new Date('2026-01-01');
+  const days = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    const statDays = document.getElementById('statDays');
-    const statPostCount = document.getElementById('statPostCount');
-    const statWordCount = document.getElementById('statWordCount');
-    const statLastEdit = document.getElementById('statLastEdit');
+  const statDays = document.getElementById('statDays');
+  const statPostCount = document.getElementById('statPostCount');
+  const statWordCount = document.getElementById('statWordCount');
+  const statLastEdit = document.getElementById('statLastEdit');
 
-    if (statDays) statDays.textContent = days + ' 天';
+  if (statDays) statDays.textContent = days + ' 天';
+
+  // 计算当前文章字数
+  const articleContent = document.getElementById('articleContent');
+  if (articleContent) {
+    const text = articleContent.textContent || '';
+    const charCount = text.replace(/\s/g, '').length;
+
+    // 从localStorage获取总字数和文章数
+    const storedStats = localStorage.getItem('yuami_stats');
+    let totalWords = charCount;
+    let totalPosts = 1;
+
+    if (storedStats) {
+      try {
+        const stats = JSON.parse(storedStats);
+        totalWords = stats.totalWords || charCount;
+        totalPosts = stats.totalPosts || 1;
+      } catch {}
+    }
+
+    if (statPostCount) statPostCount.textContent = totalPosts + ' 篇';
+    if (statWordCount) {
+      if (totalWords >= 10000) {
+        statWordCount.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
+      } else {
+        statWordCount.textContent = totalWords + ' 字';
+      }
+    }
   }
 
-  const articleContent = document.getElementById('articleContent');
+  // 最后编辑日期
+  if (statLastEdit) {
+    const dateEl = document.querySelector('.article-date');
+    if (dateEl) {
+      statLastEdit.textContent = dateEl.textContent?.trim() || '--';
+    }
+  }
 
   // Share - 直接复制链接到剪贴板
   const shareBtn = document.getElementById('shareBtn');

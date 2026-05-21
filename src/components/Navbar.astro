@@ -42,41 +42,42 @@ const currentPath = Astro.url.pathname;
       <button class="theme-toggle" id="themeToggle" title="切换主题" aria-label="切换明暗主题">
         <i class="fa-solid fa-moon" id="themeIcon"></i>
       </button>
-      <button class="mobile-toggle" id="mobileToggle" aria-label="打开菜单">
+      <button class="mobile-toggle" id="mobileToggle" aria-label="打开菜单" type="button">
         <span></span>
         <span></span>
         <span></span>
       </button>
     </div>
   </div>
-
-  <!-- Mobile Menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <ul class="mobile-menu-list">
-      {siteConfig.navItems.map((item) => (
-        <li class="mobile-nav-group">
-          {item.children ? (
-            <>
-              <button class="mobile-parent-btn" data-expanded="false">
-                <span class="mobile-parent-name">{item.name}</span>
-                <i class="fa-solid fa-chevron-down mobile-expand-icon"></i>
-              </button>
-              <ul class="mobile-sub-list">
-                {item.children.map((child) => (
-                  <li class="mobile-sub">
-                    <a href={child.path} class="mobile-sub-link">{child.name}</a>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <a href={item.path} class="mobile-simple-link">{item.name}</a>
-          )}
-        </li>
-      ))}
-    </ul>
-  </div>
 </nav>
+
+<!-- Mobile Menu: 完全脱离 navbar，独立定位 -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <ul class="mobile-menu-list">
+    {siteConfig.navItems.map((item, idx) => (
+      <li class="mobile-nav-group">
+        {item.children ? (
+          <button class="mobile-parent-btn" type="button" data-expanded="false" data-group={idx}>
+            <span>{item.name}</span>
+            <i class="fa-solid fa-chevron-down mobile-expand-icon"></i>
+          </button>
+        ) : (
+          <a href={item.path} class="mobile-simple-link">{item.name}</a>
+        )}
+        {item.children && (
+          <ul class="mobile-sub-list" data-sub={idx}>
+            {item.children.map((child) => (
+              <li>
+                <a href={child.path} class="mobile-sub-link">{child.name}</a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    ))}
+  </ul>
+</div>
 
 <style>
   .navbar {
@@ -226,6 +227,7 @@ const currentPath = Astro.url.pathname;
     background: var(--primary-alpha);
   }
 
+  /* 汉堡按钮 - 仅移动端可见 */
   .mobile-toggle {
     display: none;
     flex-direction: column;
@@ -235,6 +237,8 @@ const currentPath = Astro.url.pathname;
     width: 38px;
     height: 38px;
     cursor: pointer;
+    position: relative;
+    z-index: 1001;
   }
 
   .mobile-toggle span {
@@ -243,7 +247,7 @@ const currentPath = Astro.url.pathname;
     height: 2px;
     background: var(--text-secondary);
     border-radius: 2px;
-    transition: all var(--transition-fast);
+    transition: all 0.3s ease;
   }
 
   .mobile-toggle.active span:nth-child(1) {
@@ -256,39 +260,55 @@ const currentPath = Astro.url.pathname;
     transform: rotate(-45deg) translate(5px, -5px);
   }
 
-  /* Mobile Menu */
+  /* ===== Mobile Overlay ===== */
+  .mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-menu-overlay.active {
+    opacity: 1;
+  }
+
+  /* ===== Mobile Menu ===== */
   .mobile-menu {
     display: none;
     position: fixed;
     top: var(--nav-height);
     right: 0;
-    min-width: 200px;
-    max-width: 280px;
+    width: 240px;
+    max-width: 80vw;
     background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border-radius: 0 0 0 var(--radius-md);
     border-left: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--shadow-lg);
-    z-index: 999;
-    max-height: 0;
-    overflow: hidden;
+    z-index: 1002;
     opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.25s ease;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+    max-height: calc(100vh - var(--nav-height));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-menu.active {
-    max-height: calc(100vh - var(--nav-height));
     opacity: 1;
-    overflow-y: auto;
+    visibility: visible;
+    transform: translateY(0);
   }
 
   .mobile-menu-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
     list-style: none;
     padding: 8px;
     margin: 0;
@@ -298,32 +318,31 @@ const currentPath = Astro.url.pathname;
     display: block;
   }
 
-  /* 有子菜单的父按钮 */
+  /* 有子菜单的父级按钮 */
   .mobile-parent-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
     padding: 12px 14px;
-    border: none;
-    background: none;
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-size: 0.95rem;
     font-weight: 500;
-    font-family: inherit;
     cursor: pointer;
-    border-radius: var(--radius-sm);
     transition: all var(--transition-fast);
+    border: none;
+    background: none;
     text-align: left;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .mobile-parent-btn:hover,
   .mobile-parent-btn:active {
     background: var(--primary-alpha);
-    color: var(--primary);
   }
 
-  .mobile-parent-name {
+  .mobile-parent-btn span {
     flex: 1;
   }
 
@@ -332,7 +351,6 @@ const currentPath = Astro.url.pathname;
     color: var(--text-muted);
     transition: transform 0.25s ease;
     flex-shrink: 0;
-    margin-left: 8px;
   }
 
   .mobile-parent-btn[data-expanded="true"] .mobile-expand-icon {
@@ -342,6 +360,7 @@ const currentPath = Astro.url.pathname;
 
   .mobile-parent-btn[data-expanded="true"] {
     color: var(--primary);
+    background: var(--primary-alpha);
   }
 
   /* 无子菜单的简单链接 */
@@ -352,58 +371,60 @@ const currentPath = Astro.url.pathname;
     color: var(--text-primary);
     font-size: 0.95rem;
     font-weight: 500;
-    text-decoration: none;
     cursor: pointer;
     transition: all var(--transition-fast);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .mobile-simple-link:hover,
   .mobile-simple-link:active {
     background: var(--primary-alpha);
-    color: var(--primary);
   }
 
   /* 子菜单列表 */
   .mobile-sub-list {
-    padding-left: 14px;
-    margin-left: 14px;
-    margin-bottom: 4px;
-    list-style: none;
+    padding: 0;
+    margin: 0 0 0 14px;
     border-left: 2px solid var(--primary-alpha);
+    list-style: none;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.25s ease;
+    transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
   }
 
   .mobile-sub-list.expanded {
     opacity: 1;
+    padding: 4px 0;
   }
 
   .mobile-sub-link {
     display: block;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
+    padding: 10px 14px;
     font-size: 0.88rem;
+    color: var(--text-secondary);
     font-weight: 400;
-    text-decoration: none;
     cursor: pointer;
     transition: all var(--transition-fast);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .mobile-sub-link:hover,
   .mobile-sub-link:active {
-    background: var(--primary-alpha);
     color: var(--primary);
+    background: var(--primary-alpha);
   }
 
+  /* ===== Mobile Responsive ===== */
   @media (max-width: 768px) {
     .navbar-menu {
-      display: none;
+      display: none !important;
     }
     .mobile-toggle {
-      display: flex;
+      display: flex !important;
+    }
+    .mobile-menu-overlay {
+      display: block;
     }
     .mobile-menu {
       display: block;
@@ -415,7 +436,7 @@ const currentPath = Astro.url.pathname;
 </style>
 
 <script>
-  // Theme toggle
+  // ===== Theme toggle =====
   const themeToggle = document.getElementById('themeToggle');
   const themeIcon = document.getElementById('themeIcon');
 
@@ -435,75 +456,69 @@ const currentPath = Astro.url.pathname;
     updateThemeIcon();
   });
 
-  // Mobile menu toggle
+  // ===== Mobile Menu =====
   const mobileToggle = document.getElementById('mobileToggle');
   const mobileMenu = document.getElementById('mobileMenu');
+  const mobileOverlay = document.getElementById('mobileMenuOverlay');
 
-  function openMobileMenu() {
+  function openMenu() {
     mobileToggle?.classList.add('active');
     mobileMenu?.classList.add('active');
+    mobileOverlay?.classList.add('active');
+    document.body.style.overflow = 'hidden';
   }
 
-  function closeMobileMenu() {
+  function closeMenu() {
     mobileToggle?.classList.remove('active');
     mobileMenu?.classList.remove('active');
-    // 同时关闭所有展开的子菜单
-    document.querySelectorAll('.mobile-parent-btn[data-expanded="true"]').forEach(btn => {
-      btn.setAttribute('data-expanded', 'false');
-      const subList = btn.nextElementSibling as HTMLElement;
-      if (subList) {
-        subList.style.maxHeight = '0';
-        subList.classList.remove('expanded');
-      }
-    });
+    mobileOverlay?.classList.remove('active');
+    document.body.style.overflow = '';
   }
 
+  // 汉堡按钮点击
   mobileToggle?.addEventListener('click', (e) => {
     e.stopPropagation();
-    e.preventDefault();
     if (mobileMenu?.classList.contains('active')) {
-      closeMobileMenu();
+      closeMenu();
     } else {
-      openMobileMenu();
+      openMenu();
     }
   });
 
-  // 点击简单链接关闭菜单
-  document.querySelectorAll('.mobile-simple-link').forEach(link => {
+  // 遮罩点击关闭
+  mobileOverlay?.addEventListener('click', () => {
+    closeMenu();
+  });
+
+  // 所有子菜单链接点击后关闭菜单
+  document.querySelectorAll('.mobile-sub-link, .mobile-simple-link').forEach(link => {
     link.addEventListener('click', () => {
-      closeMobileMenu();
+      closeMenu();
     });
   });
 
-  // 点击子菜单链接关闭菜单
-  document.querySelectorAll('.mobile-sub-link').forEach(link => {
-    link.addEventListener('click', () => {
-      closeMobileMenu();
-    });
-  });
-
-  // Mobile submenu expand/collapse (手风琴)
-  const parentBtns = document.querySelectorAll('.mobile-parent-btn');
-  parentBtns.forEach(btn => {
+  // ===== 手风琴子菜单 =====
+  document.querySelectorAll('.mobile-parent-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      e.preventDefault();
       e.stopPropagation();
-
       const expanded = btn.getAttribute('data-expanded') === 'true';
-      const subList = btn.nextElementSibling as HTMLElement;
+      const groupIdx = btn.getAttribute('data-group');
+      const subList = document.querySelector(`.mobile-sub-list[data-sub="${groupIdx}"]`) as HTMLElement;
 
-      // 手风琴：关闭其他展开的菜单
-      parentBtns.forEach(otherBtn => {
+      // 手风琴：先关闭所有其他子菜单
+      document.querySelectorAll('.mobile-parent-btn').forEach(otherBtn => {
         if (otherBtn !== btn) {
           otherBtn.setAttribute('data-expanded', 'false');
-          const otherSubList = otherBtn.nextElementSibling as HTMLElement;
-          if (otherSubList) {
-            otherSubList.style.maxHeight = '0';
-            otherSubList.classList.remove('expanded');
+          const otherIdx = otherBtn.getAttribute('data-group');
+          const otherSub = document.querySelector(`.mobile-sub-list[data-sub="${otherIdx}"]`) as HTMLElement;
+          if (otherSub) {
+            otherSub.style.maxHeight = '0';
+            otherSub.classList.remove('expanded');
           }
         }
       });
 
+      // 切换当前子菜单
       if (expanded) {
         btn.setAttribute('data-expanded', 'false');
         if (subList) {
@@ -520,25 +535,11 @@ const currentPath = Astro.url.pathname;
     });
   });
 
-  // 点击页面其他区域关闭菜单
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (mobileMenu?.classList.contains('active') &&
-        !mobileMenu.contains(target) &&
-        !mobileToggle?.contains(target)) {
-      closeMobileMenu();
-    }
-  });
-
-  // Navbar scroll effect
+  // ===== Navbar scroll effect =====
   window.addEventListener('scroll', () => {
     const navbar = document.getElementById('navbar');
     if (navbar) {
-      if (window.scrollY > 80) {
-        navbar.style.boxShadow = 'var(--shadow-md)';
-      } else {
-        navbar.style.boxShadow = 'none';
-      }
+      navbar.style.boxShadow = window.scrollY > 80 ? 'var(--shadow-md)' : 'none';
     }
   });
 </script>

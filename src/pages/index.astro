@@ -1,21 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../../config';
-import { getCollection } from 'astro:content';
-
-// 动态计算站点统计
-const allPosts = await getCollection('posts');
-const allDiary = await getCollection('diary');
-const allContent = [...allPosts, ...allDiary];
-
-const totalPosts = allContent.length;
-const totalWords = allContent.reduce((sum, entry) => {
-  const text = entry.body || '';
-  return sum + text.replace(/\s/g, '').length;
-}, 0);
-const lastEdit = allContent
-  .map(e => e.data.date)
-  .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || '--';
 ---
 
 <BaseLayout title="尺素">
@@ -46,21 +31,44 @@ const lastEdit = allContent
         </div>
       </div>
 
-      <!-- 板块2：站点统计 -->
+      <!-- 板块2：站点公告 -->
+      <div class="sidebar-panel">
+        <div class="panel-header">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>站点公告</span>
+        </div>
+        <div class="panel-body">
+          <div class="notice-list">
+            {siteConfig.siteAnnouncements.map((item) => (
+              <div class="notice-item">
+                <span class="notice-date">{item.date}</span>
+                <p class="notice-text">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- 板块3：站点统计 -->
       <div class="sidebar-panel">
         <div class="panel-header">
           <i class="fa-solid fa-chart-bar"></i>
           <span>站点统计</span>
         </div>
         <div class="panel-body">
-          <div class="stat-list" data-start-date={siteConfig.siteStats.startDate}>
+          <div class="stat-list"
+            data-start-date={siteConfig.siteStats.startDate}
+            data-total-posts={siteConfig.siteStats.totalPosts}
+            data-total-words={siteConfig.siteStats.totalWords}
+            data-last-edit={siteConfig.siteStats.lastEdit}
+          >
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 总文章数</span>
-              <span class="stat-value">{totalPosts} 篇</span>
+              <span class="stat-value" id="homeStatPosts">--</span>
             </div>
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-font"></i> 总字数</span>
-              <span class="stat-value">{totalWords >= 10000 ? '约 ' + (totalWords / 10000).toFixed(1) + ' 万字' : totalWords + ' 字'}</span>
+              <span class="stat-value" id="homeStatWords">--</span>
             </div>
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
@@ -68,29 +76,8 @@ const lastEdit = allContent
             </div>
             <div class="stat-row">
               <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
-              <span class="stat-value">{lastEdit}</span>
+              <span class="stat-value" id="homeStatLastEdit">--</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 板块3：站点推荐 -->
-      <div class="sidebar-panel">
-        <div class="panel-header">
-          <i class="fa-solid fa-star"></i>
-          <span>站点推荐</span>
-        </div>
-        <div class="panel-body">
-          <div class="recommend-list">
-            {siteConfig.siteRecommendations.map((site) => (
-              <a href={site.url} target="_blank" rel="noopener" class="recommend-item">
-                <div class="recommend-info">
-                  <span class="recommend-name">{site.name}</span>
-                  <span class="recommend-desc">{site.desc}</span>
-                </div>
-                <i class="fa-solid fa-arrow-up-right-from-square recommend-link-icon"></i>
-              </a>
-            ))}
           </div>
         </div>
       </div>
@@ -289,7 +276,35 @@ const lastEdit = allContent
     box-shadow: 0 4px 12px rgba(125, 152, 245, 0.3);
   }
 
-  /* 板块2：站点统计 */
+  /* 板块2：站点公告 */
+  .notice-list {
+    width: 100%;
+  }
+
+  .notice-item {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .notice-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .notice-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .notice-text {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  /* 板块3：站点统计 */
   .stat-list {
     width: 100%;
   }
@@ -324,65 +339,6 @@ const lastEdit = allContent
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--primary);
-  }
-
-  /* 板块3：站点推荐 */
-  .recommend-list {
-    width: 100%;
-  }
-
-  .recommend-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--border-color);
-    text-decoration: none;
-    transition: all var(--transition-fast);
-  }
-
-  .recommend-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .recommend-item:hover .recommend-name {
-    color: var(--primary);
-  }
-
-  .recommend-item:hover .recommend-link-icon {
-    color: var(--primary);
-    transform: translate(2px, -2px);
-  }
-
-  .recommend-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .recommend-name {
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    transition: color var(--transition-fast);
-  }
-
-  .recommend-desc {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .recommend-link-icon {
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    flex-shrink: 0;
-    transition: all var(--transition-fast);
   }
 
   /* --- Right Main Content --- */
@@ -531,13 +487,31 @@ const lastEdit = allContent
 </style>
 
 <script>
-  // 运行时长 - 唯一需要在客户端动态计算的数据
+  // 站点统计数据 - 从 data attributes 读取配置
   const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
   if (statList) {
     const startDate = statList.dataset.startDate || '2026-01-01';
+    const totalPosts = parseInt(statList.dataset.totalPosts || '6');
+    const totalWords = parseInt(statList.dataset.totalWords || '12000');
+    const lastEdit = statList.dataset.lastEdit || '2026-05-01';
+
     const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    const statPosts = document.getElementById('homeStatPosts');
+    const statWords = document.getElementById('homeStatWords');
     const statDays = document.getElementById('homeStatDays');
+    const statLastEdit = document.getElementById('homeStatLastEdit');
+
     if (statDays) statDays.textContent = days + ' 天';
+    if (statPosts) statPosts.textContent = totalPosts + ' 篇';
+    if (statWords) {
+      if (totalWords >= 10000) {
+        statWords.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
+      } else {
+        statWords.textContent = totalWords + ' 字';
+      }
+    }
+    if (statLastEdit) statLastEdit.textContent = lastEdit;
   }
 
   // Typewriter effect

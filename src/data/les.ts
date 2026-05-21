@@ -1,7 +1,7 @@
 // LES（创作与灵感）数据 - 可独立编辑
 // 封面图片存放于 public/les/ 目录下
 export const lesList = [
-  { title: '星空下的约定', cover: '/public/les/LES70.webp', type: '插画', status: '完成', comment: '用画笔描绘的夜空' },
+  { title: '星空下的约定', cover: '/les/starry-night.webp', type: '插画', status: '完成', comment: '用画笔描绘的夜空' },
   { title: '雨后初晴', cover: '/les/after-rain.webp', type: '插画', status: '完成', comment: '雨后天空的温柔' },
   { title: '远方的信', cover: '/les/distant-letter.webp', type: '文字', status: '进行中', comment: '写给未来自己的信' },
   { title: '四季之诗', cover: '/les/four-seasons.webp', type: '文字', status: '完成', comment: '春夏秋冬的诗意记录' },
