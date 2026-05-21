@@ -1,0 +1,578 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../../config';
+import { getCollection } from 'astro:content';
+
+// 动态计算站点统计
+const allPosts = await getCollection('posts');
+const allDiary = await getCollection('diary');
+const allContent = [...allPosts, ...allDiary];
+
+const totalPosts = allContent.length;
+const totalWords = allContent.reduce((sum, entry) => {
+  const text = entry.body || '';
+  return sum + text.replace(/\s/g, '').length;
+}, 0);
+const lastEdit = allContent
+  .map(e => e.data.date)
+  .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || '--';
+---
+
+<BaseLayout title="尺素">
+  <div class="home-container">
+    <!-- Left Sidebar - 三个小板块竖直排列 -->
+    <aside class="home-sidebar">
+
+      <!-- 板块1：个人信息 -->
+      <div class="sidebar-panel">
+        <div class="panel-header">
+          <i class="fa-solid fa-user"></i>
+          <span>个人信息</span>
+        </div>
+        <div class="panel-body">
+          <div class="sidebar-avatar-wrap">
+            <img src="/avatar.webp" alt="Yuami" class="sidebar-avatar" />
+          </div>
+          <h2 class="sidebar-name">Yuami</h2>
+          <p class="sidebar-motto">生命绚烂，别被黑暗压垮</p>
+          <!-- Social Links -->
+          <div class="sidebar-social">
+            {siteConfig.socialLinks.map((link) => (
+              <a href={link.url} target="_blank" rel="noopener" title={link.name} class="social-icon">
+                <i class={link.icon}></i>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- 板块2：站点统计 -->
+      <div class="sidebar-panel">
+        <div class="panel-header">
+          <i class="fa-solid fa-chart-bar"></i>
+          <span>站点统计</span>
+        </div>
+        <div class="panel-body">
+          <div class="stat-list" data-start-date={siteConfig.siteStats.startDate}>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 总文章数</span>
+              <span class="stat-value">{totalPosts} 篇</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-font"></i> 总字数</span>
+              <span class="stat-value">{totalWords >= 10000 ? '约 ' + (totalWords / 10000).toFixed(1) + ' 万字' : totalWords + ' 字'}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
+              <span class="stat-value" id="homeStatDays">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
+              <span class="stat-value">{lastEdit}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 板块3：站点推荐 -->
+      <div class="sidebar-panel">
+        <div class="panel-header">
+          <i class="fa-solid fa-star"></i>
+          <span>站点推荐</span>
+        </div>
+        <div class="panel-body">
+          <div class="recommend-list">
+            {siteConfig.siteRecommendations.map((site) => (
+              <a href={site.url} target="_blank" rel="noopener" class="recommend-item">
+                <div class="recommend-info">
+                  <span class="recommend-name">{site.name}</span>
+                  <span class="recommend-desc">{site.desc}</span>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square recommend-link-icon"></i>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Right Content -->
+    <main class="home-main">
+      <!-- 青矜 (Typewriter) -->
+      <section class="home-section">
+        <h2 class="section-title">青衿</h2>
+        <div class="section-card card">
+          <div class="typewriter-content">
+            <div class="typewriter-text" id="typewriterText"></div>
+            <span class="typewriter-cursor">|</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 悟我 (About Me) -->
+      <section class="home-section">
+        <h2 class="section-title">悟我</h2>
+        <div class="section-card card">
+          <p>你好，欢迎来到我的个人主页。</p>
+          <p>这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。</p>
+          <p>这里存放的，不仅是我的思考，还有对美好生活的向往。</p>
+          <div class="about-links">
+            <a href="https://github.com/qitinyu" target="_blank" rel="noopener" class="about-link">
+              <i class="fa-brands fa-github"></i> GitHub
+            </a>
+            <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
+              <i class="fa-solid fa-globe"></i> 主站
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 项目展示 -->
+      <section class="home-section">
+        <h2 class="section-title">项目展示</h2>
+        <div class="projects-grid">
+          {siteConfig.projects.map((project) => (
+            <article class="project-card card">
+              <div class="project-card-body">
+                <h3 class="project-name">{project.name}</h3>
+                <p class="project-desc">{project.desc}</p>
+              </div>
+              <div class="project-card-footer">
+                <a href={project.preview} target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+                  <i class="fa-solid fa-eye"></i> 预览
+                </a>
+                <a href={project.github} target="_blank" rel="noopener" class="project-github" title="查看源码">
+                  <i class="fa-brands fa-github"></i>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  .home-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    padding: 28px 24px;
+    min-height: calc(100vh - var(--nav-height) - 80px);
+  }
+
+  /* --- Left Sidebar --- */
+  .home-sidebar {
+    width: var(--sidebar-width);
+    min-width: 260px;
+    flex-shrink: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 16px);
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sidebar-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    width: 100%;
+    transition: all var(--transition-normal);
+  }
+
+  .sidebar-panel:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--primary-alpha);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .panel-header i {
+    font-size: 0.88rem;
+  }
+
+  .panel-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* 板块1：个人信息 */
+  .sidebar-panel:first-child {
+    min-height: auto;
+  }
+
+  /* 圆形头像 - 较大 */
+  .sidebar-avatar-wrap {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary-alpha-30);
+    box-shadow: 0 4px 15px rgba(125, 152, 245, 0.2);
+    transition: all var(--transition-normal);
+    margin-bottom: 10px;
+  }
+
+  .sidebar-avatar-wrap:hover {
+    transform: scale(1.05);
+    border-color: var(--primary);
+  }
+
+  .sidebar-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sidebar-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2px;
+  }
+
+  .sidebar-motto {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-social {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .social-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-alpha);
+    color: var(--primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .social-icon:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(125, 152, 245, 0.3);
+  }
+
+  /* 板块2：站点统计 */
+  .stat-list {
+    width: 100%;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .stat-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .stat-label {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-label i {
+    color: var(--primary);
+    font-size: 0.82rem;
+  }
+
+  .stat-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  /* 板块3：站点推荐 */
+  .recommend-list {
+    width: 100%;
+  }
+
+  .recommend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .recommend-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .recommend-item:hover .recommend-name {
+    color: var(--primary);
+  }
+
+  .recommend-item:hover .recommend-link-icon {
+    color: var(--primary);
+    transform: translate(2px, -2px);
+  }
+
+  .recommend-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .recommend-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+  }
+
+  .recommend-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recommend-link-icon {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+  }
+
+  /* --- Right Main Content --- */
+  .home-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .home-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-card {
+    padding: 22px;
+  }
+
+  .section-card p {
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  /* Typewriter */
+  .typewriter-content {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    min-height: 2em;
+  }
+
+  .typewriter-text {
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.8;
+  }
+
+  .typewriter-cursor {
+    font-size: 1.1rem;
+    color: var(--primary);
+    animation: blink 1s step-end infinite;
+    font-weight: 300;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* About links */
+  .about-links {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .about-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-alpha);
+    color: var(--primary);
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .about-link:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  /* Projects */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .project-card {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-card-body { flex: 1; }
+
+  .project-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .project-desc {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .project-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
+
+  .project-github {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .project-github:hover {
+    color: var(--primary);
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 1024px) {
+    .home-container { flex-direction: column; }
+    .home-sidebar {
+      position: static;
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .sidebar-panel { flex: 1; min-width: 260px; }
+  }
+
+  @media (max-width: 768px) {
+    .projects-grid { grid-template-columns: 1fr; }
+    .home-sidebar { flex-direction: column; }
+    .sidebar-panel { min-width: auto; }
+    .home-container { padding: 20px 14px; gap: 16px; }
+  }
+</style>
+
+<script>
+  // 运行时长 - 唯一需要在客户端动态计算的数据
+  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
+  if (statList) {
+    const startDate = statList.dataset.startDate || '2026-01-01';
+    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+    const statDays = document.getElementById('homeStatDays');
+    if (statDays) statDays.textContent = days + ' 天';
+  }
+
+  // Typewriter effect
+  const texts = [
+    '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
+    '生活不止眼前的代码，还有星辰与大海。',
+    '生命绚烂，别被黑暗压垮。',
+    '记录生活中的每一份美好与感动。',
+  ];
+
+  const typewriterEl = document.getElementById('typewriterText');
+  let textIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+
+  function typewrite() {
+    if (!typewriterEl) return;
+    const currentText = texts[textIndex];
+    if (isDeleting) {
+      typewriterEl.textContent = currentText.substring(0, charIndex - 1);
+      charIndex--;
+    } else {
+      typewriterEl.textContent = currentText.substring(0, charIndex + 1);
+      charIndex++;
+    }
+    let delay = isDeleting ? 40 : 80;
+    if (!isDeleting && charIndex === currentText.length) {
+      delay = 2500;
+      isDeleting = true;
+    } else if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      textIndex = (textIndex + 1) % texts.length;
+      delay = 500;
+    }
+    setTimeout(typewrite, delay);
+  }
+  typewrite();
+</script>

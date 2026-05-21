@@ -1,0 +1,347 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SidebarWidget from '../../components/SidebarWidget.astro';
+import { lesList } from '../../data/les';
+
+const types = ['全部', '插画', '文字', '其他'];
+---
+
+<BaseLayout title="LES">
+  <div class="page-layout">
+    <SidebarWidget />
+
+    <div class="page-main">
+      <div class="type-filter" id="typeFilter">
+        {types.map(t => (
+          <span class={`filter-tab ${t === '全部' ? 'active' : ''}`} data-type={t} style="cursor: pointer;">{t}</span>
+        ))}
+      </div>
+
+      <div class="les-grid" id="lesGrid">
+        {lesList.map((item, index) => (
+          <article class="les-card card" data-type={item.type} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
+            <div class="les-cover">
+              {item.cover ? (
+                <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+              ) : null}
+              <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
+                <i class="fa-solid fa-palette"></i>
+              </div>
+              <span class="type-badge">{item.type}</span>
+            </div>
+            <div class="les-info">
+              <h3 class="les-title">{item.title}</h3>
+              <div class="les-meta">
+                <span class="status-tag">{item.status}</span>
+              </div>
+              <p class="les-comment">{item.comment}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+
+      <!-- Twikoo Comments for LES -->
+      <div class="twikoo-container">
+        <h3 class="section-title">作品评论区</h3>
+        <div class="twikoo-placeholder">
+          <i class="fa-solid fa-comments"></i>
+          <p>Twikoo 评论系统预留位置</p>
+          <p class="twikoo-hint">分享你对作品的感受</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-layout {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    padding: 28px 24px;
+  }
+
+  .page-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .type-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+
+  .filter-tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .filter-tab:hover,
+  .filter-tab.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .les-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .les-card {
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .les-card.hidden-page {
+    display: none;
+  }
+
+  .les-cover {
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all var(--transition-normal);
+  }
+
+  .les-card:hover .cover-img {
+    transform: scale(1.05);
+  }
+
+  .cover-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-alpha), var(--primary-alpha-30));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 2.5rem;
+    transition: all var(--transition-normal);
+  }
+
+  .les-card:hover .cover-placeholder {
+    transform: scale(1.05);
+  }
+
+  .type-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .les-info {
+    padding: 14px;
+  }
+
+  .les-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .les-meta {
+    margin-bottom: 6px;
+  }
+
+  .status-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    background: var(--primary-alpha);
+    color: var(--primary);
+  }
+
+  .les-comment {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 32px;
+    padding: 12px 0;
+  }
+
+  .pagination.hidden {
+    display: none;
+  }
+
+  .page-btn {
+    min-width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0 10px;
+  }
+
+  .page-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .page-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(125, 152, 245, 0.3);
+  }
+
+  .page-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .page-btn i { font-size: 0.8rem; }
+
+  .page-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 8px;
+  }
+
+  .twikoo-container { margin-top: 2rem; }
+
+  .twikoo-placeholder {
+    text-align: center;
+    padding: 32px 16px;
+    background: var(--primary-alpha);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-color);
+    color: var(--primary);
+  }
+
+  .twikoo-placeholder i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
+  .twikoo-placeholder p { font-size: 0.88rem; margin-bottom: 4px; }
+  .twikoo-hint { font-size: 0.78rem !important; color: var(--text-muted) !important; }
+
+  @media (max-width: 1024px) {
+    .page-layout { flex-direction: column; }
+    .les-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .les-grid { grid-template-columns: 1fr; }
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<script>
+  const ITEMS_PER_PAGE = 6;
+
+  const typeFilter = document.getElementById('typeFilter');
+  const lesCards = Array.from(document.querySelectorAll('.les-card'));
+  const paginationEl = document.getElementById('pagination');
+
+  let currentPage = 1;
+  let currentType = '全部';
+
+  function getFilteredCards() {
+    return lesCards.filter(card => {
+      const el = card as HTMLElement;
+      return currentType === '全部' || el.dataset.type === currentType;
+    });
+  }
+
+  function renderPagination(filteredCards: HTMLElement[]) {
+    if (!paginationEl) return;
+    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+    if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
+    paginationEl.classList.remove('hidden');
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    let html = '';
+    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      } else if (Math.abs(i - currentPage) === 2) {
+        html += `<span class="page-info">...</span>`;
+      }
+    }
+    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+    paginationEl.innerHTML = html;
+  }
+
+  function applyFilters() {
+    const filteredCards = getFilteredCards();
+    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    lesCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    filteredCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
+      (card as HTMLElement).classList.remove('hidden-page');
+      (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+    });
+    renderPagination(filteredCards);
+  }
+
+  typeFilter?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('filter-tab')) return;
+    typeFilter.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    target.classList.add('active');
+    currentType = target.dataset.type || '全部';
+    currentPage = 1;
+    applyFilters();
+  });
+
+  paginationEl?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLElement;
+    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
+    const action = btn.dataset.action;
+    const page = btn.dataset.page;
+    if (action === 'prev') currentPage--;
+    else if (action === 'next') currentPage++;
+    else if (page) currentPage = parseInt(page);
+    applyFilters();
+    document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  applyFilters();
+</script>

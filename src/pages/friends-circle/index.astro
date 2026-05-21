@@ -1,0 +1,205 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SidebarWidget from '../../components/SidebarWidget.astro';
+import { friendsList } from '../../data/friends';
+
+// 朋友圈数据 - 展示友链朋友们的最新文章
+// 实际使用时可以通过 RSS/API 获取最新文章
+// 这里使用模拟数据展示
+const friendsArticles = [
+  { name: '示例友链', url: '#', avatar: '/assets/default-avatar.png', title: '一篇关于前端开发的思考', articleUrl: '#', date: '2026-05-20', excerpt: '分享最近在前端开发中遇到的一些问题和解决方案...' },
+  { name: '示例博客', url: '#', avatar: '/assets/default-avatar.png', title: 'Astro 框架实践笔记', articleUrl: '#', date: '2026-05-18', excerpt: '使用 Astro 构建个人博客的一些心得和技巧...' },
+  { name: '小伙伴A', url: '#', avatar: '/assets/default-avatar.png', title: '算法学习之路', articleUrl: '#', date: '2026-05-15', excerpt: '从零开始学习算法，记录刷题过程中的收获...' },
+  { name: '小伙伴B', url: '#', avatar: '/assets/default-avatar.png', title: '动漫推荐 2026 春季篇', articleUrl: '#', date: '2026-05-12', excerpt: '盘点 2026 年春季值得追的番剧...' },
+  { name: '小伙伴C', url: '#', avatar: '/assets/default-avatar.png', title: '摄影入门：光与影的艺术', articleUrl: '#', date: '2026-05-10', excerpt: '新手摄影师的成长之路，分享一些拍摄技巧...' },
+];
+---
+
+<BaseLayout title="朋友圈">
+  <div class="page-layout">
+    <SidebarWidget />
+
+    <div class="page-main">
+      <div class="circle-header">
+        <h2 class="circle-title"><i class="fa-solid fa-rss"></i> 朋友圈</h2>
+        <p class="circle-desc">来自友链朋友们的最新文章动态，持续更新中。</p>
+      </div>
+
+      <div class="articles-list">
+        {friendsArticles.map((article, index) => (
+          <article class="article-item card" style={`animation-delay: ${index * 0.06}s`}>
+            <div class="article-item-header">
+              <div class="article-author">
+                <img src={article.avatar} alt={article.name} class="author-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                <div class="author-avatar-placeholder" style="display:none;">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <a href={article.url} target="_blank" rel="noopener" class="author-name">{article.name}</a>
+              </div>
+              <span class="article-date">{article.date}</span>
+            </div>
+            <div class="article-item-body">
+              <a href={article.articleUrl} target="_blank" rel="noopener" class="article-item-title">{article.title}</a>
+              <p class="article-item-excerpt">{article.excerpt}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div class="circle-notice">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>想加入朋友圈？请前往 <a href="/friends">友链</a> 页面申请。</span>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-layout {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    padding: 28px 24px;
+  }
+
+  .page-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .circle-header {
+    margin-bottom: 24px;
+  }
+
+  .circle-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .circle-title i {
+    color: var(--primary);
+  }
+
+  .circle-desc {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  .articles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .article-item {
+    padding: 18px;
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .article-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .article-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .author-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--primary-alpha-30);
+  }
+
+  .author-avatar-placeholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary-alpha);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 0.7rem;
+  }
+
+  .author-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--primary);
+  }
+
+  .author-name:hover {
+    text-decoration: underline;
+  }
+
+  .article-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .article-item-body {
+    padding-left: 36px;
+  }
+
+  .article-item-title {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+  }
+
+  .article-item-title:hover {
+    color: var(--primary);
+  }
+
+  .article-item-excerpt {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .circle-notice {
+    margin-top: 24px;
+    padding: 12px 16px;
+    background: var(--primary-alpha);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .circle-notice i {
+    color: var(--primary);
+  }
+
+  .circle-notice a {
+    color: var(--primary);
+    font-weight: 500;
+  }
+
+  @media (max-width: 1024px) {
+    .page-layout { flex-direction: column; }
+  }
+</style>

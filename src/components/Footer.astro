@@ -1,0 +1,47 @@
+---
+import { footerConfig } from '../data/footer';
+
+const { copyright, powered, icp, customLines } = footerConfig;
+---
+
+<footer class="site-footer glass">
+  <div class="footer-inner">
+    <div class="footer-line">Copyright &copy; {copyright.year} <a href={copyright.ownerUrl} target="_blank" rel="noopener">{copyright.owner}</a> | <a href={copyright.siteUrl} target="_blank" rel="noopener">{copyright.siteUrl}</a> | {copyright.email}</div>
+    <div class="footer-line">Powered by {powered.framework} &amp; {powered.theme} | Version {powered.version}</div>
+    {icp && <div class="footer-line">{icp}</div>}
+    {customLines.map(line => <div class="footer-line" set:html={line} />)}
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    padding: 18px 24px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+  }
+
+  .footer-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .footer-line {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .footer-line a {
+    color: var(--primary);
+    cursor: pointer;
+  }
+
+  .footer-line a:hover {
+    text-decoration: underline;
+  }
+</style>

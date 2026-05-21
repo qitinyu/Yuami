@@ -1,0 +1,219 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import { siteConfig } from '../../../config';
+
+const articles = siteConfig.friendsCircle;
+---
+
+<BaseLayout title="朋友圈">
+  <div class="page-with-sidebar">
+    <Sidebar />
+    <div class="page-main">
+      <div class="page-header">
+        <h1 class="page-title">朋友圈</h1>
+        <p class="page-subtitle">朋友们的最新动态</p>
+      </div>
+
+      <div class="friends-circle-list card">
+        {articles.length > 0 ? (
+          <ul class="circle-items">
+            {articles.map((article, index) => (
+              <li class="circle-item" style={`animation-delay: ${index * 0.08}s`}>
+                <a href={article.url} target="_blank" rel="noopener" class="circle-link">
+                  <span class="circle-dot">⊙</span>
+                  <span class="circle-date">{article.date}</span>
+                  <span class="circle-separator">—</span>
+                  <span class="circle-author">{article.author}</span>
+                  <span class="circle-separator">—</span>
+                  <span class="circle-title">{article.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div class="circle-empty">
+            <i class="fa-solid fa-rss"></i>
+            <p>暂无朋友动态</p>
+            <p class="circle-hint">添加友链后，这里将显示朋友们的最新文章</p>
+          </div>
+        )}
+      </div>
+
+      <div class="circle-info card">
+        <h3 class="info-title"><i class="fa-solid fa-circle-info"></i> 说明</h3>
+        <p>朋友圈会自动展示友链站点中的最新文章。如果你也想出现在这里，欢迎在<a href="/friends" class="inline-link">萍踪</a>页面申请友链！</p>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-with-sidebar {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 28px;
+    padding: 36px 32px;
+  }
+
+  .page-main { flex: 1; min-width: 0; }
+  .page-header { text-align: center; margin-bottom: 32px; }
+
+  .page-title {
+    font-size: 2.4rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 10px;
+  }
+
+  .page-subtitle { font-size: 1.05rem; color: var(--text-muted); }
+
+  .friends-circle-list {
+    padding: 28px;
+    margin-bottom: 24px;
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .circle-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .circle-item {
+    animation: fadeInUp 0.4s ease both;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .circle-item:last-child {
+    border-bottom: none;
+  }
+
+  .circle-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+
+  .circle-link:hover {
+    background: var(--primary-alpha);
+    color: var(--primary);
+    padding-left: 14px;
+  }
+
+  .circle-dot {
+    color: var(--primary);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .circle-date {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  .circle-separator {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .circle-author {
+    font-weight: 600;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  .circle-title {
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .circle-link:hover .circle-title {
+    color: var(--primary);
+  }
+
+  .circle-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--primary);
+  }
+
+  .circle-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    display: block;
+    opacity: 0.5;
+  }
+
+  .circle-empty p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .circle-hint {
+    font-size: 0.85rem !important;
+    color: var(--text-muted) !important;
+  }
+
+  .circle-info {
+    padding: 24px;
+  }
+
+  .info-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .circle-info p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .inline-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+  }
+
+  .inline-link:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 1024px) {
+    .page-with-sidebar { flex-direction: column; }
+  }
+
+  @media (max-width: 640px) {
+    .circle-link {
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .circle-title {
+      width: 100%;
+      padding-left: 30px;
+    }
+  }
+</style>

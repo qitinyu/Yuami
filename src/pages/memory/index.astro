@@ -1,0 +1,473 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SidebarWidget from '../../components/SidebarWidget.astro';
+import { albumList } from '../../data/memory';
+---
+
+<BaseLayout title="回忆">
+  <div class="page-layout">
+    <SidebarWidget />
+
+    <div class="page-main">
+      <div class="album-grid" id="albumGrid">
+        {albumList.map((album, index) => (
+          <article class="album-card card" data-album-id={album.id} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
+            <div class="album-cover">
+              <img src={album.cover} alt={album.title} class="album-cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+              <div class="album-cover-placeholder" style="display:none;">
+                <i class="fa-solid fa-images"></i>
+                <span class="album-count">{album.count} 张</span>
+              </div>
+            </div>
+            <div class="album-info">
+              <h3 class="album-title">{album.title}</h3>
+              <p class="album-desc">{album.desc}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+
+      <!-- Photo Viewer Modal -->
+      <div class="photo-modal" id="photoModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modalTitle">相册</h3>
+            <button class="modal-close" id="modalClose" aria-label="关闭"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="photo-grid" id="photoGrid">
+            <!-- Photos loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-layout {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    padding: 28px 24px;
+  }
+
+  .page-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .album-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .album-card {
+    overflow: hidden;
+    cursor: pointer;
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .album-card.hidden-page {
+    display: none;
+  }
+
+  .album-cover {
+    height: 180px;
+    overflow: hidden;
+  }
+
+  .album-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all var(--transition-normal);
+  }
+
+  .album-card:hover .album-cover-img {
+    transform: scale(1.05);
+  }
+
+  .album-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-alpha), var(--primary-alpha-30));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--primary);
+    transition: all var(--transition-normal);
+  }
+
+  .album-cover-placeholder i {
+    font-size: 2.5rem;
+  }
+
+  .album-count {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--bg-glass);
+    color: var(--text-secondary);
+  }
+
+  .album-card:hover .album-cover-placeholder {
+    transform: scale(1.05);
+  }
+
+  .album-info {
+    padding: 14px;
+  }
+
+  .album-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .album-desc {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 32px;
+    padding: 12px 0;
+  }
+
+  .pagination.hidden {
+    display: none;
+  }
+
+  .page-btn {
+    min-width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0 10px;
+  }
+
+  .page-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .page-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(125, 152, 245, 0.3);
+  }
+
+  .page-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .page-btn i { font-size: 0.8rem; }
+
+  .page-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 8px;
+  }
+
+  /* Modal */
+  .photo-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .photo-modal.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    margin: auto;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .modal-header h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .modal-close:hover {
+    background: var(--primary-alpha);
+    color: var(--primary);
+  }
+
+  .photo-grid {
+    padding: 16px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .photo-item {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .photo-item:hover {
+    transform: scale(1.03);
+  }
+
+  .photo-item img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .photo-item-placeholder {
+    width: 100%;
+    height: 160px;
+    background: var(--primary-alpha);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.5rem;
+  }
+
+  .photo-placeholder-text {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--text-muted);
+  }
+
+  .photo-hint {
+    font-size: 0.78rem;
+    margin-top: 6px;
+  }
+
+  @media (max-width: 1024px) {
+    .page-layout { flex-direction: column; }
+    .album-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .album-grid { grid-template-columns: 1fr; }
+    .photo-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<script>
+  const ITEMS_PER_PAGE = 6;
+
+  const albumCards = Array.from(document.querySelectorAll('.album-card'));
+  const paginationEl = document.getElementById('pagination');
+  const modal = document.getElementById('photoModal');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalClose = document.getElementById('modalClose');
+  const modalTitle = document.getElementById('modalTitle');
+  const photoGrid = document.getElementById('photoGrid');
+
+  let currentPage = 1;
+
+  // 支持的图片格式
+  const imageExtensions = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+
+  function renderPagination() {
+    if (!paginationEl) return;
+    const totalPages = Math.max(1, Math.ceil(albumCards.length / ITEMS_PER_PAGE));
+    if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
+    paginationEl.classList.remove('hidden');
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    let html = '';
+    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      } else if (Math.abs(i - currentPage) === 2) {
+        html += `<span class="page-info">...</span>`;
+      }
+    }
+    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+    paginationEl.innerHTML = html;
+  }
+
+  function applyPage() {
+    const totalPages = Math.max(1, Math.ceil(albumCards.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    albumCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    albumCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
+      (card as HTMLElement).classList.remove('hidden-page');
+      (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+    });
+    renderPagination();
+  }
+
+  paginationEl?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLElement;
+    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
+    const action = btn.dataset.action;
+    const page = btn.dataset.page;
+    if (action === 'prev') currentPage--;
+    else if (action === 'next') currentPage++;
+    else if (page) currentPage = parseInt(page);
+    applyPage();
+    document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // Modal - load photos dynamically from /huiyi/{albumId}/
+  // 支持任意文件名的图片，不再限制为数字编号
+  albumCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const albumId = (card as HTMLElement).dataset.albumId;
+      const title = card.querySelector('.album-title')?.textContent || '相册';
+      if (modalTitle) modalTitle.textContent = title;
+
+      if (photoGrid) {
+        photoGrid.innerHTML = '<div class="photo-placeholder-text"><p>正在加载图片...</p><p class="photo-hint">图片存放于 public/huiyi/' + albumId + '/ 目录下</p></div>';
+
+        if (albumId) {
+          // 使用目录索引文件来获取图片列表
+          // 方案：尝试加载 index.json（包含图片文件名列表）
+          // 如果不存在，则回退到数字编号扫描
+          const tryLoadImages = async () => {
+            const photos: string[] = [];
+
+            // 方案1：尝试加载 index.json 索引文件
+            try {
+              const indexRes = await fetch(`/huiyi/${albumId}/index.json`);
+              if (indexRes.ok) {
+                const indexData = await indexRes.json();
+                if (Array.isArray(indexData.images)) {
+                  indexData.images.forEach((name: string) => {
+                    photos.push(`/huiyi/${albumId}/${name}`);
+                  });
+                }
+              }
+            } catch {
+              // index.json 不存在，使用方案2
+            }
+
+            // 方案2：如果 index.json 没有图片，回退到数字编号扫描
+            if (photos.length === 0) {
+              const maxPhotos = 30;
+              for (let i = 1; i <= maxPhotos; i++) {
+                for (const ext of imageExtensions) {
+                  const imgPath = `/huiyi/${albumId}/${i}.${ext}`;
+                  try {
+                    const res = await fetch(imgPath, { method: 'HEAD' });
+                    if (res.ok) {
+                      photos.push(imgPath);
+                      break;
+                    }
+                  } catch {
+                    // 忽略错误
+                  }
+                }
+              }
+            }
+
+            if (photos.length === 0) {
+              photoGrid.innerHTML = `<div class="photo-placeholder-text"><p>暂无图片</p><p class="photo-hint">请将图片放入 public/huiyi/${albumId}/ 目录，支持任意文件名。<br/>可创建 index.json 列出图片文件名，如：{"images":["photo1.webp","sunset.jpg"]}</p></div>`;
+            } else {
+              photoGrid.innerHTML = '';
+              photos.forEach(src => {
+                const item = document.createElement('div');
+                item.className = 'photo-item';
+                item.innerHTML = `<img src="${src}" alt="照片" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'photo-item-placeholder\\'><i class=\\'fa-solid fa-image\\'></i></div>'" />`;
+                photoGrid.appendChild(item);
+              });
+            }
+          };
+
+          tryLoadImages();
+        }
+      }
+
+      modal?.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  const closeModal = () => {
+    modal?.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  modalOverlay?.addEventListener('click', closeModal);
+  modalClose?.addEventListener('click', closeModal);
+
+  applyPage();
+</script>

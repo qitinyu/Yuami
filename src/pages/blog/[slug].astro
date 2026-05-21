@@ -1,0 +1,755 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { siteConfig } from '../../../config';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  const allDiary = await getCollection('diary');
+  const allContent = [...posts, ...allDiary];
+  const totalPosts = allContent.length;
+  const totalWords = allContent.reduce((sum, entry) => {
+    const text = entry.body || '';
+    return sum + text.replace(/\s/g, '').length;
+  }, 0);
+  const lastEdit = allContent
+    .map(e => e.data.date)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || '--';
+
+  return posts.map(post => ({
+    params: { slug: post.slug },
+    props: { post, totalPosts, totalWords, lastEdit },
+  }));
+}
+
+const { post, totalPosts, totalWords, lastEdit } = Astro.props;
+const { Content } = await post.render();
+const { title, date, tags } = post.data;
+---
+
+<BaseLayout title={title}>
+  <div class="article-layout">
+    <!-- Left Sidebar: 个人信息 + 统计 + 公告 + 目录 -->
+    <aside class="article-sidebar">
+      <!-- 个人信息 -->
+      <div class="sidebar-panel">
+        <div class="panel-header"><i class="fa-solid fa-user"></i><span>个人信息</span></div>
+        <div class="panel-body">
+          <div class="mini-avatar">
+            <img src="/avatar.webp" alt="Yuami" />
+          </div>
+          <div class="mini-name">Yuami</div>
+          <div class="mini-motto">生命绚烂，别被黑暗压垮</div>
+        </div>
+      </div>
+
+      <!-- 数据统计 -->
+      <div class="sidebar-panel">
+        <div class="panel-header"><i class="fa-solid fa-chart-bar"></i><span>站内统计</span></div>
+        <div class="panel-body">
+          <div class="stat-list" data-start-date={siteConfig.siteStats.startDate}>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 文章篇数</span>
+              <span class="stat-value">{totalPosts} 篇</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-font"></i> 文章总字数</span>
+              <span class="stat-value">{totalWords >= 10000 ? '约 ' + (totalWords / 10000).toFixed(1) + ' 万字' : totalWords + ' 字'}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
+              <span class="stat-value" id="statDays">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
+              <span class="stat-value">{lastEdit}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 目录（TOC） -->
+      <div class="sidebar-panel" id="tocPanel">
+        <div class="panel-header">
+          <i class="fa-solid fa-list"></i><span>目录</span>
+          <button class="toc-collapse-btn" id="tocCollapseBtn" aria-label="折叠目录">
+            <i class="fa-solid fa-chevron-up"></i>
+          </button>
+        </div>
+        <div class="panel-body toc-body" id="tocBody">
+          <nav class="toc-nav" id="tocNav"></nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Article Main Content -->
+    <article class="article-main">
+      <header class="article-header">
+        <h1 class="article-title">{title}</h1>
+        <div class="article-meta">
+          <span class="article-date"><i class="fa-regular fa-calendar"></i> {date}</span>
+          <div class="article-tags">
+            {tags.map((tag: string) => <span class="tag">{tag}</span>)}
+          </div>
+        </div>
+      </header>
+
+      <div class="article-content prose" id="articleContent">
+        <Content />
+      </div>
+
+      <div class="article-share">
+        <button class="btn btn-ghost" id="shareBtn" title="复制链接">
+          <i class="fa-solid fa-link"></i> 复制链接
+        </button>
+      </div>
+
+      <div class="article-nav">
+        <a href="/blog" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> 返回列表</a>
+        <a href="/blog" class="btn btn-ghost">更多文章 <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+
+      <div class="article-recommend">
+        <h3 class="section-title">随机推荐</h3>
+        <div class="recommend-grid">
+          <div class="recommend-card card"><div class="recommend-body"><h4>推荐文章</h4><p>更多精彩内容等你探索</p></div></div>
+          <div class="recommend-card card"><div class="recommend-body"><h4>推荐文章</h4><p>更多精彩内容等你探索</p></div></div>
+        </div>
+      </div>
+
+      <div class="twikoo-container">
+        <h3 class="section-title">评论</h3>
+        <div class="twikoo-placeholder">
+          <i class="fa-solid fa-comments"></i>
+          <p>Twikoo 评论系统预留位置</p>
+          <p class="twikoo-hint">后期配置 envId 后即可启用</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .article-layout {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 20px;
+    padding: 28px 24px;
+  }
+
+  /* --- Left Sidebar --- */
+  .article-sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 16px);
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: calc(100vh - var(--nav-height) - 32px);
+    overflow-y: auto;
+  }
+
+  .sidebar-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    width: 100%;
+    transition: all var(--transition-normal);
+  }
+
+  .sidebar-panel:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--primary-alpha);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .panel-header i { font-size: 0.85rem; }
+
+  .panel-body {
+    padding: 12px;
+  }
+
+  /* Mini personal info - 圆形头像 */
+  .mini-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--primary-alpha-30);
+    margin: 0 auto 6px;
+  }
+
+  .mini-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mini-name {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2px;
+  }
+
+  .mini-motto {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Stats */
+  .stat-list { width: 100%; }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-label i { color: var(--primary); font-size: 0.85rem; }
+
+  .stat-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  /* TOC */
+  .toc-collapse-btn {
+    margin-left: auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .toc-collapse-btn:hover {
+    background: var(--primary-alpha);
+  }
+
+  .toc-collapse-btn.collapsed i {
+    transform: rotate(180deg);
+  }
+
+  .toc-body {
+    transition: all var(--transition-fast);
+    overflow: hidden;
+  }
+
+  .toc-body.collapsed {
+    max-height: 0 !important;
+    padding: 0 16px;
+  }
+
+  .toc-nav {
+    width: 100%;
+  }
+
+  /* TOC Level: # (h1) - 顶格 */
+  .toc-nav .toc-h1 {
+    margin-bottom: 6px;
+  }
+
+  .toc-nav .toc-h1-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+  }
+
+  .toc-nav .toc-h1-link:hover,
+  .toc-nav .toc-h1-link.active {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .toc-nav .toc-h1-link .toc-arrow {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    transition: transform var(--transition-fast);
+  }
+
+  .toc-nav .toc-h1-link.expanded .toc-arrow {
+    transform: rotate(90deg);
+  }
+
+  /* TOC Level: ## (h2) - 缩进一格 */
+  .toc-nav .toc-h2-list {
+    padding-left: 20px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+  }
+
+  .toc-nav .toc-h2-list.expanded {
+    max-height: 800px;
+  }
+
+  .toc-nav .toc-h2-item {
+    margin-bottom: 2px;
+  }
+
+  .toc-nav .toc-h2-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+  }
+
+  .toc-nav .toc-h2-link:hover,
+  .toc-nav .toc-h2-link.active {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .toc-nav .toc-h2-link .toc-arrow {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    transition: transform var(--transition-fast);
+  }
+
+  .toc-nav .toc-h2-link.expanded .toc-arrow {
+    transform: rotate(90deg);
+  }
+
+  /* TOC Level: ### (h3) - 缩进二格 */
+  .toc-nav .toc-h3-list {
+    padding-left: 20px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+  }
+
+  .toc-nav .toc-h3-list.expanded {
+    max-height: 500px;
+  }
+
+  .toc-nav .toc-h3-link {
+    display: block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    line-height: 1.5;
+  }
+
+  .toc-nav .toc-h3-link:hover,
+  .toc-nav .toc-h3-link.active {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  /* --- Article Main --- */
+  .article-main {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 32px 36px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .article-header {
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .article-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .article-date { font-size: 0.95rem; color: var(--text-muted); }
+  .article-tags { display: flex; gap: 8px; }
+  .article-content { margin-bottom: 28px; }
+  .article-share { margin-bottom: 28px; display: flex; gap: 8px; }
+
+  .article-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 28px;
+  }
+
+  .article-recommend { margin-bottom: 28px; }
+
+  .recommend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .recommend-card { padding: 16px; }
+  .recommend-body h4 { font-size: 0.98rem; color: var(--text-primary); margin-bottom: 4px; }
+  .recommend-body p { font-size: 0.85rem; color: var(--text-muted); }
+
+  .twikoo-container { margin-top: 2rem; }
+
+  .twikoo-placeholder {
+    text-align: center;
+    padding: 32px 16px;
+    background: var(--primary-alpha);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-color);
+    color: var(--primary);
+  }
+
+  .twikoo-placeholder i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
+  .twikoo-placeholder p { font-size: 0.88rem; margin-bottom: 4px; }
+  .twikoo-hint { font-size: 0.78rem; color: var(--text-muted); }
+
+  /* 复制成功提示 */
+  .share-toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--primary);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    box-shadow: 0 4px 12px rgba(125, 152, 245, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 9999;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 1024px) {
+    .article-layout { flex-direction: column; }
+    .article-sidebar {
+      position: static;
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      max-height: none;
+    }
+    .sidebar-panel { flex: 1; min-width: 240px; }
+  }
+
+  @media (max-width: 768px) {
+    .article-layout { padding: 20px 14px; }
+    .article-main { padding: 22px 16px; }
+    .article-title { font-size: 1.4rem; }
+    .recommend-grid { grid-template-columns: 1fr; }
+    .article-sidebar { flex-direction: column; }
+    .sidebar-panel { min-width: auto; }
+  }
+</style>
+
+<script>
+  // Stats - 动态计算
+  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
+  if (statList) {
+    const startDate = statList.dataset.startDate || '2026-01-01';
+    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    const statDays = document.getElementById('statDays');
+    const statPostCount = document.getElementById('statPostCount');
+    const statWordCount = document.getElementById('statWordCount');
+    const statLastEdit = document.getElementById('statLastEdit');
+
+    if (statDays) statDays.textContent = days + ' 天';
+  }
+
+  const articleContent = document.getElementById('articleContent');
+
+  // Share - 直接复制链接到剪贴板
+  const shareBtn = document.getElementById('shareBtn');
+  shareBtn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      // 显示toast提示
+      let toast = document.querySelector('.share-toast') as HTMLElement;
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'share-toast';
+        toast.textContent = '链接已复制到剪贴板';
+        document.body.appendChild(toast);
+      }
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    } catch {
+      // fallback
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('链接已复制到剪贴板！');
+    }
+  });
+
+  // ====== TOC (Table of Contents) Generator ======
+  if (articleContent) {
+    const tocNav = document.getElementById('tocNav');
+    const headings = articleContent.querySelectorAll('h1, h2, h3');
+    if (headings.length > 0 && tocNav) {
+      // Build TOC tree structure: h1 -> h2[] -> h3[]
+      const tocTree: { id: string; text: string; level: number; children: { id: string; text: string; level: number; children: { id: string; text: string; level: number }[] }[] }[] = [];
+      let currentH1: { id: string; text: string; level: number; children: { id: string; text: string; level: number; children: { id: string; text: string; level: number }[] }[] } | null = null;
+      let currentH2: { id: string; text: string; level: number; children: { id: string; text: string; level: number }[] } | null = null;
+
+      headings.forEach((heading, index) => {
+        const el = heading as HTMLElement;
+        if (!el.id) el.id = 'heading-' + index;
+        const text = el.textContent || '';
+
+        if (el.tagName === 'H1') {
+          currentH1 = { id: el.id, text, level: 1, children: [] };
+          currentH2 = null;
+          tocTree.push(currentH1);
+        } else if (el.tagName === 'H2') {
+          const h2Item = { id: el.id, text, level: 2, children: [] as { id: string; text: string; level: number }[] };
+          currentH2 = h2Item;
+          if (currentH1) {
+            currentH1.children.push(h2Item);
+          } else {
+            currentH1 = { id: '', text: '', level: 1, children: [h2Item] };
+            tocTree.push(currentH1);
+          }
+        } else if (el.tagName === 'H3') {
+          const h3Item = { id: el.id, text, level: 3 };
+          if (currentH2) {
+            currentH2.children.push(h3Item);
+          } else if (currentH1) {
+            const virtualH2 = { id: '', text: '', level: 2, children: [h3Item] };
+            currentH1.children.push(virtualH2);
+            currentH2 = virtualH2;
+          }
+        }
+      });
+
+      // Render TOC HTML with proper indentation
+      let tocHtml = '';
+      tocTree.forEach((h1, i) => {
+        if (!h1.text) return;
+        const hasChildren = h1.children.length > 0;
+        tocHtml += `<div class="toc-h1">`;
+        tocHtml += `<a href="#${h1.id}" class="toc-h1-link" data-id="${h1.id}">`;
+        if (hasChildren) {
+          tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        } else {
+          tocHtml += `<span class="toc-arrow" style="visibility:hidden"><i class="fa-solid fa-chevron-right"></i></span>`;
+        }
+        tocHtml += `${h1.text}</a>`;
+
+        if (hasChildren) {
+          tocHtml += `<div class="toc-h2-list" id="toc-h2-${i}">`;
+          h1.children.forEach((h2, j) => {
+            const h2HasChildren = h2.children.length > 0;
+            tocHtml += `<div class="toc-h2-item">`;
+            if (h2.text) {
+              tocHtml += `<a href="#${h2.id}" class="toc-h2-link" data-id="${h2.id}">`;
+              if (h2HasChildren) {
+                tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+              } else {
+                tocHtml += `<span class="toc-arrow" style="visibility:hidden"><i class="fa-solid fa-chevron-right"></i></span>`;
+              }
+              tocHtml += `${h2.text}</a>`;
+            }
+
+            if (h2HasChildren) {
+              tocHtml += `<div class="toc-h3-list" id="toc-h3-${i}-${j}">`;
+              h2.children.forEach(h3 => {
+                tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">${h3.text}</a>`;
+              });
+              tocHtml += `</div>`;
+            }
+            tocHtml += `</div>`;
+          });
+          tocHtml += `</div>`;
+        }
+        tocHtml += `</div>`;
+      });
+
+      tocNav.innerHTML = tocHtml;
+
+      // Expand/collapse h1 -> h2 list
+      const h1Links = tocNav.querySelectorAll('.toc-h1-link');
+      h1Links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const h1Div = target.closest('.toc-h1');
+          const subList = h1Div?.querySelector('.toc-h2-list') as HTMLElement | null;
+          if (subList) {
+            e.preventDefault();
+            const isExpanded = subList.classList.contains('expanded');
+            if (isExpanded) {
+              subList.classList.remove('expanded');
+              target.classList.remove('expanded');
+            } else {
+              subList.classList.add('expanded');
+              target.classList.add('expanded');
+            }
+          }
+          const headingId = target.getAttribute('data-id');
+          if (headingId) {
+            const headingEl = document.getElementById(headingId);
+            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // Expand/collapse h2 -> h3 list
+      const h2Links = tocNav.querySelectorAll('.toc-h2-link');
+      h2Links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const h2Item = target.closest('.toc-h2-item');
+          const subList = h2Item?.querySelector('.toc-h3-list') as HTMLElement | null;
+          if (subList) {
+            e.preventDefault();
+            const isExpanded = subList.classList.contains('expanded');
+            if (isExpanded) {
+              subList.classList.remove('expanded');
+              target.classList.remove('expanded');
+            } else {
+              subList.classList.add('expanded');
+              target.classList.add('expanded');
+            }
+          }
+          const headingId = target.getAttribute('data-id');
+          if (headingId) {
+            const headingEl = document.getElementById(headingId);
+            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // h3 links scroll
+      const h3Links = tocNav.querySelectorAll('.toc-h3-link');
+      h3Links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const headingId = target.getAttribute('data-id');
+          if (headingId) {
+            const headingEl = document.getElementById(headingId);
+            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // Auto-expand first h1 and its first h2
+      const firstH2List = tocNav.querySelector('.toc-h2-list');
+      const firstH1Link = tocNav.querySelector('.toc-h1-link');
+      if (firstH2List) firstH2List.classList.add('expanded');
+      if (firstH1Link) firstH1Link.classList.add('expanded');
+      const firstH3List = tocNav.querySelector('.toc-h3-list');
+      const firstH2Link = tocNav.querySelector('.toc-h2-link');
+      if (firstH3List) firstH3List.classList.add('expanded');
+      if (firstH2Link) firstH2Link.classList.add('expanded');
+
+      // Scroll spy - highlight active heading
+      const allHeadings = Array.from(headings) as HTMLElement[];
+      window.addEventListener('scroll', () => {
+        let activeId = '';
+        allHeadings.forEach(h => {
+          const rect = h.getBoundingClientRect();
+          if (rect.top <= 140) {
+            activeId = h.id;
+          }
+        });
+        if (activeId) {
+          h1Links.forEach(l => l.classList.remove('active'));
+          h2Links.forEach(l => l.classList.remove('active'));
+          h3Links.forEach(l => l.classList.remove('active'));
+          const activeLink = tocNav.querySelector(`[data-id="${activeId}"]`);
+          if (activeLink) activeLink.classList.add('active');
+        }
+      });
+    } else {
+      const tocPanel = document.getElementById('tocPanel');
+      if (tocPanel) tocPanel.style.display = 'none';
+    }
+  }
+
+  // TOC collapse button
+  const tocCollapseBtn = document.getElementById('tocCollapseBtn');
+  const tocBody = document.getElementById('tocBody');
+  tocCollapseBtn?.addEventListener('click', () => {
+    tocCollapseBtn.classList.toggle('collapsed');
+    tocBody?.classList.toggle('collapsed');
+  });
+</script>

@@ -1,0 +1,102 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const diaryEntries = await getCollection('diary');
+  return diaryEntries.map(entry => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+const { title, date, tags } = entry.data;
+---
+
+<BaseLayout title={title}>
+  <div class="article-container">
+    <article class="article-main">
+      <header class="article-header">
+        <h1 class="article-title">{title}</h1>
+        <div class="article-meta">
+          <span class="article-date"><i class="fa-regular fa-calendar"></i> {date}</span>
+          <div class="article-tags">
+            {tags.map((tag: string) => <span class="tag">{tag}</span>)}
+          </div>
+        </div>
+      </header>
+      <div class="article-content prose">
+        <Content />
+      </div>
+      <div class="article-nav">
+        <a href="/travel" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> 返回旅记</a>
+      </div>
+      <div class="twikoo-container" id="twikooContainer">
+        <h3 class="section-title">评论</h3>
+        <div class="twikoo-placeholder">
+          <i class="fa-solid fa-comments"></i>
+          <p>Twikoo 评论系统预留位置</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .article-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 32px;
+  }
+  .article-main {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 48px;
+    box-shadow: var(--shadow-sm);
+  }
+  .article-header {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .article-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+  }
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .article-date { font-size: 0.95rem; color: var(--text-muted); }
+  .article-tags { display: flex; gap: 6px; }
+  .article-content { margin-bottom: 32px; }
+  .article-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-top: 1px solid var(--border-color);
+    margin-bottom: 32px;
+  }
+  .twikoo-container { margin-top: 2rem; }
+  .twikoo-placeholder {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--primary-alpha);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-color);
+    color: var(--primary);
+  }
+  .twikoo-placeholder i { font-size: 2rem; margin-bottom: 12px; display: block; }
+  .twikoo-placeholder p { font-size: 0.9rem; }
+  @media (max-width: 768px) {
+    .article-main { padding: 24px 16px; }
+    .article-title { font-size: 1.4rem; }
+  }
+</style>

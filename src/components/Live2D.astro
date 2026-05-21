@@ -1,0 +1,198 @@
+---
+import { siteConfig } from '../../config';
+const cfg = siteConfig.live2d;
+---
+
+{cfg.enabled && (
+  <div class="live2d-wrapper" id="live2dWrapper">
+    <div class="live2d-tip" id="live2dTip">你好呀～</div>
+    <canvas id="live2dCanvas" width={cfg.width} height={cfg.height}></canvas>
+  </div>
+)}
+
+<style>
+  .live2d-wrapper {
+    position: fixed;
+    z-index: 997;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+  }
+
+  .live2d-wrapper:hover {
+    transform: translateY(-5px);
+  }
+
+  #live2dCanvas {
+    display: block;
+  }
+
+  .live2d-tip {
+    position: absolute;
+    top: -44px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--bg-glass-border);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+  }
+
+  .live2d-wrapper:hover .live2d-tip {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    .live2d-wrapper {
+      display: none;
+    }
+  }
+</style>
+
+<script define:vars={{ cfg }}>
+  // Only init on desktop
+  if (cfg.enabled && window.innerWidth > 768) {
+    // Set position from config
+    const wrapper = document.getElementById('live2dWrapper');
+    if (wrapper) {
+      wrapper.style.bottom = cfg.bottom + 'px';
+      if (cfg.position === 'left') {
+        wrapper.style.left = cfg.left + 'px';
+      } else {
+        wrapper.style.right = cfg.right + 'px';
+      }
+    }
+
+    // Tips on click
+    const tips = ['你好呀～', '今天过得怎么样？', '要加油哦！', '欢迎来到YuQi的小窝～', '别被黑暗压垮！', '呜喵～', '一起加油吧！'];
+    const tipEl = document.getElementById('live2dTip');
+    wrapper?.addEventListener('click', () => {
+      if (tipEl) {
+        tipEl.textContent = tips[Math.floor(Math.random() * tips.length)];
+        tipEl.style.opacity = '1';
+        setTimeout(() => { tipEl.style.opacity = '0'; }, 2500);
+      }
+    });
+
+    // Load oh-my-live2d via CDN
+    const oml2dScript = document.createElement('script');
+    oml2dScript.src = 'https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js';
+    oml2dScript.onload = () => {
+      if (typeof OML2D !== 'undefined') {
+        const modelUrl = cfg.modelPath + cfg.modelName + '/' + cfg.modelName + '.model3.json';
+        try {
+          OML2D.loadOml2d({
+            dockedPosition: cfg.position === 'left' ? 'left' : 'right',
+            sayHello: false,
+            tips: {
+              idleTips: {
+                wordTheDay: false,
+              },
+            },
+            models: [
+              {
+                path: modelUrl,
+                position: cfg.position === 'left' ? [0, 60] : [0, 60],
+                scale: 0.08,
+                stageStyle: {
+                  width: cfg.width,
+                  height: cfg.height,
+                },
+              },
+            ],
+          });
+          // Hide the duplicate canvas since oh-my-live2d creates its own
+          const ourCanvas = document.getElementById('live2dCanvas');
+          if (ourCanvas) ourCanvas.style.display = 'none';
+        } catch (e) {
+          console.warn('oh-my-live2d load failed, trying fallback:', e);
+          loadFallback();
+        }
+      } else {
+        loadFallback();
+      }
+    };
+    oml2dScript.onerror = () => {
+      console.warn('oh-my-live2d CDN load failed, using fallback');
+      loadFallback();
+    };
+    document.head.appendChild(oml2dScript);
+
+    // Fallback: use pixi-live2d-display if oh-my-live2d fails
+    function loadFallback() {
+      // Show our canvas again
+      const ourCanvas = document.getElementById('live2dCanvas');
+      if (ourCanvas) ourCanvas.style.display = 'block';
+
+      // Try loading with PIXI + pixi-live2d-display
+      const pixiScript = document.createElement('script');
+      pixiScript.src = 'https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js';
+      pixiScript.onload = () => {
+        const live2dScript = document.createElement('script');
+        live2dScript.src = 'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js';
+        live2dScript.onload = () => {
+          initPixiLive2D();
+        };
+        document.head.appendChild(live2dScript);
+      };
+      document.head.appendChild(pixiScript);
+    }
+
+    function initPixiLive2D() {
+      const canvas = document.getElementById('live2dCanvas');
+      if (!canvas || typeof PIXI === 'undefined') return;
+
+      try {
+        const app = new PIXI.Application({
+          view: canvas,
+          transparent: true,
+          autoStart: true,
+          width: cfg.width,
+          height: cfg.height,
+        });
+
+        const modelUrl = cfg.modelPath + cfg.modelName + '/' + cfg.modelName + '.model3.json';
+        // Try loading Live2D model
+        if (PIXI.live2d && PIXI.live2d.Live2DModel) {
+          PIXI.live2d.Live2DModel.from(modelUrl).then(model => {
+            model.anchor.set(0.5, 0.5);
+            model.position.set(cfg.width / 2, cfg.height / 2);
+            model.scale.set(0.2);
+            app.stage.addChild(model);
+          }).catch(err => {
+            console.warn('Live2D model load failed:', err);
+            showPlaceholderText(canvas);
+          });
+        } else {
+          showPlaceholderText(canvas);
+        }
+      } catch (e) {
+        console.warn('PIXI Live2D init failed:', e);
+        showPlaceholderText(canvas);
+      }
+    }
+
+    function showPlaceholderText(canvas) {
+      // If all Live2D libraries fail, show a text placeholder on the canvas
+      const ctx = canvas?.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = 'rgba(125, 152, 245, 0.15)';
+        ctx.fillRect(0, 0, cfg.width, cfg.height);
+        ctx.fillStyle = '#7D98F5';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('看板娘加载中...', cfg.width / 2, cfg.height / 2 - 10);
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#999';
+        ctx.fillText('请将模型文件放入 public/mod/ 目录', cfg.width / 2, cfg.height / 2 + 15);
+      }
+    }
+  }
+</script>
