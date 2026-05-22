@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
+import Twikoo from '../../components/Twikoo.astro';
 import { siteConfig } from '../../../config';
 import { friendsList } from '../../data/friends';
 ---
@@ -50,14 +51,7 @@ import { friendsList } from '../../data/friends';
       </div>
 
       <!-- Twikoo Comments -->
-      <div class="twikoo-container">
-        <h3 class="section-title">友链申请区</h3>
-        <div class="twikoo-placeholder">
-          <i class="fa-solid fa-comments"></i>
-          <p>Twikoo 评论系统预留位置</p>
-          <p class="twikoo-hint">在此申请友链或留言</p>
-        </div>
-      </div>
+      <Twikoo />
     </div>
   </div>
 </BaseLayout>
@@ -189,21 +183,6 @@ import { friendsList } from '../../data/friends';
     color: var(--primary);
     transform: translate(2px, -2px);
   }
-
-  .twikoo-container { margin-top: 2rem; }
-
-  .twikoo-placeholder {
-    text-align: center;
-    padding: 32px 16px;
-    background: var(--primary-alpha);
-    border-radius: var(--radius-sm);
-    border: 1px dashed var(--border-color);
-    color: var(--primary);
-  }
-
-  .twikoo-placeholder i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
-  .twikoo-placeholder p { font-size: 0.88rem; margin-bottom: 4px; }
-  .twikoo-hint { font-size: 0.78rem !important; color: var(--text-muted) !important; }
 
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }

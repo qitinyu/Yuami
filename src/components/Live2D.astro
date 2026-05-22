@@ -6,7 +6,16 @@ const cfg = siteConfig.live2d;
 {cfg.enabled && (
   <div class="live2d-wrapper" id="live2dWrapper">
     <div class="live2d-tip" id="live2dTip">你好呀～</div>
-    <canvas id="live2dCanvas" width={cfg.width} height={cfg.height}></canvas>
+    <canvas id="live2dCanvas"></canvas>
+    <!-- 控制按钮 - 始终在模型右侧 -->
+    <div class="live2d-controls" id="live2dControls">
+      <button class="live2d-ctrl-btn" id="live2dSwitchSkin" title="切换模型">
+        <i class="fa-solid fa-shirt"></i>
+      </button>
+      <button class="live2d-ctrl-btn" id="live2dClose" title="隐藏看板娘">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
   </div>
 )}
 
@@ -14,12 +23,17 @@ const cfg = siteConfig.live2d;
   .live2d-wrapper {
     position: fixed;
     z-index: 997;
-    cursor: pointer;
-    transition: all var(--transition-normal);
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  .live2d-wrapper:hover {
-    transform: translateY(-5px);
+  .live2d-wrapper.dragging {
+    cursor: grabbing;
+  }
+
+  .live2d-wrapper.hidden {
+    display: none;
   }
 
   #live2dCanvas {
@@ -49,6 +63,41 @@ const cfg = siteConfig.live2d;
     opacity: 1;
   }
 
+  /* 控制按钮 - 竖直排列在模型右侧 */
+  .live2d-controls {
+    position: absolute;
+    right: -36px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .live2d-ctrl-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .live2d-ctrl-btn:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+    border-color: var(--primary);
+    transform: scale(1.1);
+  }
+
   @media (max-width: 768px) {
     .live2d-wrapper {
       display: none;
@@ -57,11 +106,11 @@ const cfg = siteConfig.live2d;
 </style>
 
 <script define:vars={{ cfg }}>
-  // Only init on desktop
+  // ====== Live2D moc3 看板娘 (pixi-live2d-display) ======
   if (cfg.enabled && window.innerWidth > 768) {
-    // Set position from config
     const wrapper = document.getElementById('live2dWrapper');
     if (wrapper) {
+      // 初始位置
       wrapper.style.bottom = cfg.bottom + 'px';
       if (cfg.position === 'left') {
         wrapper.style.left = cfg.left + 'px';
@@ -70,129 +119,283 @@ const cfg = siteConfig.live2d;
       }
     }
 
-    // Tips on click
-    const tips = ['你好呀～', '今天过得怎么样？', '要加油哦！', '欢迎来到YuQi的小窝～', '别被黑暗压垮！', '呜喵～', '一起加油吧！'];
-    const tipEl = document.getElementById('live2dTip');
-    wrapper?.addEventListener('click', () => {
-      if (tipEl) {
-        tipEl.textContent = tips[Math.floor(Math.random() * tips.length)];
-        tipEl.style.opacity = '1';
-        setTimeout(() => { tipEl.style.opacity = '0'; }, 2500);
+    // ====== 拖拽功能 ======
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let wrapperStartX = 0;
+    let wrapperStartY = 0;
+    let hasMoved = false;
+
+    wrapper?.addEventListener('mousedown', (e) => {
+      // 控制按钮不触发拖拽
+      if (e.target.closest('.live2d-ctrl-btn')) return;
+      isDragging = true;
+      hasMoved = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      const rect = wrapper.getBoundingClientRect();
+      wrapperStartX = rect.left;
+      wrapperStartY = rect.top;
+      wrapper.classList.add('dragging');
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging || !wrapper) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasMoved = true;
+      }
+      // 转换为 left/top 定位
+      wrapper.style.left = (wrapperStartX + dx) + 'px';
+      wrapper.style.top = (wrapperStartY + dy) + 'px';
+      wrapper.style.right = 'auto';
+      wrapper.style.bottom = 'auto';
+      // 限制在视口内
+      const rect = wrapper.getBoundingClientRect();
+      if (rect.left < 0) wrapper.style.left = '0px';
+      if (rect.top < 0) wrapper.style.top = '0px';
+      if (rect.right > window.innerWidth) wrapper.style.left = (window.innerWidth - rect.width) + 'px';
+      if (rect.bottom > window.innerHeight) wrapper.style.top = (window.innerHeight - rect.height) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        wrapper?.classList.remove('dragging');
       }
     });
 
-    // Load oh-my-live2d via CDN
-    const oml2dScript = document.createElement('script');
-    oml2dScript.src = 'https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js';
-    oml2dScript.onload = () => {
-      if (typeof OML2D !== 'undefined') {
-        const modelUrl = cfg.modelPath + cfg.modelName + '/' + cfg.modelName + '.model3.json';
-        try {
-          OML2D.loadOml2d({
-            dockedPosition: cfg.position === 'left' ? 'left' : 'right',
-            sayHello: false,
-            tips: {
-              idleTips: {
-                wordTheDay: false,
-              },
-            },
-            models: [
-              {
-                path: modelUrl,
-                position: cfg.position === 'left' ? [0, 60] : [0, 60],
-                scale: 0.08,
-                stageStyle: {
-                  width: cfg.width,
-                  height: cfg.height,
-                },
-              },
-            ],
-          });
-          // Hide the duplicate canvas since oh-my-live2d creates its own
-          const ourCanvas = document.getElementById('live2dCanvas');
-          if (ourCanvas) ourCanvas.style.display = 'none';
-        } catch (e) {
-          console.warn('oh-my-live2d load failed, trying fallback:', e);
-          loadFallback();
-        }
-      } else {
-        loadFallback();
+    // 触摸拖拽支持
+    wrapper?.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.live2d-ctrl-btn')) return;
+      const touch = e.touches[0];
+      isDragging = true;
+      hasMoved = false;
+      dragStartX = touch.clientX;
+      dragStartY = touch.clientY;
+      const rect = wrapper.getBoundingClientRect();
+      wrapperStartX = rect.left;
+      wrapperStartY = rect.top;
+      wrapper.classList.add('dragging');
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging || !wrapper) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - dragStartX;
+      const dy = touch.clientY - dragStartY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasMoved = true;
       }
-    };
-    oml2dScript.onerror = () => {
-      console.warn('oh-my-live2d CDN load failed, using fallback');
-      loadFallback();
-    };
-    document.head.appendChild(oml2dScript);
+      wrapper.style.left = (wrapperStartX + dx) + 'px';
+      wrapper.style.top = (wrapperStartY + dy) + 'px';
+      wrapper.style.right = 'auto';
+      wrapper.style.bottom = 'auto';
+    }, { passive: true });
 
-    // Fallback: use pixi-live2d-display if oh-my-live2d fails
-    function loadFallback() {
-      // Show our canvas again
-      const ourCanvas = document.getElementById('live2dCanvas');
-      if (ourCanvas) ourCanvas.style.display = 'block';
+    document.addEventListener('touchend', () => {
+      if (isDragging) {
+        isDragging = false;
+        wrapper?.classList.remove('dragging');
+      }
+    });
 
-      // Try loading with PIXI + pixi-live2d-display
-      const pixiScript = document.createElement('script');
-      pixiScript.src = 'https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js';
-      pixiScript.onload = () => {
-        const live2dScript = document.createElement('script');
-        live2dScript.src = 'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js';
-        live2dScript.onload = () => {
-          initPixiLive2D();
-        };
-        document.head.appendChild(live2dScript);
-      };
-      document.head.appendChild(pixiScript);
+    // 看板娘提示语
+    const tips = [
+      '你好呀～', '今天过得怎么样？', '要加油哦！',
+      '欢迎来到YuQi的小窝～', '别被黑暗压垮！', '呜喵～',
+      '一起加油吧！', '有什么想说的吗？', '戳我干嘛～',
+    ];
+    const tipEl = document.getElementById('live2dTip');
+
+    function showTip(text) {
+      if (tipEl) {
+        tipEl.textContent = text;
+        tipEl.style.opacity = '1';
+        setTimeout(() => { tipEl.style.opacity = '0'; }, 3000);
+      }
     }
 
-    function initPixiLive2D() {
-      const canvas = document.getElementById('live2dCanvas');
-      if (!canvas || typeof PIXI === 'undefined') return;
+    // 模型列表 - 支持切换
+    const modelList = cfg.modelList && cfg.modelList.length > 0
+      ? cfg.modelList
+      : [{ name: cfg.modelName, path: cfg.modelPath + cfg.modelName + '/' + cfg.modelName + '.model3.json' }];
+    let currentModelIdx = 0;
+    let currentModel = null;
+    let pixiApp = null;
 
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function initLive2D() {
       try {
-        const app = new PIXI.Application({
+        if (typeof PIXI === 'undefined') {
+          await loadScript('https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js');
+        }
+        if (typeof Live2DCubismCore === 'undefined') {
+          try {
+            await loadScript('https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js');
+          } catch {
+            await loadScript('https://cdn.jsdelivr.net/gh/nicx519y/nicx519y.github.io@master/live2d-cubism-core/live2dcubismcore.min.js');
+          }
+        }
+        if (!PIXI.live2d) {
+          await loadScript('https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/cubism4.min.js');
+        }
+
+        const canvas = document.getElementById('live2dCanvas');
+        if (!canvas) return;
+
+        pixiApp = new PIXI.Application({
           view: canvas,
           transparent: true,
           autoStart: true,
-          width: cfg.width,
-          height: cfg.height,
+          width: cfg.width || 300,
+          height: cfg.height || 500,
         });
 
-        const modelUrl = cfg.modelPath + cfg.modelName + '/' + cfg.modelName + '.model3.json';
-        // Try loading Live2D model
-        if (PIXI.live2d && PIXI.live2d.Live2DModel) {
-          PIXI.live2d.Live2DModel.from(modelUrl).then(model => {
-            model.anchor.set(0.5, 0.5);
-            model.position.set(cfg.width / 2, cfg.height / 2);
-            model.scale.set(0.2);
-            app.stage.addChild(model);
-          }).catch(err => {
-            console.warn('Live2D model load failed:', err);
-            showPlaceholderText(canvas);
-          });
-        } else {
-          showPlaceholderText(canvas);
-        }
-      } catch (e) {
-        console.warn('PIXI Live2D init failed:', e);
-        showPlaceholderText(canvas);
+        await loadModel(modelList[currentModelIdx].path);
+
+        // 点击事件（非拖拽时触发）
+        wrapper?.addEventListener('click', (e) => {
+          if (hasMoved) return; // 拖拽结束不触发点击
+          if (e.target.closest('.live2d-ctrl-btn')) return;
+          showTip(tips[Math.floor(Math.random() * tips.length)]);
+        });
+
+      } catch (err) {
+        console.warn('Live2D 初始化失败:', err);
+        showPlaceholder();
       }
     }
 
-    function showPlaceholderText(canvas) {
-      // If all Live2D libraries fail, show a text placeholder on the canvas
-      const ctx = canvas?.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = 'rgba(125, 152, 245, 0.15)';
-        ctx.fillRect(0, 0, cfg.width, cfg.height);
-        ctx.fillStyle = '#7D98F5';
-        ctx.font = '14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('看板娘加载中...', cfg.width / 2, cfg.height / 2 - 10);
-        ctx.font = '11px sans-serif';
-        ctx.fillStyle = '#999';
-        ctx.fillText('请将模型文件放入 public/mod/ 目录', cfg.width / 2, cfg.height / 2 + 15);
+    async function loadModel(modelUrl) {
+      if (!pixiApp || !PIXI.live2d?.Live2DModel) {
+        console.warn('pixi-live2d-display 未加载');
+        showPlaceholder();
+        return;
+      }
+
+      try {
+        if (currentModel) {
+          pixiApp.stage.removeChild(currentModel);
+          currentModel.destroy();
+          currentModel = null;
+        }
+
+        currentModel = await PIXI.live2d.Live2DModel.from(modelUrl, {
+          autoInteract: false,
+        });
+
+        // 自适应缩放
+        const canvasW = pixiApp.screen.width;
+        const canvasH = pixiApp.screen.height;
+        const modelOrigW = currentModel.internalModel.originalWidth || currentModel.width;
+        const modelOrigH = currentModel.internalModel.originalHeight || currentModel.height;
+
+        const fitScale = (canvasH * 0.92) / modelOrigH;
+        const finalScale = Math.min(fitScale, (canvasW * 0.95) / modelOrigW);
+        currentModel.scale.set(finalScale);
+
+        // 水平居中，垂直底部对齐
+        currentModel.x = (canvasW - currentModel.width) / 2;
+        currentModel.y = canvasH - currentModel.height;
+
+        pixiApp.stage.addChild(currentModel);
+
+        // 鼠标跟踪
+        document.addEventListener('mousemove', (e) => {
+          if (currentModel && !isDragging) {
+            currentModel.focus(e.clientX, e.clientY);
+          }
+        });
+
+        // 点击触发动作
+        currentModel.on('hit', (hitAreas) => {
+          if (hitAreas.includes('body')) {
+            try { currentModel.motion('TapBody'); } catch {}
+          }
+          if (hitAreas.includes('head')) {
+            try { currentModel.expression('smile'); } catch {}
+          }
+        });
+
+        try { currentModel.motion('Idle'); } catch {}
+
+        showTip('看板娘来啦～');
+
+      } catch (err) {
+        console.warn('Live2D 模型加载失败:', err);
+        showPlaceholder();
       }
     }
+
+    function showPlaceholder() {
+      const canvas = document.getElementById('live2dCanvas');
+      if (canvas) {
+        const w = cfg.width || 300;
+        const h = cfg.height || 500;
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = 'rgba(125, 152, 245, 0.12)';
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = '#7D98F5';
+          ctx.font = '14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('看板娘加载中...', w / 2, h / 2 - 10);
+          ctx.font = '11px sans-serif';
+          ctx.fillStyle = '#999';
+          ctx.fillText('请将 moc3 模型放入 public/live2/models/ 目录', w / 2, h / 2 + 15);
+        }
+      }
+    }
+
+    // 切换模型按钮 - 始终显示（只有一个模型时隐藏切换按钮）
+    const switchBtn = document.getElementById('live2dSwitchSkin');
+    if (switchBtn && modelList.length > 1) {
+      switchBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentModelIdx = (currentModelIdx + 1) % modelList.length;
+        loadModel(modelList[currentModelIdx].path);
+      });
+    } else if (switchBtn) {
+      switchBtn.style.display = 'none';
+    }
+
+    // 关闭看板娘按钮 - 始终显示
+    const closeBtn = document.getElementById('live2dClose');
+    closeBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (wrapper) {
+        wrapper.classList.add('hidden');
+        // 显示一个全局恢复按钮
+        const restoreBtn = document.createElement('button');
+        restoreBtn.id = 'live2dRestore';
+        restoreBtn.innerHTML = '<i class="fa-solid fa-cat"></i>';
+        restoreBtn.title = '显示看板娘';
+        restoreBtn.style.cssText = 'position:fixed;left:10px;bottom:10px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border-color);background:var(--bg-glass);backdrop-filter:blur(12px);color:var(--primary);font-size:0.9rem;cursor:pointer;z-index:997;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.2s;';
+        restoreBtn.addEventListener('mouseenter', () => { restoreBtn.style.transform = 'scale(1.1)'; });
+        restoreBtn.addEventListener('mouseleave', () => { restoreBtn.style.transform = 'scale(1)'; });
+        restoreBtn.addEventListener('click', () => {
+          wrapper.classList.remove('hidden');
+          restoreBtn.remove();
+        });
+        document.body.appendChild(restoreBtn);
+      }
+    });
+
+    initLive2D();
   }
 </script>

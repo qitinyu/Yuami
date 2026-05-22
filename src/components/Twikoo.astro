@@ -1,0 +1,154 @@
+---
+/**
+ * Twikoo 通用评论组件
+ * 在需要评论区的页面中引入: import Twikoo from '../components/Twikoo.astro'; <Twikoo />
+ * 配置项在 config.ts 的 twikoo 字段中
+ */
+import { siteConfig } from '../../config';
+
+const envId = siteConfig.twikoo?.envId || '';
+const region = siteConfig.twikoo?.region || '';
+---
+
+<div class="twikoo-section">
+  <h3 class="section-title">评论</h3>
+  <div id="twikooComment"></div>
+</div>
+
+<script define:vars={{ twikooEnvId: envId, twikooRegion: region }}>
+  (function() {
+    const twikooEl = document.getElementById('twikooComment');
+    if (!twikooEl) return;
+
+    if (!twikooEnvId) {
+      twikooEl.innerHTML = '<div style="text-align:center;padding:24px 16px;background:var(--primary-alpha);border-radius:var(--radius-sm);border:1px dashed var(--border-color);"><i class="fa-solid fa-comments" style="font-size:1.5rem;color:var(--primary);display:block;margin-bottom:8px;"></i><p style="font-size:0.88rem;color:var(--primary);margin-bottom:4px;">Twikoo 评论系统待配置</p><p style="font-size:0.78rem;color:var(--text-muted);">请在 config.ts 中填写 twikoo.envId 后即可启用</p></div>';
+      return;
+    }
+
+    // 动态加载 Twikoo CDN（jsDelivr 主 + npmmirror 回退）
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    function initTwikoo() {
+      if (typeof twikoo !== 'undefined') {
+        twikoo.init({
+          envId: twikooEnvId,
+          region: twikooRegion || undefined,
+          el: '#twikooComment',
+          lang: 'zh-CN',
+          path: window.location.pathname,
+        }).then(() => {
+          console.log('Twikoo 评论系统加载完成');
+        }).catch((err) => {
+          console.warn('Twikoo 初始化失败:', err);
+          twikooEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统初始化失败，请刷新重试</p>';
+        });
+      } else {
+        console.warn('Twikoo 加载异常：全局对象不存在');
+        twikooEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载异常，请刷新重试</p>';
+      }
+    }
+
+    loadScript('https://cdn.jsdelivr.net/npm/twikoo@1.7.9/dist/twikoo.min.js')
+      .then(initTwikoo)
+      .catch(() => {
+        // jsDelivr 失败，回退到 npmmirror
+        console.log('jsDelivr 加载失败，尝试 npmmirror 回退...');
+        loadScript('https://registry.npmmirror.com/twikoo/1.7.9/files/dist/twikoo.min.js')
+          .then(initTwikoo)
+          .catch(() => {
+            twikooEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载失败，请检查网络后刷新重试</p>';
+          });
+      });
+  })();
+</script>
+
+<style>
+  .twikoo-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  /* Twikoo 主题适配 */
+  #twikooComment :global(.tk-meta) {
+    color: var(--text-secondary);
+  }
+
+  #twikooComment :global(.tk-content) {
+    color: var(--text-primary);
+  }
+
+  #twikooComment :global(.tk-tag) {
+    color: var(--primary);
+  }
+
+  #twikooComment :global(.tk-action-link) {
+    color: var(--primary);
+  }
+
+  #twikooComment :global(.tk-submit) {
+    background-color: var(--primary);
+  }
+
+  #twikooComment :global(.tk-input) {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+  }
+
+  #twikooComment :global(.tk-row .tk-col) {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+  }
+
+  #twikooComment :global(.tk-expand) {
+    background-color: var(--bg-card);
+    color: var(--primary);
+  }
+
+  #twikooComment :global(.tk-time) {
+    color: var(--text-muted);
+  }
+
+  #twikooComment :global(.tk-nick) {
+    color: var(--primary);
+  }
+
+  #twikooComment :global(.tk-avatar) {
+    border-color: var(--primary-alpha-30);
+  }
+
+  #twikooComment :global(.tk-comments-count) {
+    color: var(--text-secondary);
+  }
+
+  #twikooComment :global(.tk-main .tk-content p) {
+    color: var(--text-primary);
+  }
+</style>

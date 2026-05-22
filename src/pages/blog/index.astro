@@ -41,20 +41,20 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
       <div class="blog-grid" id="blogGrid">
         {blogPosts.map((post, index) => (
           <article class="blog-card card" data-tags={post.tags.join(',')} data-title={post.title} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
-            <div class="blog-card-body">
-              <div class="blog-card-meta">
-                <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
+            <a href={`/blog/${post.slug}`} class="blog-card-link">
+              <div class="blog-card-body">
+                <div class="blog-card-meta">
+                  <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
+                </div>
+                <h3 class="blog-card-title">{post.title}</h3>
+                <p class="blog-card-excerpt">{post.excerpt}</p>
+                <div class="blog-card-tags">
+                  {post.tags.map(tag => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
               </div>
-              <h3 class="blog-card-title">
-                <a href={`/blog/${post.slug}`}>{post.title}</a>
-              </h3>
-              <p class="blog-card-excerpt">{post.excerpt}</p>
-              <div class="blog-card-tags">
-                {post.tags.map(tag => (
-                  <span class="tag">{tag}</span>
-                ))}
-              </div>
-            </div>
+            </a>
           </article>
         ))}
       </div>
@@ -143,6 +143,12 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
     animation: fadeInUp 0.5s ease both;
   }
 
+  .blog-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
   .blog-card.hidden-page {
     display: none;
   }
@@ -165,15 +171,11 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
     font-weight: 600;
     margin-bottom: 8px;
     line-height: 1.5;
-  }
-
-  .blog-card-title a {
     color: var(--text-primary);
-    cursor: pointer;
     transition: color var(--transition-fast);
   }
 
-  .blog-card-title a:hover {
+  .blog-card:hover .blog-card-title {
     color: var(--primary);
   }
 
