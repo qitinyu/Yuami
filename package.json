@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
     "build": "astro build",
-    "preview": "astro preview --host 0.0.0.0"
+    "preview": "astro preview --host 0.0.0.0",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-preview": "npm run build && wrangler dev"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.13",
     "@astrojs/mdx": "^4.2.6",
     "@astrojs/sitemap": "^3.3.1",
     "astro": "^5.7.13"
