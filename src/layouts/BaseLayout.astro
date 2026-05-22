@@ -43,8 +43,10 @@ const fullTitle = title === siteConfig.title ? title : `${title} - ${siteConfig.
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', theme);
     </script>
-    <!-- Umami Analytics (预留) -->
-    {/* <script async src={siteConfig.umami.src} data-website-id={siteConfig.umami.websiteId}></script> */}
+    <!-- Umami Analytics -->
+    {siteConfig.umami.src && siteConfig.umami.websiteId && (
+      <script async src={siteConfig.umami.src} data-website-id={siteConfig.umami.websiteId}></script>
+    )}
   </head>
   <body>
     <Navbar />

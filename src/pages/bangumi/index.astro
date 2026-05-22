@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
+import Twikoo from '../../components/Twikoo.astro';
 import { bangumiList } from '../../data/bangumi';
 
 const statuses = ['全部', '看过', '在看', '想看'];
@@ -20,25 +21,27 @@ const statuses = ['全部', '看过', '在看', '想看'];
       <div class="bangumi-grid" id="bangumiGrid">
         {bangumiList.map((item, index) => (
           <article class="bangumi-card card" data-status={item.status} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
-            <div class="bangumi-cover">
-              {item.cover ? (
-                <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-              ) : null}
-              <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
-                <i class="fa-solid fa-tv"></i>
+            <a href={item.url || 'javascript:void(0)'} class="bangumi-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
+              <div class="bangumi-cover">
+                {item.cover ? (
+                  <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                ) : null}
+                <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
+                  <i class="fa-solid fa-tv"></i>
+                </div>
+                <span class="status-badge">{item.status}</span>
               </div>
-              <span class="status-badge">{item.status}</span>
-            </div>
-            <div class="bangumi-info">
-              <h3 class="bangumi-title">{item.title}</h3>
-              <div class="bangumi-score">
-                {Array.from({length: 10}, (_, i) => (
-                  <i class={`fa-solid fa-star ${i < item.score ? 'scored' : ''}`}></i>
-                ))}
-                <span class="score-num">{item.score > 0 ? `${item.score}/10` : '-/10'}</span>
+              <div class="bangumi-info">
+                <h3 class="bangumi-title">{item.title}</h3>
+                <div class="bangumi-score">
+                  {Array.from({length: 10}, (_, i) => (
+                    <i class={`fa-solid fa-star ${i < item.score ? 'scored' : ''}`}></i>
+                  ))}
+                  <span class="score-num">{item.score > 0 ? `${item.score}/10` : '-/10'}</span>
+                </div>
+                <p class="bangumi-comment">{item.comment}</p>
               </div>
-              <p class="bangumi-comment">{item.comment}</p>
-            </div>
+            </a>
           </article>
         ))}
       </div>
@@ -46,15 +49,8 @@ const statuses = ['全部', '看过', '在看', '想看'];
       <!-- Pagination -->
       <div class="pagination" id="pagination"></div>
 
-      <!-- Twikoo Comments for Bangumi -->
-      <div class="twikoo-container">
-        <h3 class="section-title">番剧评论区</h3>
-        <div class="twikoo-placeholder">
-          <i class="fa-solid fa-comments"></i>
-          <p>Twikoo 评论系统预留位置</p>
-          <p class="twikoo-hint">在这里分享你的追番感受</p>
-        </div>
-      </div>
+      <!-- Twikoo Comments -->
+      <Twikoo />
     </div>
   </div>
 </BaseLayout>
@@ -107,6 +103,13 @@ const statuses = ['全部', '看过', '在看', '想看'];
   .bangumi-card {
     overflow: hidden;
     animation: fadeInUp 0.5s ease both;
+    cursor: pointer;
+  }
+
+  .bangumi-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
   }
 
   .bangumi-card.hidden-page {
@@ -166,6 +169,11 @@ const statuses = ['全部', '看过', '在看', '想看'];
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 6px;
+    transition: color var(--transition-fast);
+  }
+
+  .bangumi-card:hover .bangumi-title {
+    color: var(--primary);
   }
 
   .bangumi-score {
@@ -252,35 +260,6 @@ const statuses = ['全部', '看过', '在看', '想看'];
     font-size: 0.85rem;
     color: var(--text-muted);
     margin: 0 8px;
-  }
-
-  .twikoo-container {
-    margin-top: 2rem;
-  }
-
-  .twikoo-placeholder {
-    text-align: center;
-    padding: 32px 16px;
-    background: var(--primary-alpha);
-    border-radius: var(--radius-sm);
-    border: 1px dashed var(--border-color);
-    color: var(--primary);
-  }
-
-  .twikoo-placeholder i {
-    font-size: 1.8rem;
-    margin-bottom: 10px;
-    display: block;
-  }
-
-  .twikoo-placeholder p {
-    font-size: 0.88rem;
-    margin-bottom: 4px;
-  }
-
-  .twikoo-hint {
-    font-size: 0.78rem !important;
-    color: var(--text-muted) !important;
   }
 
   @media (max-width: 1024px) {

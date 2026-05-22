@@ -49,33 +49,45 @@ export const siteConfig = {
   },
   // Twikoo config (预留)
   twikoo: {
-    envId: '', // 后期配置
-    region: '',
+    envId: 'https://twikoo-nt.netlify.app/.netlify/functions/twikoo', // 后期配置
+    region: 'gansu',
   },
-  // Umami config (预留)
+  // Umami 统计配置
+  // src 填写 Umami 脚本地址（如 https://cloud.umami.is/script.js），不是分享链接
+  // websiteId 填写在 Umami 后台添加站点时获得的网站 ID
   umami: {
-    src: '',
-    websiteId: '',
+    src: 'https://cloud.umami.is/script.js',
+    websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
   },
-  // Live2D 看板娘配置
+  // Live2D 看板娘配置 (支持 moc3 格式)
+  // 注意：路径以 / 开头，对应 public/ 目录（如 /live2/models/jk/ 对应 public/live2/models/jk/）
   live2d: {
     enabled: true,
-    modelPath: '/mod/',
-    modelName: 'shizuku',
+    modelPath: '/live2/models/',
+    modelName: 'wwa',
     position: 'left',
     bottom: 0,
     left: 10,
     right: 10,
-    width: 280,
-    height: 350,
+    width: 300,
+    height: 500,
+    scale: 0.15,
     mobileOff: true,
+    // 模型列表 - 支持多个模型切换（path 为 model3.json 的完整路径）
+    modelList: [
+      { name: 'wwa', path: '/live2/models/wwa/wwa.model3.json' },
+      { name: 'jk', path: '/live2/models/jk/jk.model3.json' },
+      { name: 'cmtt', path: '/live2/models/cmtt/cmtt.model3.json' },
+      // 添加更多模型:
+      // { name: 'haru', path: '/live2/models/haru/haru.model3.json' },
+    ],
   },
   // 站点统计配置
   siteStats: {
-    startDate: '2026-01-01', // 站点创建日期，用于计算运行时长
+    startDate: '2026-05-21', // 站点创建日期，用于计算运行时长
     totalPosts: 6,           // 总文章数（posts + diary）
     totalWords: 12000,       // 总字数（近似值）
-    lastEdit: '2026-05-01',  // 最后编辑日期
+    lastEdit: '2026-05-21',  // 最后编辑日期
   },
   // 站点公告
   siteAnnouncements: [

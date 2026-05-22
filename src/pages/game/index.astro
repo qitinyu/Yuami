@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
-import { gameList } from '../../data/games';
+import { gameList } from '../../data/game';
 
 const statuses = ['全部', '在玩', '看过', '想玩'];
 ---
@@ -20,20 +20,22 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
       <div class="game-grid" id="gameGrid">
         {gameList.map((item, index) => (
           <article class="game-card card" data-status={item.status} style={`animation-delay: ${index * 0.08}s`}>
-            <div class="game-cover">
-              {item.cover ? (
-                <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-              ) : null}
-              <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
-                <i class="fa-solid fa-gamepad"></i>
+            <a href={item.url || 'javascript:void(0)'} class="game-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
+              <div class="game-cover">
+                {item.cover ? (
+                  <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                ) : null}
+                <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
+                  <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <span class="platform-badge">{item.platform}</span>
               </div>
-              <span class="platform-badge">{item.platform}</span>
-            </div>
-            <div class="game-info">
-              <h3 class="game-title">{item.title}</h3>
-              <span class="status-tag">{item.status}</span>
-              <p class="game-comment">{item.comment}</p>
-            </div>
+              <div class="game-info">
+                <h3 class="game-title">{item.title}</h3>
+                <span class="status-tag">{item.status}</span>
+                <p class="game-comment">{item.comment}</p>
+              </div>
+            </a>
           </article>
         ))}
       </div>
@@ -89,6 +91,13 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
   .game-card {
     overflow: hidden;
     animation: fadeInUp 0.5s ease both;
+    cursor: pointer;
+  }
+
+  .game-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
   }
 
   .game-cover {
@@ -145,6 +154,11 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 6px;
+    transition: color var(--transition-fast);
+  }
+
+  .game-card:hover .game-title {
+    color: var(--primary);
   }
 
   .status-tag {

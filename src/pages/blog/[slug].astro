@@ -1,18 +1,30 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Twikoo from '../../components/Twikoo.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
-  return posts.map(post => ({
+  const sortedPosts = [...posts].sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+  return sortedPosts.map((post, index) => ({
     params: { slug: post.slug },
-    props: { post },
+    props: {
+      post,
+      prevPost: index > 0 ? sortedPosts[index - 1] : null,
+      nextPost: index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null,
+    },
   }));
 }
 
-const { post } = Astro.props;
+const { post, prevPost, nextPost } = Astro.props;
 const { Content } = await post.render();
 const { title, date, tags } = post.data;
+
+// 随机推荐2篇文章（排除当前文章）
+const allPosts = await getCollection('posts');
+const otherPosts = allPosts.filter(p => p.slug !== post.slug);
+const shuffled = otherPosts.sort(() => Math.random() - 0.5);
+const recommendPosts = shuffled.slice(0, 2);
 ---
 
 <BaseLayout title={title}>
@@ -93,26 +105,35 @@ const { title, date, tags } = post.data;
       </div>
 
       <div class="article-nav">
-        <a href="/blog" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> 返回列表</a>
-        <a href="/blog" class="btn btn-ghost">更多文章 <i class="fa-solid fa-arrow-right"></i></a>
+        {prevPost ? (
+          <a href={`/blog/${prevPost.slug}`} class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> {prevPost.data.title}</a>
+        ) : (
+          <span class="btn btn-ghost" style="opacity:0.4;cursor:default;">已是最新一篇</span>
+        )}
+        {nextPost ? (
+          <a href={`/blog/${nextPost.slug}`} class="btn btn-ghost">{nextPost.data.title} <i class="fa-solid fa-arrow-right"></i></a>
+        ) : (
+          <span class="btn btn-ghost" style="opacity:0.4;cursor:default;">已是最后一篇</span>
+        )}
       </div>
 
-      <div class="article-recommend">
-        <h3 class="section-title">随机推荐</h3>
-        <div class="recommend-grid">
-          <div class="recommend-card card"><div class="recommend-body"><h4>推荐文章</h4><p>更多精彩内容等你探索</p></div></div>
-          <div class="recommend-card card"><div class="recommend-body"><h4>推荐文章</h4><p>更多精彩内容等你探索</p></div></div>
+      {recommendPosts.length > 0 && (
+        <div class="article-recommend">
+          <h3 class="section-title">随机推荐</h3>
+          <div class="recommend-grid">
+            {recommendPosts.map(rp => (
+              <a href={`/blog/${rp.slug}`} class="recommend-card card" style="text-decoration:none;">
+                <div class="recommend-body">
+                  <h4>{rp.data.title}</h4>
+                  <p>{rp.data.excerpt || rp.data.tags?.join(', ') || '点击阅读'}</p>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div class="twikoo-container">
-        <h3 class="section-title">评论</h3>
-        <div class="twikoo-placeholder">
-          <i class="fa-solid fa-comments"></i>
-          <p>Twikoo 评论系统预留位置</p>
-          <p class="twikoo-hint">后期配置 envId 后即可启用</p>
-        </div>
-      </div>
+      <Twikoo />
     </article>
   </div>
 </BaseLayout>
@@ -437,24 +458,11 @@ const { title, date, tags } = post.data;
     gap: 12px;
   }
 
-  .recommend-card { padding: 16px; }
-  .recommend-body h4 { font-size: 0.98rem; color: var(--text-primary); margin-bottom: 4px; }
+  .recommend-card { padding: 16px; cursor: pointer; transition: all var(--transition-fast); }
+  .recommend-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+  .recommend-body h4 { font-size: 0.98rem; color: var(--text-primary); margin-bottom: 4px; transition: color var(--transition-fast); }
+  .recommend-card:hover .recommend-body h4 { color: var(--primary); }
   .recommend-body p { font-size: 0.85rem; color: var(--text-muted); }
-
-  .twikoo-container { margin-top: 2rem; }
-
-  .twikoo-placeholder {
-    text-align: center;
-    padding: 32px 16px;
-    background: var(--primary-alpha);
-    border-radius: var(--radius-sm);
-    border: 1px dashed var(--border-color);
-    color: var(--primary);
-  }
-
-  .twikoo-placeholder i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
-  .twikoo-placeholder p { font-size: 0.88rem; margin-bottom: 4px; }
-  .twikoo-hint { font-size: 0.78rem; color: var(--text-muted); }
 
   /* 复制成功提示 */
   .share-toast {

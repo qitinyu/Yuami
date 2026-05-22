@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
+import Twikoo from '../../components/Twikoo.astro';
 import { lesList } from '../../data/les';
 
 const types = ['全部', '插画', '文字', '其他'];
@@ -20,22 +21,24 @@ const types = ['全部', '插画', '文字', '其他'];
       <div class="les-grid" id="lesGrid">
         {lesList.map((item, index) => (
           <article class="les-card card" data-type={item.type} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
-            <div class="les-cover">
-              {item.cover ? (
-                <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-              ) : null}
-              <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
-                <i class="fa-solid fa-palette"></i>
+            <a href={item.url || 'javascript:void(0)'} class="les-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
+              <div class="les-cover">
+                {item.cover ? (
+                  <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                ) : null}
+                <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
+                  <i class="fa-solid fa-palette"></i>
+                </div>
+                <span class="type-badge">{item.type}</span>
               </div>
-              <span class="type-badge">{item.type}</span>
-            </div>
-            <div class="les-info">
-              <h3 class="les-title">{item.title}</h3>
-              <div class="les-meta">
-                <span class="status-tag">{item.status}</span>
+              <div class="les-info">
+                <h3 class="les-title">{item.title}</h3>
+                <div class="les-meta">
+                  <span class="status-tag">{item.status}</span>
+                </div>
+                <p class="les-comment">{item.comment}</p>
               </div>
-              <p class="les-comment">{item.comment}</p>
-            </div>
+            </a>
           </article>
         ))}
       </div>
@@ -43,15 +46,8 @@ const types = ['全部', '插画', '文字', '其他'];
       <!-- Pagination -->
       <div class="pagination" id="pagination"></div>
 
-      <!-- Twikoo Comments for LES -->
-      <div class="twikoo-container">
-        <h3 class="section-title">作品评论区</h3>
-        <div class="twikoo-placeholder">
-          <i class="fa-solid fa-comments"></i>
-          <p>Twikoo 评论系统预留位置</p>
-          <p class="twikoo-hint">分享你对作品的感受</p>
-        </div>
-      </div>
+      <!-- Twikoo Comments -->
+      <Twikoo />
     </div>
   </div>
 </BaseLayout>
@@ -104,6 +100,13 @@ const types = ['全部', '插画', '文字', '其他'];
   .les-card {
     overflow: hidden;
     animation: fadeInUp 0.5s ease both;
+    cursor: pointer;
+  }
+
+  .les-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
   }
 
   .les-card.hidden-page {
@@ -163,6 +166,11 @@ const types = ['全部', '插画', '文字', '其他'];
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 6px;
+    transition: color var(--transition-fast);
+  }
+
+  .les-card:hover .les-title {
+    color: var(--primary);
   }
 
   .les-meta {
@@ -239,21 +247,6 @@ const types = ['全部', '插画', '文字', '其他'];
     color: var(--text-muted);
     margin: 0 8px;
   }
-
-  .twikoo-container { margin-top: 2rem; }
-
-  .twikoo-placeholder {
-    text-align: center;
-    padding: 32px 16px;
-    background: var(--primary-alpha);
-    border-radius: var(--radius-sm);
-    border: 1px dashed var(--border-color);
-    color: var(--primary);
-  }
-
-  .twikoo-placeholder i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
-  .twikoo-placeholder p { font-size: 0.88rem; margin-bottom: 4px; }
-  .twikoo-hint { font-size: 0.78rem !important; color: var(--text-muted) !important; }
 
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }

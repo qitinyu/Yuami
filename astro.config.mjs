@@ -3,7 +3,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://yqamm.cc.cd',
+  site: 'https://8872388.xyz',
   integrations: [mdx(), sitemap()],
   markdown: {
     shikiConfig: {

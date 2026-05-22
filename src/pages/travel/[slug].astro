@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Twikoo from '../../components/Twikoo.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -33,12 +34,8 @@ const { title, date, tags } = entry.data;
       <div class="article-nav">
         <a href="/travel" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> 返回旅记</a>
       </div>
-      <div class="twikoo-container" id="twikooContainer">
-        <h3 class="section-title">评论</h3>
-        <div class="twikoo-placeholder">
-          <i class="fa-solid fa-comments"></i>
-          <p>Twikoo 评论系统预留位置</p>
-        </div>
+      <div class="twikoo-area">
+        <Twikoo />
       </div>
     </article>
   </div>
@@ -84,17 +81,7 @@ const { title, date, tags } = entry.data;
     border-top: 1px solid var(--border-color);
     margin-bottom: 32px;
   }
-  .twikoo-container { margin-top: 2rem; }
-  .twikoo-placeholder {
-    text-align: center;
-    padding: 40px 20px;
-    background: var(--primary-alpha);
-    border-radius: var(--radius-sm);
-    border: 1px dashed var(--border-color);
-    color: var(--primary);
-  }
-  .twikoo-placeholder i { font-size: 2rem; margin-bottom: 12px; display: block; }
-  .twikoo-placeholder p { font-size: 0.9rem; }
+  .twikoo-area { margin-top: 2rem; }
   @media (max-width: 768px) {
     .article-main { padding: 24px 16px; }
     .article-title { font-size: 1.4rem; }
