@@ -5,7 +5,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
   site: 'https://8872388.xyz',
-  output: 'static',
+  output: 'hybrid',
   adapter: cloudflare(),
   integrations: [mdx(), sitemap()],
   markdown: {
