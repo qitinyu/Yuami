@@ -1,4 +1,6 @@
-// 番剧数据 - 可独立编辑 // 封面图片存放于 public/assets/anime/ 目录下
+// 番剧数据 - 可独立编辑 
+// 封面图片存放于 public/anime/ 目录下
+// 或于cover下添加url链接
 export const animeList = [
   {
     title: "画江湖之不良人",
