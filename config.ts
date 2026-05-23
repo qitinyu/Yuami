@@ -14,8 +14,8 @@ export const siteConfig = {
       { name: '旅记', path: '/travel' },
       { name: '回忆', path: '/memory' },
     ]},
-    { name: '墨竹', path: '/bangumi', children: [
-      { name: '番剧', path: '/bangumi' },
+    { name: '墨竹', path: '/anime', children: [
+      { name: '番剧', path: '/anime' },
       { name: '闲游', path: '/game' },
       { name: 'LES', path: '/les' },
     ]},
@@ -64,10 +64,10 @@ export const siteConfig = {
   live2d: {
     enabled: true,
     modelPath: '/live2/models/',
-    modelName: 'jk',
+    modelName: 'wwa',
     position: 'left',
     bottom: 0,
-    left: 5,
+    left: 10,
     right: 10,
     width: 300,
     height: 500,
@@ -75,6 +75,7 @@ export const siteConfig = {
     mobileOff: true,
     // 模型列表 - 支持多个模型切换（path 为 model3.json 的完整路径）
     modelList: [
+      { name: 'wwa', path: '/live2/models/wwa/wwa.model3.json' },
       { name: 'jk', path: '/live2/models/jk/jk.model3.json' },
       { name: 'cmtt', path: '/live2/models/cmtt/cmtt.model3.json' },
       // 添加更多模型:

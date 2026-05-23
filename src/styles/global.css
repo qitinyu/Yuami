@@ -453,7 +453,7 @@ button {
 
 /* --- Global cursor: pointer for all interactive elements --- */
 a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
-.mobile-link, .cal-btn, .friend-card, .album-card, .bangumi-card, .game-card,
+.mobile-link, .cal-btn, .friend-card, .album-card, .anime-card, .game-card,
 .les-card, .social-icon, .about-link, .project-github, .float-btn, .music-ctrl-btn,
 .theme-toggle, .mobile-toggle, .music-close, .modal-close, .recommend-card,
 .blog-card-title a, .cover-placeholder, .status-badge, .platform-badge, .type-badge {

@@ -2,9 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
 import Twikoo from '../../components/Twikoo.astro';
-import { bangumiList } from '../../data/bangumi';
+import { animeList } from '../../data/anime';
 
-const statuses = ['全部', '看过', '在看', '想看'];
+const statuses = ['全部', 'completed', 'watching', 'planned'];
+const statusLabels: Record<string, string> = {
+  completed: '看过',
+  watching: '在看',
+  planned: '想看',
+};
 ---
 
 <BaseLayout title="番剧">
@@ -14,32 +19,47 @@ const statuses = ['全部', '看过', '在看', '想看'];
     <div class="page-main">
       <div class="status-filter" id="statusFilter">
         {statuses.map(s => (
-          <span class={`filter-tab ${s === '全部' ? 'active' : ''}`} data-status={s} style="cursor: pointer;">{s}</span>
+          <span class={`filter-tab ${s === '全部' ? 'active' : ''}`} data-status={s} style="cursor: pointer;">
+            {s === '全部' ? '全部' : statusLabels[s] || s}
+          </span>
         ))}
       </div>
 
-      <div class="bangumi-grid" id="bangumiGrid">
-        {bangumiList.map((item, index) => (
-          <article class="bangumi-card card" data-status={item.status} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
-            <a href={item.url || 'javascript:void(0)'} class="bangumi-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
-              <div class="bangumi-cover">
+      <div class="anime-grid" id="animeGrid">
+        {animeList.map((item, index) => (
+          <article class="anime-card card" data-status={item.status} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
+            <a href={item.link || 'javascript:void(0)'} class="anime-card-link" target={item.link ? '_blank' : undefined} rel={item.link ? 'noopener noreferrer' : undefined}>
+              <div class="anime-cover">
                 {item.cover ? (
                   <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
                 ) : null}
                 <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
                   <i class="fa-solid fa-tv"></i>
                 </div>
-                <span class="status-badge">{item.status}</span>
+                <span class="status-badge">{statusLabels[item.status] || item.status}</span>
               </div>
-              <div class="bangumi-info">
-                <h3 class="bangumi-title">{item.title}</h3>
-                <div class="bangumi-score">
-                  {Array.from({length: 10}, (_, i) => (
-                    <i class={`fa-solid fa-star ${i < item.score ? 'scored' : ''}`}></i>
-                  ))}
-                  <span class="score-num">{item.score > 0 ? `${item.score}/10` : '-/10'}</span>
+              <div class="anime-info">
+                <h3 class="anime-title">{item.title}</h3>
+                <div class="anime-meta">
+                  <span class="meta-item"><i class="fa-solid fa-star"></i> {item.rating}</span>
+                  <span class="meta-item"><i class="fa-solid fa-calendar"></i> {item.year}</span>
+                  <span class="meta-item"><i class="fa-solid fa-film"></i> {item.episodes}</span>
                 </div>
-                <p class="bangumi-comment">{item.comment}</p>
+                <div class="anime-genre">
+                  {item.genre.map(g => (
+                    <span class="genre-tag">{g}</span>
+                  ))}
+                </div>
+                {item.studio && <div class="anime-studio"><i class="fa-solid fa-building"></i> {item.studio}</div>}
+                <p class="anime-description">{item.description}</p>
+                {item.progress !== undefined && item.totalEpisodes && (
+                  <div class="anime-progress">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style={`width: ${(item.progress / item.totalEpisodes) * 100}%`}></div>
+                    </div>
+                    <span class="progress-text">{item.progress}/{item.totalEpisodes} 集</span>
+                  </div>
+                )}
               </div>
             </a>
           </article>
@@ -94,30 +114,30 @@ const statuses = ['全部', '看过', '在看', '想看'];
     border-color: var(--primary);
   }
 
-  .bangumi-grid {
+  .anime-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
 
-  .bangumi-card {
+  .anime-card {
     overflow: hidden;
     animation: fadeInUp 0.5s ease both;
     cursor: pointer;
   }
 
-  .bangumi-card-link {
+  .anime-card-link {
     display: block;
     text-decoration: none;
     color: inherit;
   }
 
-  .bangumi-card.hidden-page {
+  .anime-card.hidden-page {
     display: none;
   }
 
-  .bangumi-cover {
-    height: 180px;
+  .anime-cover {
+    height: 200px;
     overflow: hidden;
     position: relative;
   }
@@ -129,7 +149,7 @@ const statuses = ['全部', '看过', '在看', '想看'];
     transition: all var(--transition-normal);
   }
 
-  .bangumi-card:hover .cover-img {
+  .anime-card:hover .cover-img {
     transform: scale(1.05);
   }
 
@@ -145,7 +165,7 @@ const statuses = ['全部', '看过', '在看', '想看'];
     transition: all var(--transition-normal);
   }
 
-  .bangumi-card:hover .cover-placeholder {
+  .anime-card:hover .cover-placeholder {
     transform: scale(1.05);
   }
 
@@ -160,11 +180,11 @@ const statuses = ['全部', '看过', '在看', '想看'];
     color: #fff;
   }
 
-  .bangumi-info {
+  .anime-info {
     padding: 14px;
   }
 
-  .bangumi-title {
+  .anime-title {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -172,37 +192,90 @@ const statuses = ['全部', '看过', '在看', '想看'];
     transition: color var(--transition-fast);
   }
 
-  .bangumi-card:hover .bangumi-title {
+  .anime-card:hover .anime-title {
     color: var(--primary);
   }
 
-  .bangumi-score {
+  .anime-meta {
     display: flex;
     align-items: center;
-    gap: 2px;
-    margin-bottom: 6px;
+    gap: 10px;
+    margin-bottom: 8px;
     flex-wrap: wrap;
   }
 
-  .bangumi-score i {
-    font-size: 0.55rem;
+  .meta-item {
+    font-size: 0.78rem;
     color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 3px;
   }
 
-  .bangumi-score i.scored {
-    color: #f5a623;
+  .meta-item i {
+    color: var(--primary);
+    font-size: 0.65rem;
   }
 
-  .score-num {
+  .anime-genre {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .genre-tag {
     font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-left: 4px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: var(--primary-alpha);
+    color: var(--primary);
   }
 
-  .bangumi-comment {
+  .anime-studio {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .anime-studio i {
+    color: var(--primary);
+    font-size: 0.65rem;
+    margin-right: 3px;
+  }
+
+  .anime-description {
     font-size: 0.88rem;
     color: var(--text-muted);
     line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  .anime-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .progress-text {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
   }
 
   /* Pagination */
@@ -264,11 +337,11 @@ const statuses = ['全部', '看过', '在看', '想看'];
 
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }
-    .bangumi-grid { grid-template-columns: repeat(2, 1fr); }
+    .anime-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {
-    .bangumi-grid { grid-template-columns: 1fr; }
+    .anime-grid { grid-template-columns: 1fr; }
     .page-btn {
       min-width: 32px;
       height: 32px;
@@ -281,14 +354,14 @@ const statuses = ['全部', '看过', '在看', '想看'];
   const ITEMS_PER_PAGE = 6;
 
   const statusFilter = document.getElementById('statusFilter');
-  const bangumiCards = Array.from(document.querySelectorAll('.bangumi-card'));
+  const animeCards = Array.from(document.querySelectorAll('.anime-card'));
   const paginationEl = document.getElementById('pagination');
 
   let currentPage = 1;
   let currentStatus = '全部';
 
   function getFilteredCards() {
-    return bangumiCards.filter(card => {
+    return animeCards.filter(card => {
       const el = card as HTMLElement;
       return currentStatus === '全部' || el.dataset.status === currentStatus;
     });
@@ -319,7 +392,7 @@ const statuses = ['全部', '看过', '在看', '想看'];
     const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
     if (currentPage > totalPages) currentPage = totalPages;
 
-    bangumiCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
+    animeCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     filteredCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
       (card as HTMLElement).classList.remove('hidden-page');

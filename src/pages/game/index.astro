@@ -1,9 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
-import { gameList } from '../../data/game';
-
-const statuses = ['全部', '在玩', '看过', '想玩'];
+import { gameList, carouselImages, reflectionText } from '../../data/game';
 ---
 
 <BaseLayout title="闲游">
@@ -11,34 +9,93 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
     <SidebarWidget />
 
     <div class="page-main">
-      <div class="status-filter" id="statusFilter">
-        {statuses.map(s => (
-          <span class={`filter-tab ${s === '全部' ? 'active' : ''}`} data-status={s} style="cursor: pointer;">{s}</span>
-        ))}
+      <!-- 页面标题 -->
+      <div class="page-header">
+        <h1 class="page-title">闲游</h1>
+        <p class="page-subtitle">游戏是另一种人生，每一局都是新的开始</p>
       </div>
 
+      <!-- 轮播图部分 -->
+      {carouselImages.length > 0 && (
+        <div class="carousel-container" id="carouselContainer">
+          <div class="carousel-track">
+            {carouselImages.map((image, index) => (
+              <div class={`carousel-slide ${index === 0 ? 'active' : ''}`}>
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  class="carousel-img"
+                  onerror="this.style.display='none';"
+                />
+              </div>
+            ))}
+          </div>
+
+          <!-- 指示点 -->
+          <div class="carousel-dots">
+            {carouselImages.map((_, index) => (
+              <button
+                class={`carousel-dot ${index === 0 ? 'active' : ''}`}
+                onclick={`goToSlide(${index})`}
+                aria-label={`切换到第${index + 1}张`}
+              ></button>
+            ))}
+          </div>
+
+          <!-- 左右切换按钮 -->
+          <button class="carousel-btn carousel-prev" onclick="prevSlide()" aria-label="上一张">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button class="carousel-btn carousel-next" onclick="nextSlide()" aria-label="下一张">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      )}
+
+      <!-- 游戏卡片网格 -->
       <div class="game-grid" id="gameGrid">
         {gameList.map((item, index) => (
-          <article class="game-card card" data-status={item.status} style={`animation-delay: ${index * 0.08}s`}>
+          <article class="game-card" data-tags={item.tags.join(',')} style={`animation-delay: ${index * 0.08}s`}>
             <a href={item.url || 'javascript:void(0)'} class="game-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
-              <div class="game-cover">
-                {item.cover ? (
-                  <img src={item.cover} alt={item.title} class="cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                ) : null}
-                <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
-                  <i class="fa-solid fa-gamepad"></i>
+              <div class="game-card-inner">
+                <div class="game-info">
+                  <h3 class="game-title">{item.name}</h3>
+                  <div class="game-meta">
+                    <span class="meta-item"><i class="fa-solid fa-star"></i> {item.rating}/5</span>
+                    <span class="meta-item"><i class="fa-solid fa-building"></i> {item.company}</span>
+                  </div>
+                  <div class="game-tags">
+                    {item.tags.map(t => (
+                      <span class="game-tag">{t}</span>
+                    ))}
+                  </div>
+                  <p class="game-description">{item.description}</p>
+                  <div class="game-footer">
+                    <span class="play-time"><i class="fa-solid fa-clock"></i> {item.playTime}</span>
+                    <span class="release-date"><i class="fa-solid fa-calendar"></i> {item.releaseDate}</span>
+                  </div>
                 </div>
-                <span class="platform-badge">{item.platform}</span>
-              </div>
-              <div class="game-info">
-                <h3 class="game-title">{item.title}</h3>
-                <span class="status-tag">{item.status}</span>
-                <p class="game-comment">{item.comment}</p>
+                <div class="game-icon-area">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} class="game-icon" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                  ) : null}
+                  <div class="icon-placeholder" style={item.imageUrl ? 'display:none;' : ''}>
+                    <i class="fa-solid fa-gamepad"></i>
+                  </div>
+                </div>
               </div>
             </a>
           </article>
         ))}
       </div>
+
+      <!-- 闲游感悟 -->
+      {reflectionText && (
+        <div class="reflection-section card">
+          <h2 class="reflection-title">闲游 · 所悟</h2>
+          <p class="reflection-text">{reflectionText}</p>
+        </div>
+      )}
     </div>
   </div>
 </BaseLayout>
@@ -57,42 +114,162 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
     min-width: 0;
   }
 
-  .status-filter {
+  /* 页面标题 */
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .page-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .page-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    padding-left: 14px;
+  }
+
+  /* 轮播图 */
+  .carousel-container {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 24px;
+    cursor: grab;
+    background: var(--bg-card);
+  }
+
+  .carousel-container:active {
+    cursor: grabbing;
+  }
+
+  .carousel-track {
+    position: relative;
+    height: 300px;
+  }
+
+  .carousel-slide {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    animation: carouselFadeIn 0.6s ease-in-out;
+  }
+
+  .carousel-slide.active {
+    display: block;
+  }
+
+  .carousel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .carousel-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 8px;
-    margin-bottom: 20px;
-    justify-content: center;
+    z-index: 10;
   }
 
-  .filter-tab {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.3s ease;
+    padding: 0;
   }
 
-  .filter-tab:hover,
-  .filter-tab.active {
-    background: var(--primary);
+  .carousel-dot.active {
+    background: #fff;
+    transform: scale(1.3);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  }
+
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.3);
     color: #fff;
-    border-color: var(--primary);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+    font-size: 0.85rem;
   }
 
+  .carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .carousel-prev {
+    left: 12px;
+  }
+
+  .carousel-next {
+    right: 12px;
+  }
+
+  @keyframes carouselFadeIn {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+  }
+
+  /* 游戏卡片 */
   .game-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 18px;
+    margin-bottom: 24px;
   }
 
   .game-card {
-    overflow: hidden;
     animation: fadeInUp 0.5s ease both;
     cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
   }
+
+  .game-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(125, 152, 245, 0.15);
+   }
 
   .game-card-link {
     display: block;
@@ -100,24 +277,41 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
     color: inherit;
   }
 
-  .game-cover {
-    height: 180px;
+  .game-card-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    position: relative;
+  }
+
+  .game-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .game-icon-area {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     position: relative;
   }
 
-  .cover-img {
+  .game-icon {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: var(--radius-sm);
     transition: all var(--transition-normal);
   }
 
-  .game-card:hover .cover-img {
-    transform: scale(1.05);
+  .game-card:hover .game-icon {
+    transform: scale(1.08);
   }
 
-  .cover-placeholder {
+  .icon-placeholder {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, var(--primary-alpha), var(--primary-alpha-30));
@@ -125,28 +319,8 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
     align-items: center;
     justify-content: center;
     color: var(--primary);
-    font-size: 2.5rem;
-    transition: all var(--transition-normal);
-  }
-
-  .game-card:hover .cover-placeholder {
-    transform: scale(1.05);
-  }
-
-  .platform-badge {
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    background: var(--bg-glass);
-    backdrop-filter: blur(8px);
-    color: var(--text-secondary);
-  }
-
-  .game-info {
-    padding: 14px;
+    font-size: 1.5rem;
+    border-radius: var(--radius-sm);
   }
 
   .game-title {
@@ -155,50 +329,260 @@ const statuses = ['全部', '在玩', '看过', '想玩'];
     color: var(--text-primary);
     margin-bottom: 6px;
     transition: color var(--transition-fast);
+    padding-right: 0;
   }
 
   .game-card:hover .game-title {
     color: var(--primary);
   }
 
-  .status-tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
+  .game-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .meta-item i {
+    color: var(--primary);
+    font-size: 0.65rem;
+  }
+
+  .game-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .game-tag {
     font-size: 0.7rem;
+    padding: 1px 8px;
+    border-radius: 10px;
     background: var(--primary-alpha);
     color: var(--primary);
-    margin-bottom: 6px;
   }
 
-  .game-comment {
+  .game-description {
     font-size: 0.88rem;
     color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 8px;
   }
 
+  .game-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+    padding-top: 8px;
+  }
+
+  .game-footer i {
+    color: var(--primary);
+    font-size: 0.65rem;
+    margin-right: 3px;
+  }
+
+  /* 闲游感悟 */
+  .reflection-section {
+    padding: 24px;
+    text-align: center;
+  }
+
+  .reflection-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    position: relative;
+    padding-left: 14px;
+    text-align: left;
+  }
+
+  .reflection-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .reflection-text {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    line-height: 1.8;
+  }
+
+  /* 手机端适配 */
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }
-    .game-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .game-grid { grid-template-columns: 1fr; }
+
+    .carousel-track { height: 260px; }
+
+    .carousel-btn { width: 30px; height: 30px; font-size: 0.75rem; }
+    .carousel-prev { left: 8px; }
+    .carousel-next { right: 8px; }
+
+    .page-title { font-size: 1.4rem; }
+
+    .game-icon-area {
+      width: 60px;
+      height: 60px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-layout { padding: 16px 12px; gap: 16px; }
+
+    .carousel-track { height: 200px; }
+    .carousel-dots { bottom: 8px; gap: 6px; }
+    .carousel-dot { width: 6px; height: 6px; }
+    .carousel-btn { width: 26px; height: 26px; font-size: 0.7rem; }
+
+    .game-card-inner { padding: 12px; gap: 10px; }
+    .game-icon-area {
+      width: 52px;
+      height: 52px;
+    }
+    .game-title { font-size: 0.92rem; }
+    .game-description { font-size: 0.82rem; }
+
+    .reflection-section { padding: 16px; }
+    .reflection-text { font-size: 1rem; }
   }
 </style>
 
-<script>
-  const statusFilter = document.getElementById('statusFilter');
-  const gameCards = document.querySelectorAll('.game-card');
+<script is:inline>
+  let currentSlide = 0;
+  let autoSlideInterval;
 
-  statusFilter?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.classList.contains('filter-tab')) return;
-    statusFilter.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-    target.classList.add('active');
-    const status = target.dataset.status;
-    gameCards.forEach(card => {
-      const el = card as HTMLElement;
-      el.style.display = status === '全部' || el.dataset.status === status ? '' : 'none';
+  function initCarousel() {
+    const slides = document.querySelectorAll('.carousel-slide');
+    if (slides.length === 0) return;
+
+    updateCarousel();
+    startAutoSlide();
+
+    const carousel = document.querySelector('.carousel-container');
+    if (carousel) {
+      // 鼠标滚轮
+      carousel.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        if (e.deltaY < 0) prevSlide();
+        else nextSlide();
+        resetAutoSlide();
+      }, { passive: false });
+
+      // 鼠标悬停暂停
+      carousel.addEventListener('mouseenter', pauseAutoSlide);
+      carousel.addEventListener('mouseleave', startAutoSlide);
+
+      // 触摸滑动（手机端）
+      let touchStartX = 0;
+      let touchEndX = 0;
+      carousel.addEventListener('touchstart', function (e) {
+        touchStartX = e.changedTouches[0].screenX;
+        pauseAutoSlide();
+      }, { passive: true });
+      carousel.addEventListener('touchend', function (e) {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) nextSlide();
+          else prevSlide();
+          resetAutoSlide();
+        } else {
+          startAutoSlide();
+        }
+      }, { passive: true });
+    }
+
+    // 键盘支持
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { prevSlide(); resetAutoSlide(); }
+      else if (e.key === 'ArrowRight') { nextSlide(); resetAutoSlide(); }
     });
+
+    // 页面可见性
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) pauseAutoSlide();
+      else startAutoSlide();
+    });
+  }
+
+  function startAutoSlide() {
+    if (autoSlideInterval) clearInterval(autoSlideInterval);
+    autoSlideInterval = setInterval(function () { nextSlide(); }, 4000);
+  }
+
+  function pauseAutoSlide() {
+    if (autoSlideInterval) clearInterval(autoSlideInterval);
+  }
+
+  function resetAutoSlide() {
+    pauseAutoSlide();
+    startAutoSlide();
+  }
+
+  function nextSlide() {
+    const slides = document.querySelectorAll('.carousel-slide');
+    if (slides.length === 0) return;
+    currentSlide = (currentSlide + 1) % slides.length;
+    updateCarousel();
+  }
+
+  function prevSlide() {
+    const slides = document.querySelectorAll('.carousel-slide');
+    if (slides.length === 0) return;
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    updateCarousel();
+  }
+
+  function goToSlide(index) {
+    currentSlide = index;
+    updateCarousel();
+    resetAutoSlide();
+  }
+
+  function updateCarousel() {
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.carousel-dot');
+    if (slides.length === 0) return;
+
+    slides.forEach(function (slide, i) {
+      slide.classList.remove('active');
+      if (i === currentSlide) slide.classList.add('active');
+    });
+
+    dots.forEach(function (dot, i) {
+      dot.classList.remove('active');
+      if (i === currentSlide) dot.classList.add('active');
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', function () {
+    setTimeout(initCarousel, 100);
   });
 </script>
