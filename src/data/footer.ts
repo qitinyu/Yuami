@@ -5,7 +5,7 @@ export const footerConfig = {
     year: 2026,
     owner: 'qitinyu',
     ownerUrl: 'https://github.com/qitinyu',
-    siteUrl: 'https://yqamm.cc.cd',
+    siteUrl: 'https://8872388.xyx',
     email: '484894496@qq.com',
   },
   // 技术信息
