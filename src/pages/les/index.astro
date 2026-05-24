@@ -4,7 +4,7 @@ import SidebarWidget from '../../components/SidebarWidget.astro';
 import Twikoo from '../../components/Twikoo.astro';
 import { lesList } from '../../data/les';
 
-const types = ['全部', '插画', '文字', '其他'];
+const types = ['全部', '一完结', '连载中', '全完结' ];
 ---
 
 <BaseLayout title="LES">
@@ -34,6 +34,8 @@ const types = ['全部', '插画', '文字', '其他'];
               <div class="les-info">
                 <h3 class="les-title">{item.title}</h3>
                 <div class="les-meta">
+                  <span class="cv-tag">{item.cv}</span>
+                  <span class="cp-tag">{item.cp}</span>
                   <span class="status-tag">{item.status}</span>
                 </div>
                 <p class="les-comment">{item.comment}</p>
@@ -176,16 +178,23 @@ const types = ['全部', '插画', '文字', '其他'];
   .les-meta {
     margin-bottom: 6px;
   }
-
-  .status-tag {
+ 
+  .cv-tag,
+  .cp-tag,
+  .status-tag
+   {
     display: inline-block;
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 0.7rem;
     background: var(--primary-alpha);
     color: var(--primary);
+   
   }
-
+  .cp-tag,
+  .status-tag{
+   margin-left: 10px;
+}
   .les-comment {
     font-size: 0.88rem;
     color: var(--text-muted);
@@ -212,7 +221,7 @@ const types = ['全部', '插画', '文字', '其他'];
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 1rem;
     border: 1px solid var(--border-color);
     background: var(--bg-card);
     color: var(--text-secondary);
@@ -240,7 +249,7 @@ const types = ['全部', '插画', '文字', '其他'];
     pointer-events: none;
   }
 
-  .page-btn i { font-size: 0.8rem; }
+  .page-btn i { font-size: 1.2rem; }
 
   .page-info {
     font-size: 0.85rem;

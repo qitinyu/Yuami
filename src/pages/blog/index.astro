@@ -3,15 +3,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
 import { getCollection } from 'astro:content';
 
-const allPosts = await getCollection('posts');
-const blogPosts = allPosts
+const allPots = await getCollection('pots');
+const blogPosts = allPots
   .map(post => ({
     slug: post.slug,
     title: post.data.title,
-    date: post.data.date,
-    tags: post.data.tags,
-    excerpt: post.data.excerpt || '',
-    cover: post.data.cover || '',
+    date: post.data.published || post.data.date || '',
+    tags: post.data.tags || [],
+    excerpt: post.data.description || post.data.excerpt || '',
+    cover: post.data.image || post.data.cover || '',
+    encrypted: post.data.encrypted || false,
+    author: post.data.author || '',
   }))
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -45,6 +47,8 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
               <div class="blog-card-body">
                 <div class="blog-card-meta">
                   <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
+                  {post.encrypted && <span class="blog-encrypted"><i class="fa-solid fa-lock"></i></span>}
+                  {post.author && <span class="blog-author"><i class="fa-solid fa-user-pen"></i> {post.author}</span>}
                 </div>
                 <h3 class="blog-card-title">{post.title}</h3>
                 <p class="blog-card-excerpt">{post.excerpt}</p>
@@ -159,11 +163,33 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 
   .blog-card-meta {
     margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .blog-date {
     font-size: 0.82rem;
     color: var(--text-muted);
+  }
+
+  .blog-encrypted {
+    font-size: 0.75rem;
+    color: var(--primary);
+    background: var(--primary-alpha);
+    padding: 1px 8px;
+    border-radius: 10px;
+  }
+
+  .blog-author {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  .blog-author i {
+    color: var(--primary);
+    margin-right: 3px;
+    font-size: 0.7rem;
   }
 
   .blog-card-title {
@@ -246,7 +272,7 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
   }
 
   .page-btn i {
-    font-size: 0.8rem;
+    font-size: 1.1rem;
   }
 
   .page-info {

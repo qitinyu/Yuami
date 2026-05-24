@@ -5,7 +5,7 @@
 
 /* --- CSS Variables --- */
 :root {
-  /* Theme Colors */
+  /* Theme Colors - 默认值，会被JS动态覆盖 */
   --primary: #7D98F5;
   --primary-light: #9DB3F7;
   --primary-dark: #5A75D4;
@@ -29,7 +29,7 @@
   --shadow-lg: 0 8px 40px rgba(125, 152, 245, 0.16);
   --shadow-hover: 0 8px 30px rgba(125, 152, 245, 0.2);
 
-  /* Dimensions - 缩小卡片比例 */
+  /* Dimensions */
   --nav-height: 64px;
   --sidebar-width: 280px;
   --max-width: 1400px;
@@ -451,12 +451,23 @@ button {
   color: #fff !important;
 }
 
+/* --- 评论区白底卡片背景 --- */
+.twikoo-card-bg {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-top: 2rem;
+}
+
 /* --- Global cursor: pointer for all interactive elements --- */
 a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
 .mobile-link, .cal-btn, .friend-card, .album-card, .anime-card, .game-card,
 .les-card, .social-icon, .about-link, .project-github, .float-btn, .music-ctrl-btn,
 .theme-toggle, .mobile-toggle, .music-close, .modal-close, .recommend-card,
-.blog-card-title a, .cover-placeholder, .status-badge, .platform-badge, .type-badge {
+.blog-card-title a, .cover-placeholder, .status-badge, .platform-badge, .type-badge,
+.color-picker-btn {
   cursor: pointer;
 }
 
@@ -467,7 +478,6 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
 
 /* --- Mobile Menu Overlay Fix --- */
 @media (max-width: 768px) {
-  /* 防止移动端不可见长条元素干扰点击 */
   .mobile-menu {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;

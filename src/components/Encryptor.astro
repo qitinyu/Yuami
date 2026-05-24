@@ -1,0 +1,188 @@
+---
+interface Props {
+  password: string;
+}
+
+const { password } = Astro.props;
+---
+
+<div class="encryptor-wrapper" data-password={password}>
+  <div class="encryptor-lock" id="encryptorLock">
+    <div class="lock-icon">
+      <i class="fa-solid fa-lock"></i>
+    </div>
+    <p class="lock-text">这篇文章已加密，请输入密码查看</p>
+    <div class="lock-input-wrap">
+      <input
+        type="password"
+        class="lock-input"
+        id="encryptorInput"
+        placeholder="输入密码..."
+        autocomplete="off"
+      />
+      <button class="lock-btn" id="encryptorBtn">
+        <i class="fa-solid fa-key"></i> 解锁
+      </button>
+    </div>
+    <p class="lock-error" id="encryptorError">密码错误，请重试</p>
+  </div>
+  <div class="encryptor-content" id="encryptorContent" style="display:none;">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .encryptor-wrapper {
+    width: 100%;
+  }
+
+  .encryptor-lock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    border: 2px dashed var(--primary-alpha);
+    border-radius: var(--radius-md);
+    background: var(--primary-alpha);
+    background: linear-gradient(135deg, var(--primary-alpha), transparent);
+    text-align: center;
+  }
+
+  .lock-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(125, 152, 245, 0.35);
+  }
+
+  .lock-text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+
+  .lock-input-wrap {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .lock-input {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    outline: none;
+    transition: all var(--transition-fast);
+  }
+
+  .lock-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-alpha);
+  }
+
+  .lock-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.92rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .lock-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(125, 152, 245, 0.3);
+  }
+
+  .lock-error {
+    display: none;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 12px;
+  }
+
+  .lock-error.show {
+    display: block;
+    animation: shakeError 0.4s ease;
+  }
+
+  @keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  @media (max-width: 480px) {
+    .encryptor-lock {
+      padding: 32px 16px;
+    }
+    .lock-input-wrap {
+      flex-direction: column;
+    }
+    .lock-btn {
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  const wrapper = document.querySelector('.encryptor-wrapper') as HTMLElement;
+  const lock = document.getElementById('encryptorLock');
+  const content = document.getElementById('encryptorContent');
+  const input = document.getElementById('encryptorInput') as HTMLInputElement;
+  const btn = document.getElementById('encryptorBtn');
+  const error = document.getElementById('encryptorError');
+
+  if (wrapper && lock && content && input && btn && error) {
+    const correctPassword = wrapper.dataset.password || '';
+
+    // 检查是否已经解锁（sessionStorage）
+    const pageKey = 'yuami_unlocked_' + window.location.pathname;
+    if (sessionStorage.getItem(pageKey) === 'true') {
+      lock.style.display = 'none';
+      content.style.display = 'block';
+    }
+
+    function tryUnlock() {
+      const entered = input.value.trim();
+      if (entered === correctPassword) {
+        lock.style.display = 'none';
+        content.style.display = 'block';
+        sessionStorage.setItem(pageKey, 'true');
+      } else {
+        error.classList.add('show');
+        input.value = '';
+        setTimeout(() => {
+          error.classList.remove('show');
+        }, 3000);
+      }
+    }
+
+    btn.addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryUnlock();
+    });
+  }
+</script>

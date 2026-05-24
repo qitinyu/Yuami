@@ -14,6 +14,15 @@ interface Props {
 
 const { title = siteConfig.title, description = siteConfig.description } = Astro.props;
 const fullTitle = title === siteConfig.title ? title : `${title} - ${siteConfig.title}`;
+
+// 从config读取字体和阴影配置
+const fontFamily = siteConfig.font?.fontFamily || "'朱雀仿宋', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif";
+const fontSize = siteConfig.font?.fontSize || '16px';
+const fontFile = siteConfig.font?.fontFile || '/font/zqfs.woff2';
+const shadowSm = siteConfig.shadow?.sm || '0 2px 8px rgba(125, 152, 245, 0.08)';
+const shadowMd = siteConfig.shadow?.md || '0 4px 20px rgba(125, 152, 245, 0.12)';
+const shadowLg = siteConfig.shadow?.lg || '0 8px 40px rgba(125, 152, 245, 0.16)';
+const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 0.2)';
 ---
 
 <!doctype html>
@@ -28,7 +37,7 @@ const fullTitle = title === siteConfig.title ? title : `${title} - ${siteConfig.
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
+    <style is:inline>
       @font-face {
         font-family: '朱雀仿宋';
         src: url('/font/zqfs.woff2') format('woff2');
@@ -36,12 +45,68 @@ const fullTitle = title === siteConfig.title ? title : `${title} - ${siteConfig.
         font-style: normal;
         font-display: swap;
       }
+      /* 应用config中的字体和阴影设置 */
+      :root {
+        font-family: {fontFamily};
+        font-size: {fontSize};
+        --shadow-sm: {shadowSm};
+        --shadow-md: {shadowMd};
+        --shadow-lg: {shadowLg};
+        --shadow-hover: {shadowHover};
+      }
+      body {
+        font-family: {fontFamily};
+      }
     </style>
     <title>{fullTitle}</title>
     <!-- Prevent flash of wrong theme -->
     <script is:inline>
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', theme);
+
+      // 恢复记忆的主题色
+      const savedColor = localStorage.getItem('yuami_theme_color');
+      if (savedColor) {
+        function hslToHex(h, s, l) {
+          s /= 100; l /= 100;
+          const a = s * Math.min(l, 1 - l);
+          const f = (n) => {
+            const k = (n + h / 30) % 12;
+            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+            return Math.round(255 * color).toString(16).padStart(2, '0');
+          };
+          return '#' + f(0) + f(8) + f(4);
+        }
+        function lighten(hex, amt) {
+          hex = hex.replace('#', '');
+          const r = parseInt(hex.substring(0,2),16)/255, g = parseInt(hex.substring(2,4),16)/255, b = parseInt(hex.substring(4,6),16)/255;
+          const max = Math.max(r,g,b), min = Math.min(r,g,b);
+          let h=0,s=0; const l=(max+min)/2;
+          if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=((g-b)/d+(g<b?6:0))*60;break;case g:h=((b-r)/d+2)*60;break;case b:h=((r-g)/d+4)*60;break;}}
+          return hslToHex(Math.round(h), Math.max(Math.round(s*100)-5,30), Math.min(Math.round(l*100)+amt,85));
+        }
+        function darken(hex, amt) {
+          hex = hex.replace('#', '');
+          const r = parseInt(hex.substring(0,2),16)/255, g = parseInt(hex.substring(2,4),16)/255, b = parseInt(hex.substring(4,6),16)/255;
+          const max = Math.max(r,g,b), min = Math.min(r,g,b);
+          let h=0,s=0; const l=(max+min)/2;
+          if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=((g-b)/d+(g<b?6:0))*60;break;case g:h=((b-r)/d+2)*60;break;case b:h=((r-g)/d+4)*60;break;}}
+          return hslToHex(Math.round(h), Math.min(Math.round(s*100)+5,100), Math.max(Math.round(l*100)-amt,20));
+        }
+        const hex = savedColor.replace('#','');
+        const rv = parseInt(hex.substring(0,2),16), gv = parseInt(hex.substring(2,4),16), bv = parseInt(hex.substring(4,6),16);
+        const root = document.documentElement.style;
+        root.setProperty('--primary', savedColor);
+        root.setProperty('--primary-light', lighten(savedColor, 15));
+        root.setProperty('--primary-dark', darken(savedColor, 15));
+        root.setProperty('--primary-alpha', 'rgba('+rv+','+gv+','+bv+',0.15)');
+        root.setProperty('--primary-alpha-30', 'rgba('+rv+','+gv+','+bv+',0.3)');
+        root.setProperty('--border-color', 'rgba('+rv+','+gv+','+bv+',0.15)');
+        root.setProperty('--shadow-sm', '0 2px 8px rgba('+rv+','+gv+','+bv+',0.08)');
+        root.setProperty('--shadow-md', '0 4px 20px rgba('+rv+','+gv+','+bv+',0.12)');
+        root.setProperty('--shadow-lg', '0 8px 40px rgba('+rv+','+gv+','+bv+',0.16)');
+        root.setProperty('--shadow-hover', '0 8px 30px rgba('+rv+','+gv+','+bv+',0.2)');
+      }
     </script>
     <!-- Umami Analytics -->
     {siteConfig.umami.src && siteConfig.umami.websiteId && (

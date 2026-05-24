@@ -1,76 +1,160 @@
 ---
+import { siteConfig } from '../../config';
+
+const sakura = siteConfig.sakura;
+const isEnabled = sakura.enabled;
+const isMobileOff = sakura.mobileOff;
 ---
 
-<div class="sakura-container" id="sakuraContainer" aria-hidden="true">
-</div>
+{isEnabled && (
+  <div class="sakura-container" id="sakuraContainer"
+    data-petals={sakura.petals}
+    data-min-size={sakura.minSize}
+    data-max-size={sakura.maxSize}
+    data-min-duration={sakura.minDuration}
+    data-max-duration={sakura.maxDuration}
+    data-color={sakura.color}
+    data-mobile-off={isMobileOff ? 'true' : 'false'}
+  ></div>
+)}
 
 <style>
   .sakura-container {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 9998;
     overflow: hidden;
   }
 
-  .petal {
+  .sakura-petal {
     position: absolute;
-    top: -10%;
-    opacity: 0;
-    animation: sakura-fall linear infinite;
+    top: -30px;
+    pointer-events: none;
+    opacity: 0.85;
+    will-change: transform, opacity;
   }
 
-  .petal::after {
-    content: '🌸';
-    font-size: inherit;
+  .sakura-petal svg {
+    width: 100%;
+    height: 100%;
   }
 
-  @keyframes sakura-fall {
+  @keyframes sakuraFall {
     0% {
       opacity: 0;
-      transform: translateX(0) rotate(0deg);
+      transform: translateX(0) translateY(0) rotate(0deg) scale(1);
     }
     10% {
-      opacity: 0.8;
+      opacity: 0.85;
     }
     90% {
-      opacity: 0.6;
+      opacity: 0.7;
     }
     100% {
       opacity: 0;
-      transform: translateX(var(--drift)) rotate(720deg);
-      top: 110%;
+      transform: translateX(var(--sway-x, 80px)) translateY(var(--fall-height, 100vh)) rotate(var(--rotate-end, 720deg)) scale(0.6);
+    }
+  }
+
+  @keyframes sakuraSway {
+    0%, 100% {
+      margin-left: 0;
+    }
+    25% {
+      margin-left: 30px;
+    }
+    50% {
+      margin-left: -20px;
+    }
+    75% {
+      margin-left: 15px;
     }
   }
 </style>
 
 <script>
-  function createPetals() {
-    const container = document.getElementById('sakuraContainer');
-    if (!container) return;
-    
-    const petalCount = 18;
-    for (let i = 0; i < petalCount; i++) {
-      const petal = document.createElement('div');
-      petal.className = 'petal';
-      const size = Math.random() * 12 + 8;
-      const left = Math.random() * 100;
-      const duration = Math.random() * 8 + 8;
-      const delay = Math.random() * 15;
-      const drift = (Math.random() - 0.5) * 200;
-      
-      petal.style.cssText = `
-        left: ${left}%;
-        font-size: ${size}px;
-        --drift: ${drift}px;
-        animation-duration: ${duration}s;
-        animation-delay: ${delay}s;
-      `;
-      container.appendChild(petal);
+  const container = document.getElementById('sakuraContainer');
+  if (container) {
+    const petals = parseInt(container.dataset.petals || '25');
+    const minSize = parseInt(container.dataset.minSize || '10');
+    const maxSize = parseInt(container.dataset.maxSize || '22');
+    const minDuration = parseInt(container.dataset.minDuration || '6');
+    const maxDuration = parseInt(container.dataset.maxDuration || '12');
+    const color = container.dataset.color || '#ffb7c5';
+    const mobileOff = container.dataset.mobileOff === 'true';
+
+    // 手机端关闭检查
+    if (mobileOff && window.innerWidth <= 768) {
+      container.style.display = 'none';
+    } else {
+      function createPetal() {
+        const petal = document.createElement('div');
+        petal.className = 'sakura-petal';
+
+        const size = minSize + Math.random() * (maxSize - minSize);
+        const duration = minDuration + Math.random() * (maxDuration - minDuration);
+        // 修复：确保起始X位置均匀覆盖整个视口宽度，包括超出部分
+        const startX = Math.random() * (window.innerWidth + 100) - 50;
+        const swayX = (Math.random() - 0.5) * 300; // 增大摆动范围，正负都有
+        const rotateEnd = 360 + Math.random() * 720;
+        const delay = Math.random() * 8;
+
+        petal.style.left = startX + 'px';
+        petal.style.width = size + 'px';
+        petal.style.height = size + 'px';
+        petal.style.setProperty('--sway-x', swayX + 'px');
+        petal.style.setProperty('--fall-height', (window.innerHeight + 50) + 'px');
+        petal.style.setProperty('--rotate-end', rotateEnd + 'deg');
+        petal.style.animation = `sakuraFall ${duration}s ease-in-out ${delay}s infinite, sakuraSway ${duration * 0.4}s ease-in-out ${delay}s infinite`;
+
+        const opacity = 0.5 + Math.random() * 0.4;
+        petal.style.opacity = String(opacity);
+
+        // 创建花瓣SVG
+        const hueShift = Math.random() * 20 - 10;
+        petal.innerHTML = `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 1C10 1 12 6 16 7C16 7 12 9 12 13C12 13 10 10 8 13C8 9 4 7 4 7C8 6 10 1 10 1Z" fill="${color}" opacity="0.9"/>
+          <path d="M10 3C10 3 11 6 13 7C13 7 11 8.5 11 11C11 11 10 9.5 9 11C9 8.5 7 7 7 7C9 6 10 3 10 3Z" fill="${color}" opacity="0.5"/>
+        </svg>`;
+
+        container.appendChild(petal);
+      }
+
+      // 创建花瓣
+      for (let i = 0; i < petals; i++) {
+        createPetal();
+      }
+
+      // 窗口大小变化时重新计算位置
+      let resizeTimer: ReturnType<typeof setTimeout>;
+      window.addEventListener('resize', () => {
+        if (mobileOff && window.innerWidth <= 768) {
+          container.style.display = 'none';
+        } else {
+          container.style.display = '';
+          // 防抖重建花瓣以适配新宽度
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            container.innerHTML = '';
+            for (let i = 0; i < petals; i++) {
+              createPetal();
+            }
+          }, 300);
+        }
+      });
+
+      // 页面不可见时暂停动画
+      document.addEventListener('visibilitychange', () => {
+        container.style.animationPlayState = document.hidden ? 'paused' : 'running';
+        const allPetals = container.querySelectorAll('.sakura-petal');
+        allPetals.forEach((p) => {
+          (p as HTMLElement).style.animationPlayState = document.hidden ? 'paused' : 'running';
+        });
+      });
     }
   }
-  createPetals();
 </script>

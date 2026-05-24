@@ -2,17 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
 import { friendsList } from '../../data/friends';
+import { fetchAllFriendArticles } from '../../utils/rss-parser';
 
-// 朋友圈数据 - 展示友链朋友们的最新文章
-// 实际使用时可以通过 RSS/API 获取最新文章
-// 这里使用模拟数据展示
-const friendsArticles = [
-  { name: '示例友链', url: '#', avatar: '/assets/default-avatar.png', title: '一篇关于前端开发的思考', articleUrl: '#', date: '2026-05-20', excerpt: '分享最近在前端开发中遇到的一些问题和解决方案...' },
-  { name: '示例博客', url: '#', avatar: '/assets/default-avatar.png', title: 'Astro 框架实践笔记', articleUrl: '#', date: '2026-05-18', excerpt: '使用 Astro 构建个人博客的一些心得和技巧...' },
-  { name: '小伙伴A', url: '#', avatar: '/assets/default-avatar.png', title: '算法学习之路', articleUrl: '#', date: '2026-05-15', excerpt: '从零开始学习算法，记录刷题过程中的收获...' },
-  { name: '小伙伴B', url: '#', avatar: '/assets/default-avatar.png', title: '动漫推荐 2026 春季篇', articleUrl: '#', date: '2026-05-12', excerpt: '盘点 2026 年春季值得追的番剧...' },
-  { name: '小伙伴C', url: '#', avatar: '/assets/default-avatar.png', title: '摄影入门：光与影的艺术', articleUrl: '#', date: '2026-05-10', excerpt: '新手摄影师的成长之路，分享一些拍摄技巧...' },
-];
+// 从友链 RSS feed 获取最新文章（构建时执行）
+const friendsArticles = await fetchAllFriendArticles(friendsList, 3);
+
+const hasArticles = friendsArticles.length > 0;
 ---
 
 <BaseLayout title="朋友圈">
@@ -22,29 +17,37 @@ const friendsArticles = [
     <div class="page-main">
       <div class="circle-header">
         <h2 class="circle-title"><i class="fa-solid fa-rss"></i> 朋友圈</h2>
-        <p class="circle-desc">来自友链朋友们的最新文章动态，持续更新中。</p>
+        <p class="circle-desc">来自友链朋友们的最新文章动态，每次构建时更新。</p>
       </div>
 
-      <div class="articles-list">
-        {friendsArticles.map((article, index) => (
-          <article class="article-item card" style={`animation-delay: ${index * 0.06}s`}>
-            <div class="article-item-header">
-              <div class="article-author">
-                <img src={article.avatar} alt={article.name} class="author-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                <div class="author-avatar-placeholder" style="display:none;">
-                  <i class="fa-solid fa-user"></i>
+      {hasArticles ? (
+        <div class="articles-list">
+          {friendsArticles.map((article, index) => (
+            <article class="article-item card" style={`animation-delay: ${index * 0.06}s`}>
+              <div class="article-item-header">
+                <div class="article-author">
+                  <img src={article.avatar} alt={article.name} class="author-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                  <div class="author-avatar-placeholder" style="display:none;">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                  <a href={article.url} target="_blank" rel="noopener" class="author-name">{article.name}</a>
                 </div>
-                <a href={article.url} target="_blank" rel="noopener" class="author-name">{article.name}</a>
+                <span class="article-date">{article.date}</span>
               </div>
-              <span class="article-date">{article.date}</span>
-            </div>
-            <div class="article-item-body">
-              <a href={article.articleUrl} target="_blank" rel="noopener" class="article-item-title">{article.title}</a>
-              <p class="article-item-excerpt">{article.excerpt}</p>
-            </div>
-          </article>
-        ))}
-      </div>
+              <div class="article-item-body">
+                <a href={article.articleUrl} target="_blank" rel="noopener" class="article-item-title">{article.title}</a>
+                {article.excerpt && <p class="article-item-excerpt">{article.excerpt}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div class="circle-empty">
+          <i class="fa-solid fa-rss"></i>
+          <p>暂未获取到友链文章</p>
+          <p class="empty-hint">请确保友链数据中已填写 rss 字段，或等待下次构建更新。</p>
+        </div>
+      )}
 
       <div class="circle-notice">
         <i class="fa-solid fa-circle-info"></i>
@@ -176,6 +179,33 @@ const friendsArticles = [
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* 空状态 */
+  .circle-empty {
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+  }
+
+  .circle-empty i {
+    font-size: 2rem;
+    color: var(--primary-alpha-30);
+    margin-bottom: 12px;
+  }
+
+  .circle-empty p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .circle-empty .empty-hint {
+    font-size: 0.82rem;
+    margin-top: 4px;
+    color: var(--text-muted);
+    opacity: 0.7;
   }
 
   .circle-notice {

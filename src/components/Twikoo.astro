@@ -3,17 +3,26 @@
  * Twikoo 通用评论组件
  * 在需要评论区的页面中引入: import Twikoo from '../components/Twikoo.astro'; <Twikoo />
  * 配置项在 config.ts 的 twikoo 字段中
+ *
+ * Props:
+ *   bare (boolean) - 为 true 时不渲染外层卡片和"评论区"标题，仅渲染评论区域
+ *                    适用于已自带卡片背景的页面（如博客文章详情页）
  */
 import { siteConfig } from '../../config';
 
 const envId = siteConfig.twikoo?.envId || '';
 const region = siteConfig.twikoo?.region || '';
+const bare = Astro.props.bare === true;
 ---
 
-<div class="twikoo-section">
-  <h3 class="section-title">评论</h3>
+{bare ? (
   <div id="twikooComment"></div>
-</div>
+) : (
+  <div class="twikoo-card-bg">
+    <h3 class="section-title">评论区</h3>
+    <div id="twikooComment"></div>
+  </div>
+)}
 
 <script define:vars={{ twikooEnvId: envId, twikooRegion: region }}>
   (function() {
@@ -71,28 +80,36 @@ const region = siteConfig.twikoo?.region || '';
 </script>
 
 <style>
-  .twikoo-section {
+  /* 白底卡片背景 - 随内容扩展自动填充 */
+  .twikoo-card-bg {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
     margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--border-color);
   }
 
+  /* section-title 复用全局样式，字体大小与随机推荐一致 (1.4rem) */
   .section-title {
-    font-size: 1.15rem;
+    font-size: 1.4rem;
     font-weight: 600;
-    color: var(--primary);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    color: var(--text-primary);
+    margin-bottom: 1.2rem;
+    position: relative;
+    padding-left: 16px;
   }
 
   .section-title::before {
     content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
     width: 4px;
-    height: 18px;
-    background: var(--primary);
-    border-radius: 2px;
+    height: 60%;
+    background: linear-gradient(180deg, var(--primary), var(--primary-light));
+    border-radius: 3px;
   }
 
   /* Twikoo 主题适配 */

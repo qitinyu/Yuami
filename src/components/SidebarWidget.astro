@@ -346,6 +346,10 @@ const {
         statWords.textContent = totalWords + ' 字';
       }
     }
-    if (statLastEdit) statLastEdit.textContent = lastEdit;
+    if (statLastEdit) {
+      // 只显示日期部分（如 2026-05-24）
+      const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
+      statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
+    }
   }
 </script>

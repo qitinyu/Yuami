@@ -1,6 +1,7 @@
 ---
 import { siteConfig } from '../../config';
 const currentPath = Astro.url.pathname;
+const colorPickerEnabled = siteConfig.themeColorPicker?.enabled ?? false;
 ---
 
 <nav class="navbar glass" id="navbar">
@@ -37,8 +38,31 @@ const currentPath = Astro.url.pathname;
       ))}
     </ul>
 
-    <!-- Right: Theme Toggle + Mobile Menu -->
+    <!-- Right: Color Picker + Theme Toggle + Mobile Menu -->
     <div class="navbar-actions">
+      {colorPickerEnabled && (
+        <div class="color-picker-wrapper">
+          <button class="color-picker-btn" id="colorPickerBtn" title="切换主题色" aria-label="切换主题色">
+            <i class="fa-solid fa-palette"></i>
+          </button>
+          <div class="color-picker-panel" id="colorPickerPanel">
+            <div class="color-bar" id="colorBar">
+              <div class="color-bar-gradient"></div>
+              <div class="color-bar-thumb" id="colorBarThumb"></div>
+            </div>
+            <div class="color-picker-presets">
+              <button class="color-preset" data-color="#7D98F5" style="background:#7D98F5;" title="默认蓝"></button>
+              <button class="color-preset" data-color="#F5767D" style="background:#F5767D;" title="樱粉"></button>
+              <button class="color-preset" data-color="#76F5A0" style="background:#76F5A0;" title="薄荷"></button>
+              <button class="color-preset" data-color="#F5C876" style="background:#F5C876;" title="琥珀"></button>
+              <button class="color-preset" data-color="#C076F5" style="background:#C076F5;" title="紫罗兰"></button>
+              <button class="color-preset" data-color="#76D4F5" style="background:#76D4F5;" title="天蓝"></button>
+              <button class="color-preset" data-color="#F576D4" style="background:#F576D4;" title="桃红"></button>
+              <button class="color-preset" data-color="#A0F576" style="background:#A0F576;" title="青柠"></button>
+            </div>
+          </div>
+        </div>
+      )}
       <button class="theme-toggle" id="themeToggle" title="切换主题" aria-label="切换明暗主题">
         <i class="fa-solid fa-moon" id="themeIcon"></i>
       </button>
@@ -51,7 +75,7 @@ const currentPath = Astro.url.pathname;
   </div>
 </nav>
 
-<!-- Mobile Menu: 完全脱离 navbar，独立定位 -->
+<!-- Mobile Menu -->
 <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
 <div class="mobile-menu" id="mobileMenu">
   <ul class="mobile-menu-list">
@@ -87,7 +111,16 @@ const currentPath = Astro.url.pathname;
     right: 0;
     height: var(--nav-height);
     z-index: 1000;
-    transition: all var(--transition-normal);
+    transition: transform 0.35s ease, box-shadow var(--transition-normal);
+  }
+
+  /* Nav自动隐藏/展开 */
+  .navbar.nav-hidden {
+    transform: translateY(-100%);
+  }
+
+  .navbar.nav-visible {
+    transform: translateY(0);
   }
 
   .navbar-inner {
@@ -227,7 +260,112 @@ const currentPath = Astro.url.pathname;
     background: var(--primary-alpha);
   }
 
-  /* 汉堡按钮 - 仅移动端可见 */
+  /* Color Picker */
+  .color-picker-wrapper {
+    position: relative;
+  }
+
+  .color-picker-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 1rem;
+  }
+
+  .color-picker-btn:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .color-picker-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--bg-glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 16px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: all 0.25s ease;
+    z-index: 1001;
+  }
+
+  .color-picker-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .color-bar {
+    position: relative;
+    height: 20px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .color-bar-gradient {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    background: linear-gradient(to right,
+      #ff0000, #ff8800, #ffff00, #88ff00, #00ff00,
+      #00ff88, #00ffff, #0088ff, #0000ff, #8800ff,
+      #ff00ff, #ff0088, #ff0000
+    );
+  }
+
+  .color-bar-thumb {
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: left 0.1s ease;
+  }
+
+  .color-picker-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .color-preset {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .color-preset:hover {
+    transform: scale(1.2);
+    border-color: var(--text-secondary);
+  }
+
+  .color-preset.active {
+    border-color: var(--text-primary);
+    transform: scale(1.15);
+  }
+
+  /* 汉堡按钮 */
   .mobile-toggle {
     display: none;
     flex-direction: column;
@@ -322,7 +460,6 @@ const currentPath = Astro.url.pathname;
     display: block;
   }
 
-  /* 有子菜单的父级按钮 */
   .mobile-parent-btn {
     display: flex;
     align-items: center;
@@ -367,7 +504,6 @@ const currentPath = Astro.url.pathname;
     background: var(--primary-alpha);
   }
 
-  /* 无子菜单的简单链接 */
   .mobile-simple-link {
     display: block;
     padding: 12px 14px;
@@ -385,7 +521,6 @@ const currentPath = Astro.url.pathname;
     background: var(--primary-alpha);
   }
 
-  /* 子菜单列表 */
   .mobile-sub-list {
     padding: 0;
     margin: 0 0 0 14px;
@@ -436,6 +571,10 @@ const currentPath = Astro.url.pathname;
     .navbar-inner {
       padding: 0 14px;
     }
+    .color-picker-panel {
+      right: -60px;
+      width: 200px;
+    }
   }
 </style>
 
@@ -460,6 +599,50 @@ const currentPath = Astro.url.pathname;
     updateThemeIcon();
   });
 
+  // ===== Navbar auto-hide/show on scroll =====
+  const navbar = document.getElementById('navbar');
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+  let isHoveringNav = false;
+
+  if (navbar) {
+    // 鼠标悬浮在nav上时，始终显示
+    navbar.addEventListener('mouseenter', () => { isHoveringNav = true; });
+    navbar.addEventListener('mouseleave', () => { isHoveringNav = false; });
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+
+          if (isHoveringNav) {
+            // 鼠标在nav上，不隐藏
+            navbar.classList.remove('nav-hidden');
+            navbar.classList.add('nav-visible');
+          } else if (currentScrollY <= 80) {
+            // 顶部区域，始终显示
+            navbar.classList.remove('nav-hidden');
+            navbar.classList.add('nav-visible');
+            navbar.style.boxShadow = 'none';
+          } else if (currentScrollY > lastScrollY && currentScrollY > 200) {
+            // 向下滚动，隐藏nav
+            navbar.classList.add('nav-hidden');
+            navbar.classList.remove('nav-visible');
+          } else {
+            // 向上滚动，显示nav
+            navbar.classList.remove('nav-hidden');
+            navbar.classList.add('nav-visible');
+            navbar.style.boxShadow = 'var(--shadow-md)';
+          }
+
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+
   // ===== Mobile Menu =====
   const mobileToggle = document.getElementById('mobileToggle');
   const mobileMenu = document.getElementById('mobileMenu');
@@ -479,7 +662,6 @@ const currentPath = Astro.url.pathname;
     document.body.style.overflow = '';
   }
 
-  // 汉堡按钮点击
   mobileToggle?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (mobileMenu?.classList.contains('active')) {
@@ -489,12 +671,10 @@ const currentPath = Astro.url.pathname;
     }
   });
 
-  // 遮罩点击关闭
   mobileOverlay?.addEventListener('click', () => {
     closeMenu();
   });
 
-  // 所有子菜单链接点击后关闭菜单
   document.querySelectorAll('.mobile-sub-link, .mobile-simple-link').forEach(link => {
     link.addEventListener('click', () => {
       closeMenu();
@@ -509,7 +689,6 @@ const currentPath = Astro.url.pathname;
       const groupIdx = btn.getAttribute('data-group');
       const subList = document.querySelector(`.mobile-sub-list[data-sub="${groupIdx}"]`) as HTMLElement;
 
-      // 手风琴：先关闭所有其他子菜单
       document.querySelectorAll('.mobile-parent-btn').forEach(otherBtn => {
         if (otherBtn !== btn) {
           otherBtn.setAttribute('data-expanded', 'false');
@@ -522,7 +701,6 @@ const currentPath = Astro.url.pathname;
         }
       });
 
-      // 切换当前子菜单
       if (expanded) {
         btn.setAttribute('data-expanded', 'false');
         if (subList) {
@@ -539,11 +717,167 @@ const currentPath = Astro.url.pathname;
     });
   });
 
-  // ===== Navbar scroll effect =====
-  window.addEventListener('scroll', () => {
-    const navbar = document.getElementById('navbar');
-    if (navbar) {
-      navbar.style.boxShadow = window.scrollY > 80 ? 'var(--shadow-md)' : 'none';
+  // ===== Color Picker (主题色切换) =====
+  const colorPickerBtn = document.getElementById('colorPickerBtn');
+  const colorPickerPanel = document.getElementById('colorPickerPanel');
+  const colorBar = document.getElementById('colorBar');
+  const colorBarThumb = document.getElementById('colorBarThumb');
+
+  // HSL转Hex
+  function hslToHex(h: number, s: number, l: number): string {
+    s /= 100; l /= 100;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  }
+
+  // Hex转HSL
+  function hexToHsl(hex: string): { h: number; s: number; l: number } {
+    hex = hex.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0;
+    const l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) * 60; break;
+        case g: h = ((b - r) / d + 2) * 60; break;
+        case b: h = ((r - g) / d + 4) * 60; break;
+      }
+    }
+    return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+  }
+
+  // 从Hex生成浅色/深色变体
+  function lighten(hex: string, amount: number): string {
+    const hsl = hexToHsl(hex);
+    return hslToHex(hsl.h, Math.max(hsl.s - 5, 30), Math.min(hsl.l + amount, 85));
+  }
+  function darken(hex: string, amount: number): string {
+    const hsl = hexToHsl(hex);
+    return hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.max(hsl.l - amount, 20));
+  }
+
+  // 应用主题色
+  function applyThemeColor(hex: string) {
+    const root = document.documentElement;
+    root.style.setProperty('--primary', hex);
+    root.style.setProperty('--primary-light', lighten(hex, 15));
+    root.style.setProperty('--primary-dark', darken(hex, 15));
+
+    // 重新计算alpha
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    root.style.setProperty('--primary-alpha', `rgba(${r}, ${g}, ${b}, 0.15)`);
+    root.style.setProperty('--primary-alpha-30', `rgba(${r}, ${g}, ${b}, 0.3)`);
+
+    // 更新阴影中的主色
+    root.style.setProperty('--shadow-sm', `0 2px 8px rgba(${r}, ${g}, ${b}, 0.08)`);
+    root.style.setProperty('--shadow-md', `0 4px 20px rgba(${r}, ${g}, ${b}, 0.12)`);
+    root.style.setProperty('--shadow-lg', `0 8px 40px rgba(${r}, ${g}, ${b}, 0.16)`);
+    root.style.setProperty('--shadow-hover', `0 8px 30px rgba(${r}, ${g}, ${b}, 0.2)`);
+
+    // 更新border-color
+    root.style.setProperty('--border-color', `rgba(${r}, ${g}, ${b}, 0.15)`);
+
+    // 记忆到localStorage
+    localStorage.setItem('yuami_theme_color', hex);
+
+    // 更新thumb位置
+    updateThumbPosition(hex);
+
+    // 更新preset按钮active状态
+    document.querySelectorAll('.color-preset').forEach(btn => {
+      const el = btn as HTMLElement;
+      el.classList.toggle('active', el.dataset.color === hex);
+    });
+  }
+
+  function updateThumbPosition(hex: string) {
+    if (!colorBarThumb) return;
+    const hsl = hexToHsl(hex);
+    // 将hue映射到0-100%位置
+    const pct = (hsl.h / 360) * 100;
+    colorBarThumb.style.left = pct + '%';
+    colorBarThumb.style.background = hex;
+  }
+
+  // 初始化已记忆的主题色
+  const savedColor = localStorage.getItem('yuami_theme_color');
+  if (savedColor) {
+    applyThemeColor(savedColor);
+  }
+
+  // 打开/关闭面板
+  colorPickerBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    colorPickerPanel?.classList.toggle('active');
+  });
+
+  // 点击外部关闭
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.color-picker-wrapper')) {
+      colorPickerPanel?.classList.remove('active');
     }
   });
+
+  // 预设颜色点击
+  document.querySelectorAll('.color-preset').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const color = (e.currentTarget as HTMLElement).dataset.color;
+      if (color) applyThemeColor(color);
+    });
+  });
+
+  // 颜色条拖拽/点击选择
+  if (colorBar) {
+    let isDragging = false;
+
+    function pickColorFromBar(e: MouseEvent | TouchEvent) {
+      const rect = colorBar!.getBoundingClientRect();
+      let clientX: number;
+      if ('touches' in e) {
+        clientX = e.touches[0].clientX;
+      } else {
+        clientX = e.clientX;
+      }
+      let pct = (clientX - rect.left) / rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      const hue = Math.round(pct * 360);
+      const hex = hslToHex(hue, 65, 70);
+      applyThemeColor(hex);
+    }
+
+    colorBar.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      pickColorFromBar(e);
+    });
+
+    colorBar.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      pickColorFromBar(e);
+    }, { passive: true });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) pickColorFromBar(e);
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      if (isDragging) pickColorFromBar(e);
+    }, { passive: true });
+
+    document.addEventListener('mouseup', () => { isDragging = false; });
+    document.addEventListener('touchend', () => { isDragging = false; });
+  }
 </script>
