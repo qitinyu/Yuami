@@ -3,16 +3,16 @@ export const footerConfig = {
   // 版权信息
   copyright: {
     year: 2026,
-    owner: 'qitinyu',
+    owner: 'YuQi',
     ownerUrl: 'https://github.com/qitinyu',
-    siteUrl: 'https://yqamm.cc.cd',
+    siteUrl: 'https://8872388.xyz',
     email: '484894496@qq.com',
   },
   // 技术信息
   powered: {
     framework: 'Astro',
     theme: 'Yuami',
-    version: '1.0',
+    version: '1.0.6',
   },
   // 备案信息（可选，留空则不显示）
   icp: '',
