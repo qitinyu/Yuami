@@ -3,7 +3,7 @@ export const siteConfig = {
   title: 'Yuami',
   subtitle: '生命绚烂，别被黑暗压垮',
   description: 'Yuami的个人博客 - 记录生活、思考与创造',
-  url: 'https://yqamm.cc.cd',
+  url: 'https://8872388.xyz',
   author: 'Yuami',
   email: '484894496@qq.com',
   themeColor: '#7D98F5',
@@ -32,7 +32,7 @@ export const siteConfig = {
 
   // ========== 樱花飘落效果配置 ==========
   sakura: {
-    enabled: true,        // 开启/关闭樱花飘落效果（true: 开启, false: 关闭）
+    enabled: false,        // 开启/关闭樱花飘落效果（true: 开启, false: 关闭）
     petals: 25,           // 同时飘落的花瓣数量
     minSize: 10,          // 最小花瓣大小（px）
     maxSize: 22,          // 最大花瓣大小（px）
@@ -91,9 +91,9 @@ export const siteConfig = {
 
   // ========== 站点公告 ==========
   siteAnnouncements: [
-    { date: '2026-05-21', text: '博客功能持续更新中，欢迎反馈建议！' },
-    { date: '2026-05-18', text: '博客正式上线，欢迎访问！' },
-    { date: '2026-05-01', text: 'Yuami Blog v1.0 构建完成，基于 Astro 框架。' },
+    { date: '2026-05-24', text: '博客发布v1.0.5版本，欢迎反馈建议！' },
+    { date: '2026-05-21', text: '博客正式上线v1.0.3，欢迎访问！' },
+    { date: '2026-05-20', text: 'Yuami Blog v1.0 构建完成，基于 Astro 框架。' },
   ],
 
   // ========== 导航栏配置 ==========
