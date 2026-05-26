@@ -1,87 +1,135 @@
 ---
 /**
- * Twikoo 通用评论组件
- * 在需要评论区的页面中引入: import Twikoo from '../components/Twikoo.astro'; <Twikoo />
- * 配置项在 config.ts 的 twikoo 字段中
+ * 评论系统通用组件
+ * 支持双评论系统: Twikoo / Giscus
+ * 在 config.ts 的 comment 字段中选择启用哪个系统
  *
  * Props:
- *   bare (boolean) - 为 true 时不渲染外层卡片和"评论区"标题，仅渲染评论区域
- *                    适用于已自带卡片背景的页面（如博客文章详情页）
+ *   bare (boolean) - 为 true 时不渲染外层卡片和"评论区"标题
  */
 import { siteConfig } from '../../config';
 
-const envId = siteConfig.twikoo?.envId || '';
-const region = siteConfig.twikoo?.region || '';
+const comment = siteConfig.comment;
+const isCommentEnabled = comment?.enable !== false;
+const system = comment?.system || 'twikoo';
 const bare = Astro.props.bare === true;
+
+const twikooEnvId = comment?.twikoo?.envId || '';
+const twikooLang = comment?.twikoo?.lang || 'zh-CN';
+
+const giscusConfig = comment?.giscus || {};
 ---
 
-{bare ? (
-  <div id="twikooComment"></div>
-) : (
-  <div class="twikoo-card-bg">
-    <h3 class="section-title">评论区</h3>
-    <div id="twikooComment"></div>
-  </div>
+{isCommentEnabled && (
+  bare ? (
+    <div id="commentContainer" data-system={system}></div>
+  ) : (
+    <div class="comment-card-bg">
+      <h3 class="comment-section-title">评论区</h3>
+      <div id="commentContainer" data-system={system}></div>
+    </div>
+  )
 )}
 
-<script define:vars={{ twikooEnvId: envId, twikooRegion: region }}>
-  (function() {
-    const twikooEl = document.getElementById('twikooComment');
-    if (!twikooEl) return;
+{isCommentEnabled && system === 'giscus' && (
+  <script define:vars={{ giscusConfig }} is:inline>
+    (function() {
+      const container = document.getElementById('commentContainer');
+      if (!container || container.dataset.system !== 'giscus') return;
 
-    if (!twikooEnvId) {
-      twikooEl.innerHTML = '<div style="text-align:center;padding:24px 16px;background:var(--primary-alpha);border-radius:var(--radius-sm);border:1px dashed var(--border-color);"><i class="fa-solid fa-comments" style="font-size:1.5rem;color:var(--primary);display:block;margin-bottom:8px;"></i><p style="font-size:0.88rem;color:var(--primary);margin-bottom:4px;">Twikoo 评论系统待配置</p><p style="font-size:0.78rem;color:var(--text-muted);">请在 config.ts 中填写 twikoo.envId 后即可启用</p></div>';
-      return;
-    }
+      const g = giscusConfig;
+      const script = document.createElement('script');
+      script.src = 'https://giscus.app/client.js';
+      script.setAttribute('data-repo', g.repo || '');
+      script.setAttribute('data-repo-id', g.repoId || '');
+      script.setAttribute('data-category', g.category || '');
+      script.setAttribute('data-category-id', g.categoryId || '');
+      script.setAttribute('data-mapping', g.mapping || 'pathname');
+      script.setAttribute('data-strict', g.strict || '0');
+      script.setAttribute('data-reactions-enabled', g.reactionsEnabled || '1');
+      script.setAttribute('data-emit-metadata', g.emitMetadata || '0');
+      script.setAttribute('data-input-position', g.inputPosition || 'top');
+      script.setAttribute('data-theme', g.theme || 'noborder_light');
+      script.setAttribute('data-lang', g.lang || 'zh-CN');
+      script.setAttribute('data-loading', g.loading || 'lazy');
+      script.setAttribute('crossorigin', 'anonymous');
+      script.async = true;
 
-    // 动态加载 Twikoo CDN（jsDelivr 主 + npmmirror 回退）
-    function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    }
+      container.appendChild(script);
 
-    function initTwikoo() {
-      if (typeof twikoo !== 'undefined') {
-        twikoo.init({
-          envId: twikooEnvId,
-          region: twikooRegion || undefined,
-          el: '#twikooComment',
-          lang: 'zh-CN',
-          path: window.location.pathname,
-        }).then(() => {
-          console.log('Twikoo 评论系统加载完成');
-        }).catch((err) => {
-          console.warn('Twikoo 初始化失败:', err);
-          twikooEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统初始化失败，请刷新重试</p>';
-        });
-      } else {
-        console.warn('Twikoo 加载异常：全局对象不存在');
-        twikooEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载异常，请刷新重试</p>';
+      // 主题色适配：监听主题变化并更新 giscus 主题
+      function updateGiscusTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const theme = isDark ? 'noborder_dark' : 'noborder_light';
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (iframe) {
+          iframe.contentWindow?.postMessage({ giscus: { setConfig: { theme } } }, 'https://giscus.app');
+        }
       }
-    }
 
-    loadScript('https://cdn.jsdelivr.net/npm/twikoo@1.7.9/dist/twikoo.min.js')
-      .then(initTwikoo)
-      .catch(() => {
-        // jsDelivr 失败，回退到 npmmirror
-        console.log('jsDelivr 加载失败，尝试 npmmirror 回退...');
-        loadScript('https://registry.npmmirror.com/twikoo/1.7.9/files/dist/twikoo.min.js')
-          .then(initTwikoo)
-          .catch(() => {
-            twikooEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载失败，请检查网络后刷新重试</p>';
-          });
+      // 主题切换时更新 giscus
+      const observer = new MutationObserver(() => {
+        updateGiscusTheme();
       });
-  })();
-</script>
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    })();
+  </script>
+)}
+
+{isCommentEnabled && system === 'twikoo' && (
+  <script define:vars={{ twikooEnvId, twikooLang }} is:inline>
+    (function() {
+      const container = document.getElementById('commentContainer');
+      if (!container || container.dataset.system !== 'twikoo') return;
+
+      if (!twikooEnvId) {
+        container.innerHTML = '<div style="text-align:center;padding:24px 16px;background:var(--primary-alpha);border-radius:var(--radius-sm);border:1px dashed var(--border-color);"><i class="fa-solid fa-comments" style="font-size:1.5rem;color:var(--primary);display:block;margin-bottom:8px;"></i><p style="font-size:0.88rem;color:var(--primary);margin-bottom:4px;">Twikoo 评论系统待配置</p><p style="font-size:0.78rem;color:var(--text-muted);">请在 config.ts 中填写 comment.twikoo.envId 后即可启用</p></div>';
+        return;
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      function initTwikoo() {
+        if (typeof twikoo !== 'undefined') {
+          twikoo.init({
+            envId: twikooEnvId,
+            el: '#commentContainer',
+            lang: twikooLang || 'zh-CN',
+            path: window.location.pathname,
+          }).then(() => {
+            console.log('Twikoo 评论系统加载完成');
+          }).catch((err) => {
+            console.warn('Twikoo 初始化失败:', err);
+            container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统初始化失败，请刷新重试</p>';
+          });
+        } else {
+          container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载异常，请刷新重试</p>';
+        }
+      }
+
+      loadScript('https://cdn.jsdelivr.net/npm/twikoo@1.7.9/dist/twikoo.min.js')
+        .then(initTwikoo)
+        .catch(() => {
+          loadScript('https://registry.npmmirror.com/twikoo/1.7.9/files/dist/twikoo.min.js')
+            .then(initTwikoo)
+            .catch(() => {
+              container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载失败，请检查网络后刷新重试</p>';
+            });
+        });
+    })();
+  </script>
+)}
 
 <style>
-  /* 白底卡片背景 - 随内容扩展自动填充 */
-  .twikoo-card-bg {
+  .comment-card-bg {
     background: var(--bg-card);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
@@ -90,8 +138,7 @@ const bare = Astro.props.bare === true;
     margin-top: 2rem;
   }
 
-  /* section-title 复用全局样式，字体大小与随机推荐一致 (1.4rem) */
-  .section-title {
+  .comment-section-title {
     font-size: 1.4rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -100,7 +147,7 @@ const bare = Astro.props.bare === true;
     padding-left: 16px;
   }
 
-  .section-title::before {
+  .comment-section-title::before {
     content: '';
     position: absolute;
     left: 0;
@@ -113,59 +160,55 @@ const bare = Astro.props.bare === true;
   }
 
   /* Twikoo 主题适配 */
-  #twikooComment :global(.tk-meta) {
+  #commentContainer[data-system="twikoo"] :global(.tk-meta) {
     color: var(--text-secondary);
   }
-
-  #twikooComment :global(.tk-content) {
+  #commentContainer[data-system="twikoo"] :global(.tk-content) {
     color: var(--text-primary);
   }
-
-  #twikooComment :global(.tk-tag) {
+  #commentContainer[data-system="twikoo"] :global(.tk-tag) {
     color: var(--primary);
   }
-
-  #twikooComment :global(.tk-action-link) {
+  #commentContainer[data-system="twikoo"] :global(.tk-action-link) {
     color: var(--primary);
   }
-
-  #twikooComment :global(.tk-submit) {
+  #commentContainer[data-system="twikoo"] :global(.tk-submit) {
     background-color: var(--primary);
   }
-
-  #twikooComment :global(.tk-input) {
+  #commentContainer[data-system="twikoo"] :global(.tk-input) {
     background-color: var(--bg-card);
     border-color: var(--border-color);
     color: var(--text-primary);
   }
-
-  #twikooComment :global(.tk-row .tk-col) {
+  #commentContainer[data-system="twikoo"] :global(.tk-row .tk-col) {
     background-color: var(--bg-card);
     border-color: var(--border-color);
   }
-
-  #twikooComment :global(.tk-expand) {
+  #commentContainer[data-system="twikoo"] :global(.tk-expand) {
     background-color: var(--bg-card);
     color: var(--primary);
   }
-
-  #twikooComment :global(.tk-time) {
+  #commentContainer[data-system="twikoo"] :global(.tk-time) {
     color: var(--text-muted);
   }
-
-  #twikooComment :global(.tk-nick) {
+  #commentContainer[data-system="twikoo"] :global(.tk-nick) {
     color: var(--primary);
   }
-
-  #twikooComment :global(.tk-avatar) {
+  #commentContainer[data-system="twikoo"] :global(.tk-avatar) {
     border-color: var(--primary-alpha-30);
   }
-
-  #twikooComment :global(.tk-comments-count) {
+  #commentContainer[data-system="twikoo"] :global(.tk-comments-count) {
     color: var(--text-secondary);
   }
-
-  #twikooComment :global(.tk-main .tk-content p) {
+  #commentContainer[data-system="twikoo"] :global(.tk-main .tk-content p) {
     color: var(--text-primary);
+  }
+
+  /* Giscus 适配 */
+  #commentContainer[data-system="giscus"] {
+    min-height: 200px;
+  }
+  #commentContainer[data-system="giscus"] :global(.giscus) {
+    max-width: 100%;
   }
 </style>

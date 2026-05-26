@@ -1,11 +1,15 @@
 ---
 import { siteConfig } from '../../config';
+import { getCollection } from 'astro:content';
 
 interface Props {
   showPersonalInfo?: boolean;
   showSiteAnnouncement?: boolean;
   showSiteStats?: boolean;
   compact?: boolean;
+  totalPosts?: number;
+  totalWords?: number;
+  lastEdit?: string;
 }
 
 const {
@@ -13,7 +17,37 @@ const {
   showSiteAnnouncement = true,
   showSiteStats = true,
   compact = false,
+  totalPosts: propTotalPosts,
+  totalWords: propTotalWords,
+  lastEdit: propLastEdit,
 } = Astro.props;
+
+// 如果未通过props传入统计数据，则自动计算
+let totalPosts = propTotalPosts;
+let totalWords = propTotalWords;
+let lastEdit = propLastEdit;
+
+if (totalPosts === undefined || totalWords === undefined || lastEdit === undefined) {
+  const allPots = await getCollection('pots');
+  const allDiary = await getCollection('diary');
+  if (totalPosts === undefined) totalPosts = allPots.length + allDiary.length;
+  if (totalWords === undefined) {
+    totalWords = 0;
+    allPots.forEach(p => { totalWords += (p.body || '').replace(/\s/g, '').length; });
+    allDiary.forEach(d => { totalWords += (d.body || '').replace(/\s/g, '').length; });
+  }
+  if (lastEdit === undefined) {
+    const allDates = [
+      ...allPots.map(p => p.data.published || p.data.date || ''),
+      ...allDiary.map(d => d.data.date || ''),
+    ].filter(Boolean).sort().reverse();
+    lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
+  }
+}
+
+const isStatsEnabled = siteConfig.siteStats?.enabled !== false && showSiteStats;
+const isAnnouncementEnabled = siteConfig.siteAnnouncements?.enabled !== false && showSiteAnnouncement;
+const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnnouncements || [];
 ---
 
 <aside class:list={['sidebar-widget', { compact }]}>
@@ -27,7 +61,7 @@ const {
         <div class:list={['sidebar-avatar-wrap', { mini: compact }]}>
           <img src="/avatar.webp" alt="Yuami" class="sidebar-avatar" />
         </div>
-        <h2 class:list={['sidebar-name', { mini: compact }]}>Yuami</h2>
+        <h2 class:list={['sidebar-name', { mini: compact }]}>{siteConfig.author || 'Yuami'}</h2>
         <p class:list={['sidebar-motto', { mini: compact }]}>{siteConfig.subtitle}</p>
         <div class="sidebar-social">
           {siteConfig.socialLinks.map((link) => (
@@ -40,7 +74,7 @@ const {
     </div>
   )}
 
-  {showSiteAnnouncement && (
+  {isAnnouncementEnabled && (
     <div class="sidebar-panel">
       <div class="panel-header">
         <i class="fa-solid fa-bullhorn"></i>
@@ -48,7 +82,7 @@ const {
       </div>
       <div class="panel-body">
         <div class="notice-list">
-          {siteConfig.siteAnnouncements.map((item) => (
+          {announcements.map((item: { date: string; text: string }) => (
             <div class="notice-item">
               <span class="notice-date">{item.date}</span>
               <p class="notice-text">{item.text}</p>
@@ -59,7 +93,7 @@ const {
     </div>
   )}
 
-  {showSiteStats && (
+  {isStatsEnabled && (
     <div class="sidebar-panel">
       <div class="panel-header">
         <i class="fa-solid fa-chart-bar"></i>
@@ -67,10 +101,10 @@ const {
       </div>
       <div class="panel-body">
         <div class="stat-list"
-          data-start-date={siteConfig.siteStats.startDate}
-          data-total-posts={siteConfig.siteStats.totalPosts}
-          data-total-words={siteConfig.siteStats.totalWords}
-          data-last-edit={siteConfig.siteStats.lastEdit}
+          data-start-date={siteConfig.siteStats?.startDate || '2026-01-01'}
+          data-total-posts={totalPosts}
+          data-total-words={totalWords}
+          data-last-edit={lastEdit}
         >
           <div class="stat-row">
             <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 总文章数</span>
@@ -148,7 +182,6 @@ const {
     align-items: center;
   }
 
-  /* Avatar */
   .sidebar-avatar-wrap {
     width: 100px;
     height: 100px;
@@ -233,7 +266,6 @@ const {
     box-shadow: 0 4px 12px rgba(125, 152, 245, 0.3);
   }
 
-  /* Site Announcement */
   .notice-list {
     width: 100%;
   }
@@ -261,7 +293,6 @@ const {
     line-height: 1.5;
   }
 
-  /* Stats */
   .stat-list {
     width: 100%;
   }
@@ -322,13 +353,12 @@ const {
 </style>
 
 <script>
-  // 站点统计数据 - 从 data attributes 读取配置
   const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
   if (statList) {
     const startDate = statList.dataset.startDate || '2026-01-01';
-    const totalPosts = parseInt(statList.dataset.totalPosts || '6');
-    const totalWords = parseInt(statList.dataset.totalWords || '12000');
-    const lastEdit = statList.dataset.lastEdit || '2026-05-01';
+    const totalPosts = parseInt(statList.dataset.totalPosts || '0');
+    const totalWords = parseInt(statList.dataset.totalWords || '0');
+    const lastEdit = statList.dataset.lastEdit || '';
 
     const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
 
@@ -347,7 +377,6 @@ const {
       }
     }
     if (statLastEdit) {
-      // 只显示日期部分（如 2026-05-24）
       const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
       statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
     }

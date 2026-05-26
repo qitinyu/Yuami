@@ -1,0 +1,10 @@
+{
+	"title": "见闻",
+	"hidden": false,
+	"description": "世界很大，多去走走.",
+	"date": "2025-1122",
+	"location": "Website",
+	"tags": ["web", "daily", "Moe"],
+	"layout": "masonry",
+	"columns": 3
+}

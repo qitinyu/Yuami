@@ -1,14 +1,18 @@
 ---
+import { siteConfig } from '../../config';
+
+const musicEnabled = siteConfig.music?.enabled !== false;
 ---
 
 <div class="floating-buttons" id="floatingButtons">
-  <!-- Music Player -->
-  <button class="float-btn" id="musicBtn" title="音乐播放器" aria-label="音乐播放器">
-    <i class="fa-solid fa-music"></i>
-  </button>
+  {musicEnabled && (
+    <button class="float-btn" id="musicBtn" title="音乐播放器" aria-label="音乐播放器">
+      <i class="fa-solid fa-music"></i>
+    </button>
+  )}
 
-  <!-- Back to Home -->
-  <a href="/" class="float-btn" title="回到尺素" aria-label="回到尺素">
+  <!-- Back to Blog -->
+  <a href="/blog" class="float-btn" title="回到博文" aria-label="回到博文">
     <i class="fa-solid fa-house"></i>
   </a>
 
@@ -17,6 +21,7 @@
     <i class="fa-solid fa-arrow-up"></i>
   </button>
 
+  {musicEnabled && (
   <!-- Music Player Panel -->
   <div class="music-panel" id="musicPanel">
     <div class="music-panel-header">
@@ -62,6 +67,7 @@
     </div>
     <audio id="musicAudio" preload="none"></audio>
   </div>
+  )}
 </div>
 
 <style>

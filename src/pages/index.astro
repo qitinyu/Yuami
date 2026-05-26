@@ -1,556 +1,385 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { siteConfig } from '../../config';
+import SidebarWidget from '../components/SidebarWidget.astro';
+import { getCollection } from 'astro:content';
+
+const allPots = await getCollection('pots');
+
+// 构建时计算站点统计数据
+const allDiary = await getCollection('diary');
+const totalPosts = allPots.length + allDiary.length;
+let totalWords = 0;
+allPots.forEach(p => { totalWords += (p.body || '').replace(/\s/g, '').length; });
+allDiary.forEach(d => { totalWords += (d.body || '').replace(/\s/g, '').length; });
+const allDates = [
+  ...allPots.map(p => p.data.published || p.data.date || ''),
+  ...allDiary.map(d => d.data.date || ''),
+].filter(Boolean).sort().reverse();
+const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
+
+const blogPosts = allPots
+  .map(post => ({
+    slug: post.slug,
+    title: post.data.title,
+    date: (post.data.published || post.data.date || '').substring(0, 10),
+    tags: post.data.tags || [],
+    excerpt: post.data.description || post.data.excerpt || '',
+    cover: post.data.image || post.data.cover || '',
+    encrypted: post.data.encrypted || false,
+    author: post.data.author || '',
+  }))
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 ---
 
-<BaseLayout title="尺素">
-  <div class="home-container">
-    <!-- Left Sidebar - 三个小板块竖直排列 -->
-    <aside class="home-sidebar">
+<BaseLayout title="博文">
+  <div class="page-layout">
+    <SidebarWidget
+      totalPosts={totalPosts}
+      totalWords={totalWords}
+      lastEdit={lastEdit}
+    />
 
-      <!-- 板块1：个人信息 -->
-      <div class="sidebar-panel">
-        <div class="panel-header">
-          <i class="fa-solid fa-user"></i>
-          <span>个人信息</span>
+    <div class="page-main">
+      <!-- Search & Filter -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="搜索文章..." class="search-input" />
         </div>
-        <div class="panel-body">
-          <div class="sidebar-avatar-wrap">
-            <img src="/avatar.webp" alt="Yuami" class="sidebar-avatar" />
-          </div>
-          <h2 class="sidebar-name">Yuami</h2>
-          <p class="sidebar-motto">生命绚烂，别被黑暗压垮</p>
-          <!-- Social Links -->
-          <div class="sidebar-social">
-            {siteConfig.socialLinks.map((link) => (
-              <a href={link.url} target="_blank" rel="noopener" title={link.name} class="social-icon">
-                <i class={link.icon}></i>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <!-- 板块2：站点公告 -->
-      <div class="sidebar-panel">
-        <div class="panel-header">
-          <i class="fa-solid fa-bullhorn"></i>
-          <span>站点公告</span>
-        </div>
-        <div class="panel-body">
-          <div class="notice-list">
-            {siteConfig.siteAnnouncements.map((item) => (
-              <div class="notice-item">
-                <span class="notice-date">{item.date}</span>
-                <p class="notice-text">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <!-- 板块3：站点统计 -->
-      <div class="sidebar-panel">
-        <div class="panel-header">
-          <i class="fa-solid fa-chart-bar"></i>
-          <span>站点统计</span>
-        </div>
-        <div class="panel-body">
-          <div class="stat-list"
-            data-start-date={siteConfig.siteStats.startDate}
-            data-total-posts={siteConfig.siteStats.totalPosts}
-            data-total-words={siteConfig.siteStats.totalWords}
-            data-last-edit={siteConfig.siteStats.lastEdit}
-          >
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 总文章数</span>
-              <span class="stat-value" id="homeStatPosts">--</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-font"></i> 总字数</span>
-              <span class="stat-value" id="homeStatWords">--</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
-              <span class="stat-value" id="homeStatDays">--</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
-              <span class="stat-value" id="homeStatLastEdit">--</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </aside>
-
-    <!-- Right Content -->
-    <main class="home-main">
-      <!-- 青矜 (Typewriter) -->
-      <section class="home-section">
-        <h2 class="section-title">青衿</h2>
-        <div class="section-card card">
-          <div class="typewriter-content">
-            <div class="typewriter-text" id="typewriterText"></div>
-            <span class="typewriter-cursor">|</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 悟我 (About Me) -->
-      <section class="home-section">
-        <h2 class="section-title">悟我</h2>
-        <div class="section-card card">
-          <p>你好，欢迎来到我的个人主页。</p>
-          <p>这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。</p>
-          <p>这里存放的，不仅是我的思考，还有对美好生活的向往。</p>
-          <div class="about-links">
-            <a href="https://github.com/qitinyu" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-brands fa-github"></i> GitHub
-            </a>
-            <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-solid fa-globe"></i> 主站
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- 项目展示 -->
-      <section class="home-section">
-        <h2 class="section-title">项目展示</h2>
-        <div class="projects-grid">
-          {siteConfig.projects.map((project) => (
-            <article class="project-card card">
-              <div class="project-card-body">
-                <h3 class="project-name">{project.name}</h3>
-                <p class="project-desc">{project.desc}</p>
-              </div>
-              <div class="project-card-footer">
-                <a href={project.preview} target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
-                  <i class="fa-solid fa-eye"></i> 预览
-                </a>
-                <a href={project.github} target="_blank" rel="noopener" class="project-github" title="查看源码">
-                  <i class="fa-brands fa-github"></i>
-                </a>
-              </div>
-            </article>
+        <div class="tag-filter" id="tagFilter">
+          <span class="tag active" data-tag="all">全部</span>
+          {allTags.map(tag => (
+            <span class="tag" data-tag={tag}>{tag}</span>
           ))}
         </div>
-      </section>
-    </main>
+      </div>
+
+      <!-- Blog Grid - 3x3 -->
+      <div class="blog-grid" id="blogGrid">
+        {blogPosts.map((post, index) => (
+          <article class="blog-card card" data-tags={post.tags.join(',')} data-title={post.title} data-index={index} style={`animation-delay: ${(index % 9) * 0.06}s`}>
+            <a href={`/blog/${post.slug}`} class="blog-card-link">
+              <div class="blog-card-body">
+                <div class="blog-card-meta">
+                  <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
+                  {post.encrypted && <span class="blog-encrypted"><i class="fa-solid fa-lock"></i></span>}
+                  {post.author && <span class="blog-author"><i class="fa-solid fa-user-pen"></i> {post.author}</span>}
+                </div>
+                <h3 class="blog-card-title">{post.title}</h3>
+                <p class="blog-card-excerpt">{post.excerpt}</p>
+                <div class="blog-card-tags">
+                  {post.tags.map(tag => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
   </div>
 </BaseLayout>
 
 <style>
-  .home-container {
+  .page-layout {
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
     gap: 24px;
     padding: 28px 24px;
-    min-height: calc(100vh - var(--nav-height) - 80px);
   }
 
-  /* --- Left Sidebar --- */
-  .home-sidebar {
-    width: var(--sidebar-width);
-    min-width: 260px;
-    flex-shrink: 0;
-    position: sticky;
-    top: calc(var(--nav-height) + 16px);
-    height: fit-content;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .sidebar-panel {
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    width: 100%;
-    transition: all var(--transition-normal);
-  }
-
-  .sidebar-panel:hover {
-    box-shadow: var(--shadow-hover);
-  }
-
-  .panel-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: var(--primary-alpha);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  .panel-header i {
-    font-size: 0.88rem;
-  }
-
-  .panel-body {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  /* 板块1：个人信息 */
-  .sidebar-panel:first-child {
-    min-height: auto;
-  }
-
-  /* 圆形头像 - 较大 */
-  .sidebar-avatar-wrap {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid var(--primary-alpha-30);
-    box-shadow: 0 4px 15px rgba(125, 152, 245, 0.2);
-    transition: all var(--transition-normal);
-    margin-bottom: 10px;
-  }
-
-  .sidebar-avatar-wrap:hover {
-    transform: scale(1.05);
-    border-color: var(--primary);
-  }
-
-  .sidebar-avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .sidebar-name {
-    font-size: 1.3rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 2px;
-  }
-
-  .sidebar-motto {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    text-align: center;
-    font-style: italic;
-    margin-bottom: 10px;
-  }
-
-  .sidebar-social {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 10px;
-  }
-
-  .social-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--primary-alpha);
-    color: var(--primary);
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-  }
-
-  .social-icon:hover {
-    background: var(--primary);
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(125, 152, 245, 0.3);
-  }
-
-  /* 板块2：站点公告 */
-  .notice-list {
-    width: 100%;
-  }
-
-  .notice-item {
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--border-color);
-  }
-
-  .notice-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .notice-date {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 2px;
-  }
-
-  .notice-text {
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    line-height: 1.5;
-  }
-
-  /* 板块3：站点统计 */
-  .stat-list {
-    width: 100%;
-  }
-
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--border-color);
-  }
-
-  .stat-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .stat-label {
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .stat-label i {
-    color: var(--primary);
-    font-size: 0.82rem;
-  }
-
-  .stat-value {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  /* --- Right Main Content --- */
-  .home-main {
+  .page-main {
     flex: 1;
     min-width: 0;
+  }
+
+  .filter-bar {
+    margin-bottom: 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 14px;
   }
 
-  .home-section {
+  .search-box {
     display: flex;
-    flex-direction: column;
-  }
-
-  .section-card {
-    padding: 22px;
-  }
-
-  .section-card p {
-    color: var(--text-primary);
-    margin-bottom: 8px;
-    font-size: 0.95rem;
-    line-height: 1.8;
-  }
-
-  /* Typewriter */
-  .typewriter-content {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    min-height: 2em;
-  }
-
-  .typewriter-text {
-    font-size: 1.15rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    line-height: 1.8;
-  }
-
-  .typewriter-cursor {
-    font-size: 1.1rem;
-    color: var(--primary);
-    animation: blink 1s step-end infinite;
-    font-weight: 300;
-    margin-left: 2px;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  /* About links */
-  .about-links {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .about-link {
-    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    background: var(--primary-alpha);
-    color: var(--primary);
-    font-size: 0.92rem;
-    cursor: pointer;
     transition: all var(--transition-fast);
+    max-width: 400px;
   }
 
-  .about-link:hover {
+  .search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-alpha);
+  }
+
+  .search-box i {
+    color: var(--text-muted);
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: none;
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag-filter .tag.active {
     background: var(--primary);
     color: #fff;
   }
 
-  /* Projects */
-  .projects-grid {
+  .blog-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
 
-  .project-card {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
+  .blog-card {
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
   }
 
-  .project-card-body { flex: 1; }
+  .blog-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
 
-  .project-name {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text-primary);
+  .blog-card.hidden-page {
+    display: none;
+  }
+
+  .blog-card-body {
+    padding: 16px;
+  }
+
+  .blog-card-meta {
     margin-bottom: 6px;
-  }
-
-  .project-desc {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-  }
-
-  .project-card-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 10px;
   }
 
-  .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
-
-  .project-github {
-    font-size: 1.1rem;
+  .blog-date {
+    font-size: 0.8rem;
     color: var(--text-muted);
-    cursor: pointer;
-    transition: all var(--transition-fast);
   }
 
-  .project-github:hover {
+  .blog-encrypted {
+    font-size: 0.75rem;
     color: var(--primary);
-    transform: scale(1.1);
+    background: var(--primary-alpha);
+    padding: 1px 8px;
+    border-radius: 10px;
   }
+
+  .blog-author {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .blog-author i {
+    color: var(--primary);
+    margin-right: 3px;
+    font-size: 0.7rem;
+  }
+
+  .blog-card-title {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+  }
+
+  .blog-card:hover .blog-card-title {
+    color: var(--primary);
+  }
+
+  .blog-card-excerpt {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .blog-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  /* 分页样式已移至 global.css */
 
   @media (max-width: 1024px) {
-    .home-container { flex-direction: column; }
-    .home-sidebar {
-      position: static;
-      width: 100%;
-      flex-direction: row;
-      flex-wrap: wrap;
+    .page-layout { flex-direction: column; }
+    .blog-grid {
+      grid-template-columns: repeat(2, 1fr);
     }
-    .sidebar-panel { flex: 1; min-width: 260px; }
   }
 
-  @media (max-width: 768px) {
-    .projects-grid { grid-template-columns: 1fr; }
-    .home-sidebar { flex-direction: column; }
-    .sidebar-panel { min-width: auto; }
-    .home-container { padding: 20px 14px; gap: 16px; }
+  @media (max-width: 640px) {
+    .blog-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
 <script>
-  // 站点统计数据 - 从 data attributes 读取配置
-  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
-  if (statList) {
-    const startDate = statList.dataset.startDate || '2026-01-01';
-    const totalPosts = parseInt(statList.dataset.totalPosts || '6');
-    const totalWords = parseInt(statList.dataset.totalWords || '12000');
-    const lastEdit = statList.dataset.lastEdit || '2026-05-01';
+  const ITEMS_PER_PAGE = 9;
 
-    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const tagFilter = document.getElementById('tagFilter');
+  const blogCards = Array.from(document.querySelectorAll('.blog-card'));
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const paginationEl = document.getElementById('pagination');
 
-    const statPosts = document.getElementById('homeStatPosts');
-    const statWords = document.getElementById('homeStatWords');
-    const statDays = document.getElementById('homeStatDays');
-    const statLastEdit = document.getElementById('homeStatLastEdit');
+  let currentPage = 1;
+  let currentTag = 'all';
+  let searchQuery = '';
 
-    if (statDays) statDays.textContent = days + ' 天';
-    if (statPosts) statPosts.textContent = totalPosts + ' 篇';
-    if (statWords) {
-      if (totalWords >= 10000) {
-        statWords.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
-      } else {
-        statWords.textContent = totalWords + ' 字';
+  function getFilteredCards() {
+    return blogCards.filter(card => {
+      const el = card as HTMLElement;
+      const tags = el.dataset.tags || '';
+      const title = el.dataset.title?.toLowerCase() || '';
+      const tagMatch = currentTag === 'all' || tags.includes(currentTag);
+      const searchMatch = !searchQuery || title.includes(searchQuery);
+      return tagMatch && searchMatch;
+    });
+  }
+
+  function renderPagination(filteredCards: HTMLElement[]) {
+    if (!paginationEl) return;
+    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+
+    if (totalPages <= 1) {
+      paginationEl.classList.add('hidden');
+      return;
+    }
+    paginationEl.classList.remove('hidden');
+
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    let html = '';
+    // 左箭头
+    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+    // 页码按钮 - 简洁模式
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) {
+      html += `<button class="page-btn" data-page="1">1</button>`;
+      if (startPage > 2) {
+        html += `<span class="page-ellipsis">...</span>`;
       }
     }
-    if (statLastEdit) {
-      // 只显示日期部分（如 2026-05-24）
-      const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
-      statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
+
+    for (let i = startPage; i <= endPage; i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
     }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        html += `<span class="page-ellipsis">...</span>`;
+      }
+      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+
+    // 右箭头
+    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+    paginationEl.innerHTML = html;
   }
 
-  // Typewriter effect
-  const texts = [
-    '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
-    '生活不止眼前的代码，还有星辰与大海。',
-    '生命绚烂，别被黑暗压垮。',
-    '记录生活中的每一份美好与感动。',
-  ];
+  function applyFilters() {
+    const filteredCards = getFilteredCards();
+    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
 
-  const typewriterEl = document.getElementById('typewriterText');
-  let textIndex = 0;
-  let charIndex = 0;
-  let isDeleting = false;
+    if (currentPage > totalPages) currentPage = totalPages;
 
-  function typewrite() {
-    if (!typewriterEl) return;
-    const currentText = texts[textIndex];
-    if (isDeleting) {
-      typewriterEl.textContent = currentText.substring(0, charIndex - 1);
-      charIndex--;
-    } else {
-      typewriterEl.textContent = currentText.substring(0, charIndex + 1);
-      charIndex++;
-    }
-    let delay = isDeleting ? 40 : 80;
-    if (!isDeleting && charIndex === currentText.length) {
-      delay = 2500;
-      isDeleting = true;
-    } else if (isDeleting && charIndex === 0) {
-      isDeleting = false;
-      textIndex = (textIndex + 1) % texts.length;
-      delay = 500;
-    }
-    setTimeout(typewrite, delay);
+    blogCards.forEach(card => {
+      (card as HTMLElement).classList.add('hidden-page');
+    });
+
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const pageCards = filteredCards.slice(start, start + ITEMS_PER_PAGE);
+    pageCards.forEach((card, i) => {
+      (card as HTMLElement).classList.remove('hidden-page');
+      (card as HTMLElement).style.animationDelay = `${i * 0.06}s`;
+    });
+
+    renderPagination(filteredCards);
   }
-  typewrite();
+
+  // Tag filter
+  tagFilter?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('tag')) return;
+    tagFilter.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+    target.classList.add('active');
+    currentTag = target.dataset.tag || 'all';
+    currentPage = 1;
+    applyFilters();
+  });
+
+  // Search
+  searchInput?.addEventListener('input', (e) => {
+    searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+    currentPage = 1;
+    applyFilters();
+  });
+
+  // Pagination click
+  paginationEl?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const btn = target.closest('.page-btn') as HTMLElement;
+    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
+
+    const action = btn.dataset.action;
+    const page = btn.dataset.page;
+
+    if (action === 'prev') currentPage--;
+    else if (action === 'next') currentPage++;
+    else if (page) currentPage = parseInt(page);
+
+    applyFilters();
+    const container = document.querySelector('.page-main');
+    if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  applyFilters();
 </script>

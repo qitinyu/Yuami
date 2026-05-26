@@ -278,62 +278,7 @@ const statusLabels: Record<string, string> = {
     white-space: nowrap;
   }
 
-  /* Pagination */
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    margin-top: 32px;
-    padding: 12px 0;
-  }
-
-  .pagination.hidden {
-    display: none;
-  }
-
-  .page-btn {
-    min-width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    border: 1px solid var(--border-color);
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    padding: 0 10px;
-  }
-
-  .page-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--primary-alpha);
-  }
-
-  .page-btn.active {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-    box-shadow: 0 2px 8px rgba(125, 152, 245, 0.3);
-  }
-
-  .page-btn.disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  .page-btn i { font-size: 0.8rem; }
-
-  .page-info {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin: 0 8px;
-  }
+  /* 分页样式已移至 global.css */
 
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }
@@ -342,11 +287,6 @@ const statusLabels: Record<string, string> = {
 
   @media (max-width: 640px) {
     .anime-grid { grid-template-columns: 1fr; }
-    .page-btn {
-      min-width: 32px;
-      height: 32px;
-      font-size: 0.8rem;
-    }
   }
 </style>
 
@@ -376,12 +316,26 @@ const statusLabels: Record<string, string> = {
 
     let html = '';
     html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
-    for (let i = 1; i <= totalPages; i++) {
-      if (totalPages <= 7 || i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
-        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-      } else if (Math.abs(i - currentPage) === 2) {
-        html += `<span class="page-info">...</span>`;
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    if (startPage > 1) {
+      html += `<button class="page-btn" data-page="1">1</button>`;
+      if (startPage > 2) {
+        html += `<span class="page-ellipsis">...</span>`;
       }
+    }
+    for (let i = startPage; i <= endPage; i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        html += `<span class="page-ellipsis">...</span>`;
+      }
+      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
     }
     html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
     paginationEl.innerHTML = html;

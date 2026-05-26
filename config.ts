@@ -3,7 +3,7 @@ export const siteConfig = {
   title: 'Yuami',
   subtitle: '生命绚烂，别被黑暗压垮',
   description: 'Yuami的个人博客 - 记录生活、思考与创造',
-  url: 'https://8872388.xyz',
+  url: 'https://yqamm.cc.cd',
   author: 'Yuami',
   email: '484894496@qq.com',
   themeColor: '#7D98F5',
@@ -14,12 +14,10 @@ export const siteConfig = {
   },
 
   // ========== 全局字体配置 ==========
-  // 字体文件存放于 public/font/ 目录下
-  // 修改 fontFamily 后请确保对应字体文件已放入 public/font/ 并在下方 fontFile 中声明
   font: {
     fontFamily: "'朱雀仿宋', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif",
-    fontSize: '16px',     // 基础字体大小（支持px/rem）
-    fontFile: '/font/zqfs.woff2',  // 自定义字体文件路径（相对public目录）
+    fontSize: '16px',
+    fontFile: '/font/zqfs.woff2',
   },
 
   // ========== 全局阴影配置 ==========
@@ -32,32 +30,52 @@ export const siteConfig = {
 
   // ========== 樱花飘落效果配置 ==========
   sakura: {
-    enabled: false,        // 开启/关闭樱花飘落效果（true: 开启, false: 关闭）
-    petals: 25,           // 同时飘落的花瓣数量
-    minSize: 10,          // 最小花瓣大小（px）
-    maxSize: 22,          // 最大花瓣大小（px）
-    minDuration: 6,       // 最短飘落时间（秒）
-    maxDuration: 12,      // 最长飘落时间（秒）
-    color: '#ffb7c5',     // 花瓣主色（支持任意CSS颜色值）
+    enabled: true,        // 开启/关闭樱花飘落效果（true: 开启, false: 关闭）
+    petals: 30,           // 同时飘落的花瓣数量
+    minSize: 12,          // 最小花瓣大小（px）
+    maxSize: 26,          // 最大花瓣大小（px）
+    minDuration: 5,       // 最短飘落时间（秒）
+    maxDuration: 10,      // 最长飘落时间（秒）
+    color: '#ffb7c5',     // 花瓣主色
     mobileOff: false,     // 手机端是否关闭
   },
 
   // ========== 音乐播放器配置 ==========
   music: {
+    enabled: true,       // 开启/关闭音乐播放器（true: 开启, false: 关闭）
     api: 'https://api.qijieya.cn/meting/',
     server: 'netease',
     type: 'playlist',
     id: '17863308200',
   },
 
-  // ========== Twikoo 评论配置 ==========
-  twikoo: {
-    envId: 'https://netlify-nt.netlify.app/.netlify/functions/twikoo',
-    region: 'gansu',
+  // ========== 评论系统配置 ==========
+  comment: {
+    enable: true,         // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
+    system: 'twikoo',     // 评论系统选择: "twikoo" | "giscus"
+    twikoo: {
+      envId: 'https://netlify-nt.netlify.app/.netlify/functions/twikoo',
+      lang: 'zh-CN',
+    },
+    giscus: {
+      repo: 'qitinyu/yuami-giscus',
+      repoId: 'R_kgDOSmXsaA',
+      category: 'Announcements',
+      categoryId: 'DIC_kwDOSmXsaM4C9uxi',
+      mapping: 'pathname',
+      strict: '1',
+      reactionsEnabled: '1',
+      emitMetadata: '0',
+      inputPosition: 'top',
+      theme: 'noborder_light',
+      lang: 'zh-CN',
+      loading: 'lazy',
+    },
   },
 
   // ========== Umami 统计配置 ==========
   umami: {
+    enabled: false,        // 开启/关闭Umami统计（true: 开启, false: 关闭）
     src: 'https://cloud.umami.is/script.js',
     websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
   },
@@ -76,25 +94,28 @@ export const siteConfig = {
     scale: 0.15,
     mobileOff: true,
     modelList: [
-      { name: 'jk', path: '/live2/models/jk/jk.model3.json' },
       { name: 'cmtt', path: '/live2/models/cmtt/cmtt.model3.json' },
+      { name: 'jk', path: '/live2/models/jk/jk.model3.json' },
     ],
   },
 
   // ========== 站点统计配置 ==========
   siteStats: {
+    enabled: true,        // 开启/关闭站点统计显示（true: 开启, false: 关闭）
     startDate: '2026-05-21',
-    totalPosts: 6,
-    totalWords: 12000,
-    lastEdit: '2026-05-21',
+    // totalPosts 和 totalWords 现在由构建时自动统计，无需手动填写
+    // lastEdit 也由构建时自动统计
   },
 
   // ========== 站点公告 ==========
-  siteAnnouncements: [
-    { date: '2026-05-24', text: '博客发布v1.0.5版本，欢迎反馈建议！' },
-    { date: '2026-05-21', text: '博客正式上线v1.0.3，欢迎访问！' },
-    { date: '2026-05-20', text: 'Yuami Blog v1.0 构建完成，基于 Astro 框架。' },
-  ],
+  siteAnnouncements: {
+    enabled: true,        // 开启/关闭站点公告显示（true: 开启, false: 关闭）
+    items: [
+      { date: '2026-05-21', text: '博客功能持续更新中，欢迎反馈建议！' },
+      { date: '2026-05-18', text: '博客正式上线，欢迎访问！' },
+      { date: '2026-05-01', text: 'Yuami Blog v1.0 构建完成，基于 Astro 框架。' },
+    ],
+  },
 
   // ========== 导航栏配置 ==========
   navItems: [
@@ -113,7 +134,7 @@ export const siteConfig = {
       { name: '朋友圈', path: '/friends-circle' },
       { name: '关于', path: '/about' },
     ]},
-    { name: '尺素', path: '/' },
+    { name: '尺素', path: '/home' },
   ],
 
   // ========== 社交链接 ==========

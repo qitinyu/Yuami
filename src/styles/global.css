@@ -471,6 +471,97 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
   cursor: pointer;
 }
 
+/* ====== 全局分页按钮 - 简洁大气风格 ====== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 36px;
+  padding: 16px 0;
+}
+
+.pagination.hidden {
+  display: none;
+}
+
+.page-btn {
+  min-width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.page-btn:hover {
+  color: var(--primary);
+  background: var(--primary-alpha);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.page-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 3px 12px rgba(125, 152, 245, 0.35);
+  transform: translateY(-1px);
+  font-weight: 600;
+}
+
+.page-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.page-btn i {
+  font-size: 0.95rem;
+}
+
+.page-ellipsis {
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+}
+
+.page-info {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0 6px;
+  min-width: 30px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .page-btn {
+    min-width: 38px;
+    height: 38px;
+    font-size: 0.9rem;
+    padding: 0 10px;
+    border-radius: 8px;
+  }
+  .page-ellipsis {
+    min-width: 38px;
+    height: 38px;
+  }
+}
+
 /* --- Page Transitions --- */
 .page-content {
   animation: fadeInUp 0.5s ease;

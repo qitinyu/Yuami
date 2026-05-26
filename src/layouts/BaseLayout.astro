@@ -23,6 +23,11 @@ const shadowSm = siteConfig.shadow?.sm || '0 2px 8px rgba(125, 152, 245, 0.08)';
 const shadowMd = siteConfig.shadow?.md || '0 4px 20px rgba(125, 152, 245, 0.12)';
 const shadowLg = siteConfig.shadow?.lg || '0 8px 40px rgba(125, 152, 245, 0.16)';
 const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 0.2)';
+
+// 是否启用各组件
+const umamiEnabled = siteConfig.umami?.enabled !== false && siteConfig.umami?.src && siteConfig.umami?.websiteId;
+const musicEnabled = siteConfig.music?.enabled !== false;
+const sakuraEnabled = siteConfig.sakura?.enabled !== false;
 ---
 
 <!doctype html>
@@ -45,7 +50,6 @@ const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 
         font-style: normal;
         font-display: swap;
       }
-      /* 应用config中的字体和阴影设置 */
       :root {
         font-family: {fontFamily};
         font-size: {fontSize};
@@ -109,7 +113,7 @@ const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 
       }
     </script>
     <!-- Umami Analytics -->
-    {siteConfig.umami.src && siteConfig.umami.websiteId && (
+    {umamiEnabled && (
       <script async src={siteConfig.umami.src} data-website-id={siteConfig.umami.websiteId}></script>
     )}
   </head>
@@ -119,7 +123,7 @@ const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 
       <slot />
     </main>
     <Footer />
-    <Sakura />
+    {sakuraEnabled && <Sakura />}
     <FloatingButtons />
     <Live2D />
   </body>
