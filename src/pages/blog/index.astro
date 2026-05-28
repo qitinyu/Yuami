@@ -22,13 +22,14 @@ const blogPosts = allPots
     slug: post.slug,
     title: post.data.title,
     date: (post.data.published || post.data.date || '').substring(0, 10),
+    isoDate: post.data.published || post.data.date || '',
     tags: post.data.tags || [],
     excerpt: post.data.description || post.data.excerpt || '',
     cover: post.data.image || post.data.cover || '',
     encrypted: post.data.encrypted || false,
     author: post.data.author || '',
   }))
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  .sort((a, b) => new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime());
 
 const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 ---
@@ -64,6 +65,7 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
               <div class="blog-card-body">
                 <div class="blog-card-meta">
                   <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
+                  <time datetime={post.isoDate} class="sr-only">{post.isoDate}</time>
                   {post.encrypted && <span class="blog-encrypted"><i class="fa-solid fa-lock"></i></span>}
                   {post.author && <span class="blog-author"><i class="fa-solid fa-user-pen"></i> {post.author}</span>}
                 </div>

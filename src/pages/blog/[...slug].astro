@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SidebarWidget from '../../components/SidebarWidget.astro';
 import Twikoo from '../../components/Twikoo.astro';
 import Encryptor from '../../components/Encryptor.astro';
 import { getCollection } from 'astro:content';
@@ -37,71 +38,16 @@ const password = post.data.password || '';
 
 // 随机推荐2篇文章（排除当前文章）
 const allPots = await getCollection('pots');
-const allDiary = await getCollection('diary');
 const otherPots = allPots.filter(p => p.slug !== post.slug);
 const shuffled = otherPots.sort(() => Math.random() - 0.5);
 const recommendPosts = shuffled.slice(0, 2);
-
-// 构建时计算站点统计
-const totalPostsStat = allPots.length + allDiary.length;
-let totalWordsStat = 0;
-allPots.forEach(p => { totalWordsStat += (p.body || '').replace(/\s/g, '').length; });
-allDiary.forEach(d => { totalWordsStat += (d.body || '').replace(/\s/g, '').length; });
-const allDates = [
-  ...allPots.map(p => p.data.published || p.data.date || ''),
-  ...allDiary.map(d => d.data.date || ''),
-].filter(Boolean).sort().reverse();
-const lastEditStat = allDates[0] ? allDates[0].substring(0, 10) : '';
-const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
 ---
 
 <BaseLayout title={title}>
   <div class="article-layout">
-    <!-- Left Sidebar: 个人信息 + 统计 + 公告 + 目录 -->
+    <!-- Left Sidebar: 复用全局 SidebarWidget + 目录 -->
     <aside class="article-sidebar">
-      <!-- 个人信息 -->
-      <div class="sidebar-panel">
-        <div class="panel-header"><i class="fa-solid fa-user"></i><span>个人信息</span></div>
-        <div class="panel-body">
-          <div class="mini-avatar">
-            <img src={siteConfig.avatar || '/home/avatar.webp'} alt="Yuami" />
-          </div>
-          <div class="mini-name">{author || 'Yuami'}</div>
-          <div class="mini-motto">生命绚烂，别被黑暗压垮</div>
-        </div>
-      </div>
-
-      <!-- 数据统计 -->
-      {siteConfig.siteStats?.enabled !== false && (
-      <div class="sidebar-panel">
-        <div class="panel-header"><i class="fa-solid fa-chart-bar"></i><span>站内统计</span></div>
-        <div class="panel-body">
-          <div class="stat-list"
-            data-start-date={startDateStat}
-            data-total-posts={totalPostsStat}
-            data-total-words={totalWordsStat}
-            data-last-edit={lastEditStat}
-          >
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 文章篇数</span>
-              <span class="stat-value" id="statPostCount">--</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-font"></i> 文章总字数</span>
-              <span class="stat-value" id="statWordCount">--</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
-              <span class="stat-value" id="statDays">--</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
-              <span class="stat-value" id="statLastEdit">--</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      )}
+      <SidebarWidget compact />
 
       <!-- 目录（TOC） -->
       <div class="sidebar-panel" id="tocPanel">
@@ -227,6 +173,7 @@ const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
     overflow-y: auto;
   }
 
+  /* TOC Panel - 使用与 SidebarWidget 一致的样式 */
   .sidebar-panel {
     background: var(--bg-card);
     border-radius: var(--radius-md);
@@ -256,73 +203,10 @@ const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
   .panel-header i { font-size: 0.85rem; }
 
   .panel-body {
-    padding: 12px;
+    padding: 16px;
   }
 
-  /* Mini personal info - 圆形头像 */
-  .mini-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid var(--primary-alpha-30);
-    margin: 0 auto 6px;
-  }
-
-  .mini-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .mini-name {
-    text-align: center;
-    font-size: 1rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 2px;
-  }
-
-  .mini-motto {
-    text-align: center;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    font-style: italic;
-  }
-
-  /* Stats */
-  .stat-list { width: 100%; }
-
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--border-color);
-  }
-
-  .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
-
-  .stat-label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .stat-label i { color: var(--primary); font-size: 0.85rem; }
-
-  .stat-value {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  /* TOC */
+  /* TOC collapse button */
   .toc-collapse-btn {
     margin-left: auto;
     width: 26px;
@@ -578,7 +462,7 @@ const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
   .recommend-card:hover .recommend-body h4 { color: var(--primary); }
   .recommend-body p { font-size: 0.85rem; color: var(--text-muted); }
 
-  /* 评论区区域 - 不再嵌套卡片，标题+评论内容直接在文章卡片内 */
+  /* 评论区区域 */
   .comment-area {
     margin-top: 2rem;
     padding-top: 1.5rem;
@@ -655,36 +539,6 @@ const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
 </style>
 
 <script>
-  // Stats - 使用构建时计算的准确数据
-  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
-  if (statList) {
-    const startDate = statList.dataset.startDate || '2026-01-01';
-    const totalPosts = parseInt(statList.dataset.totalPosts || '0');
-    const totalWords = parseInt(statList.dataset.totalWords || '0');
-    const lastEdit = statList.dataset.lastEdit || '';
-
-    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
-
-    const statDays = document.getElementById('statDays');
-    const statPostCount = document.getElementById('statPostCount');
-    const statWordCount = document.getElementById('statWordCount');
-    const statLastEdit = document.getElementById('statLastEdit');
-
-    if (statDays) statDays.textContent = days + ' 天';
-    if (statPostCount) statPostCount.textContent = totalPosts + ' 篇';
-    if (statWordCount) {
-      if (totalWords >= 10000) {
-        statWordCount.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
-      } else {
-        statWordCount.textContent = totalWords + ' 字';
-      }
-    }
-    if (statLastEdit) {
-      const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
-      statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
-    }
-  }
-
   const articleContent = document.getElementById('articleContent');
 
   // Share - 直接复制链接到剪贴板

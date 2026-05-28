@@ -31,10 +31,10 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
         </div>
         <div class="panel-body">
           <div class="sidebar-avatar-wrap">
-            <img src="/avatar.webp" alt="Yuami" class="sidebar-avatar" />
+            <img src={siteConfig.avatar || '/home/avatar.webp'} alt={siteConfig.author || 'Yuami'} class="sidebar-avatar" />
           </div>
-          <h2 class="sidebar-name">Yuami</h2>
-          <p class="sidebar-motto">生命绚烂，别被黑暗压垮</p>
+          <h2 class="sidebar-name">{siteConfig.author || 'Yuami'}</h2>
+          <p class="sidebar-motto">{siteConfig.subtitle}</p>
           <!-- Social Links -->
           <div class="sidebar-social">
             {siteConfig.socialLinks.map((link) => (
