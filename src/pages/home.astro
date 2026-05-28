@@ -46,7 +46,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
               <i class="fa-brands fa-github"></i> GitHub
             </a>
             <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-solid fa-globe"></i> 主站
+              <i class="fa-solid fa-globe"></i> 导航
             </a>
           </div>
         </div>
@@ -54,7 +54,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
 
       <!-- 项目展示 -->
       <section class="home-section">
-        <h2 class="section-title">项目展示</h2>
+        <h2 class="section-title">拾遗</h2>
         <div class="projects-grid">
           {siteConfig.projects.map((project) => (
             <article class="project-card card">
@@ -492,7 +492,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
     .home-container { flex-direction: column; }
     .home-sidebar {
       position: static;
-      order: 0;
+      order: 1; /* 插件排在主内容后面 */
       width: 100%;
       flex-direction: row;
       flex-wrap: wrap;
@@ -504,7 +504,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
     .projects-grid { grid-template-columns: 1fr; }
     .home-sidebar {
       flex-direction: column;
-      order: 0;
+      order: 1; /* 移动端插件排在主内容后面 */
     }
     .sidebar-panel { min-width: auto; }
     .home-container { padding: 20px 14px; gap: 16px; }

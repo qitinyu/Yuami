@@ -26,12 +26,7 @@ const image = entry.data.image || entry.data.cover || '';
 
 <BaseLayout title={title}>
   <div class="article-layout">
-    <!-- Left Sidebar: 3 Plugins (always full style) -->
-    <aside class="article-sidebar">
-      <SidebarWidget />
-    </aside>
-
-    <!-- Article Main Content -->
+    <!-- Article Main Content (DOM first for mobile order) -->
     <article class="article-main">
       <header class="article-header">
         <h1 class="article-title">{title}</h1>
@@ -67,6 +62,11 @@ const image = entry.data.image || entry.data.cover || '';
         </div>
       )}
     </article>
+
+    <!-- Left Sidebar (DOM second, CSS order: -1 on desktop; mobile: natural order after article) -->
+    <aside class="article-sidebar">
+      <SidebarWidget />
+    </aside>
   </div>
 </BaseLayout>
 
@@ -79,17 +79,7 @@ const image = entry.data.image || entry.data.cover || '';
     padding: 28px 24px;
   }
 
-  /* --- Left Sidebar (3 plugins, always full style) --- */
-  .article-sidebar {
-    width: var(--sidebar-width);
-    flex-shrink: 0;
-    order: 0;
-    position: sticky;
-    top: calc(var(--nav-height) + 16px);
-    height: fit-content;
-  }
-
-  /* --- Article Main --- */
+  /* --- Article Main (DOM first) --- */
   .article-main {
     flex: 1;
     min-width: 0;
@@ -98,6 +88,17 @@ const image = entry.data.image || entry.data.cover || '';
     border: 1px solid var(--border-color);
     padding: 48px;
     box-shadow: var(--shadow-sm);
+    order: 1;
+  }
+
+  /* --- Left Sidebar (DOM second, CSS order moves it left on desktop) --- */
+  .article-sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    order: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 16px);
+    height: fit-content;
   }
 
   /* --- Article Header & Content --- */
@@ -193,12 +194,16 @@ const image = entry.data.image || entry.data.cover || '';
     border-radius: 3px;
   }
 
-  /* --- Tablet (≤1024px) --- */
+  /* --- Tablet/Mobile (≤1024px) - 文章在上，插件在下 --- */
   @media (max-width: 1024px) {
     .article-layout {
       flex-direction: column;
     }
+    .article-main {
+      order: 0;
+    }
     .article-sidebar {
+      order: 1;
       position: static;
       width: 100%;
     }

@@ -132,9 +132,9 @@ export const siteConfig = {
   siteAnnouncements: {
     enabled: true,
     items: [
-      { date: '2026-05-21', text: '博客功能持续更新中，欢迎反馈建议！' },
-      { date: '2026-05-18', text: '博客正式上线，欢迎访问！' },
-      { date: '2026-05-01', text: 'Yuami Blog v1.0 构建完成，基于 Astro 框架。' },
+      { date: '2026-05-28', text: '博客更新v1.0.7正式版，欢迎反馈建议！' },
+      { date: '2026-05-26', text: '博客更新1.0.6正式版，1.0.7beta正在完善！' },
+      { date: '2026-05-24', text: 'Yuami 框架修缮。' },
     ],
   },
 
@@ -160,20 +160,57 @@ export const siteConfig = {
 
   // ========== 社交链接 ==========
   socialLinks: [
-    { name: 'GitHub', url: 'https://github.com/qitinyu', icon: 'fa-brands fa-github-alt' },
-    { name: '米游社', url: 'https://www.miyoushe.com/sr/accountCenter/postList?id=227165994', icon: 'fa-brands fa-battle-net' },
-    { name: 'B站', url: 'https://space.bilibili.com/3461582895974946', icon: 'fab fa-bilibili' },
-    { name: 'QQ', url: 'https://qm.qq.com/cgi-bin/qm/qr?k=-A9MUAbpO68zcu1YAp11NiI3ir7WczLO', icon: 'fa-brands fa-qq' },
-    { name: 'Email', url: 'mailto:484894496@qq.com', icon: 'fa-solid fa-envelope' },
+    { name: 'GitHub', 
+      url: 'https://github.com/qitinyu', 
+      icon: 'fa-brands fa-github-alt' },
+
+    { name: '米游社', 
+      url: 'https://www.miyoushe.com/sr/accountCenter/postList?id=227165994', 
+      icon: 'fa-brands fa-battle-net' },
+
+    { name: 'B站', 
+      url: 'https://space.bilibili.com/3461582895974946', 
+      icon: 'fab fa-bilibili' },
+      
+    { name: 'QQ', 
+      url: 'https://qm.qq.com/cgi-bin/qm/qr?k=-A9MUAbpO68zcu1YAp11NiI3ir7WczLO', 
+      icon: 'fa-brands fa-qq' },
+
+    { name: 'Email', 
+      url: 'mailto:484894496@qq.com', 
+      icon: 'fa-solid fa-envelope' },
   ],
 
   // ========== 项目展示 ==========
   projects: [
-    { name: '雨祁小窝', desc: '基于Astro-Mizuki的现代化个人博客', preview: 'https://yqamm.cc.cd', github: 'https://github.com/qitinyu/yuqi/' },
-    { name: '胡桃-手风琴', desc: 'HTML+CSS+JS 制作的简易网页', preview: 'https://qitinyu.github.io/hutao-sfq/', github: 'https://github.com/qitinyu/hutao-sfq' },
-    { name: '雨祁-导航', desc: 'HTML+CSS+JS 制作的网页导航', preview: 'https://qitinyu.github.io/YQ-nav/', github: 'https://github.com/qitinyu/YQ-nav' },
-    { name: '提瓦特简介', desc: 'HTML+CSS+JS 制作的对于提瓦特大陆的简介', preview: 'https://qitinyu.github.io/yq-twt/', github: 'https://github.com/qitinyu/yq-twt' },
-    { name: '雨祁-网页练习', desc: 'HTML+CSS+JS 制作的较完整网页练习', preview: 'https://qitinyu.github.io/yq-wz/', github: 'https://github.com/qitinyu/yq-wz' },
-    { name: '雨祁-自学练习', desc: 'HTML+CSS+JS 制作的自学练习', preview: 'https://qitinyu.github.io/hutao-J/', github: 'https://github.com/qitinyu/hutao-J' },
+    { name: '雨祁小窝', 
+      desc: '基于Astro-Mizuki的现代化个人博客', 
+      preview: 'https://yqamm.cc.cd', 
+      github: 'https://github.com/qitinyu/yuqi/' },
+
+    { name: '雨祁云盘', 
+      desc: '基于openlist搭载cloudflared tunnle实现的网盘合集', 
+      preview: 'https://qitinyu.github.io/yq-twt/', 
+      github: 'https://github.com/qitinyu/yq-twt' },
+
+    { name: '胡桃-手风琴', 
+      desc: 'HTML+CSS+JS 制作的简易网页', 
+      preview: 'https://qitinyu.github.io/hutao-sfq/', 
+      github: 'https://github.com/qitinyu/hutao-sfq' },
+
+    { name: '雨祁导航', 
+      desc: 'HTML+CSS+JS 制作的网页导航', 
+      preview: 'https://qitinyu.github.io/YQ-nav/', 
+      github: 'https://github.com/qitinyu/YQ-nav' },
+
+    { name: '雨祁-网页练习', 
+      desc: 'HTML+CSS+JS 制作的较完整网页练习', 
+      preview: 'https://yq-wz.pages.dev/', 
+      github: 'https://github.com/qitinyu/yq-wz' },
+
+    { name: '雨祁-自学练习', 
+      desc: 'HTML+CSS+JS 制作的自学练习', 
+      preview: 'https://qitinyu.github.io/hutao-J/', 
+      github: 'https://github.com/qitinyu/hutao-J' },
   ],
 };
