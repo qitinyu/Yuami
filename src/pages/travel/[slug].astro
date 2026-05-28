@@ -1,7 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SidebarWidget from '../../components/SidebarWidget.astro';
 import Twikoo from '../../components/Twikoo.astro';
 import { getCollection } from 'astro:content';
+import { siteConfig } from '../../../config';
+import { formatDate } from '../../utils/dateFormat';
 
 export async function getStaticPaths() {
   const diaryEntries = await getCollection('diary');
@@ -13,67 +16,147 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
-const { title, date, tags } = entry.data;
+const title = entry.data.title;
+const dateRaw = entry.data.date || '';
+const dateFormatted = formatDate(dateRaw);
+const tags = entry.data.tags || [];
+const description = entry.data.description || entry.data.excerpt || '';
+const image = entry.data.image || entry.data.cover || '';
 ---
 
 <BaseLayout title={title}>
-  <div class="article-container">
+  <div class="article-layout">
+    <!-- Left Sidebar: 3 Plugins (always full style) -->
+    <aside class="article-sidebar">
+      <SidebarWidget />
+    </aside>
+
+    <!-- Article Main Content -->
     <article class="article-main">
       <header class="article-header">
         <h1 class="article-title">{title}</h1>
         <div class="article-meta">
-          <span class="article-date"><i class="fa-regular fa-calendar"></i> {date}</span>
-          <div class="article-tags">
-            {tags.map((tag: string) => <span class="tag">{tag}</span>)}
-          </div>
+          <span class="article-date"><i class="fa-regular fa-calendar"></i> {dateFormatted}</span>
+          {tags.length > 0 && (
+            <div class="article-tags">
+              {tags.map((tag: string) => <span class="tag">{tag}</span>)}
+            </div>
+          )}
         </div>
+        {description && <p class="article-description">{description}</p>}
       </header>
-      <div class="article-content prose">
+
+      {image && (
+        <div class="article-cover">
+          <img src={image} alt={title} onerror="this.style.display='none';" />
+        </div>
+      )}
+
+      <div class="article-content prose" id="articleContent">
         <Content />
       </div>
+
       <div class="article-nav">
         <a href="/travel" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> 返回旅记</a>
       </div>
-      <div class="twikoo-area">
-        <Twikoo />
-      </div>
+
+      {siteConfig.comment?.enable !== false && (
+        <div class="comment-area">
+          <h3 class="section-title">评论区</h3>
+          <Twikoo />
+        </div>
+      )}
     </article>
   </div>
 </BaseLayout>
 
 <style>
-  .article-container {
-    max-width: 960px;
+  .article-layout {
+    max-width: var(--max-width);
     margin: 0 auto;
-    padding: 40px 32px;
+    display: flex;
+    gap: 20px;
+    padding: 28px 24px;
   }
+
+  /* --- Left Sidebar (3 plugins, always full style) --- */
+  .article-sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    order: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 16px);
+    height: fit-content;
+  }
+
+  /* --- Article Main --- */
   .article-main {
+    flex: 1;
+    min-width: 0;
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     padding: 48px;
     box-shadow: var(--shadow-sm);
   }
+
+  /* --- Article Header & Content --- */
   .article-header {
     margin-bottom: 36px;
     padding-bottom: 28px;
     border-bottom: 1px solid var(--border-color);
   }
+
   .article-title {
     font-size: 2rem;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 14px;
+    line-height: 1.4;
   }
+
   .article-meta {
     display: flex;
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
   }
-  .article-date { font-size: 0.95rem; color: var(--text-muted); }
-  .article-tags { display: flex; gap: 6px; }
-  .article-content { margin-bottom: 32px; }
+
+  .article-date {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .article-tags {
+    display: flex;
+    gap: 6px;
+  }
+
+  .article-description {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .article-cover {
+    margin-bottom: 20px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .article-cover img {
+    width: 100%;
+    max-height: 360px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+  }
+
+  .article-content {
+    margin-bottom: 32px;
+  }
+
   .article-nav {
     display: flex;
     justify-content: space-between;
@@ -81,9 +164,75 @@ const { title, date, tags } = entry.data;
     border-top: 1px solid var(--border-color);
     margin-bottom: 32px;
   }
-  .twikoo-area { margin-top: 2rem; }
+
+  /* 评论区区域 */
+  .comment-area {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .comment-area .section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.2rem;
+    position: relative;
+    padding-left: 16px;
+  }
+
+  .comment-area .section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: linear-gradient(180deg, var(--primary), var(--primary-light));
+    border-radius: 3px;
+  }
+
+  /* --- Tablet (≤1024px) --- */
+  @media (max-width: 1024px) {
+    .article-layout {
+      flex-direction: column;
+    }
+    .article-sidebar {
+      position: static;
+      width: 100%;
+    }
+    .article-sidebar :global(.sidebar-widget) {
+      position: static;
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .article-sidebar :global(.sidebar-panel) {
+      flex: 1;
+      min-width: 260px;
+    }
+  }
+
+  /* --- Mobile (≤768px) --- */
   @media (max-width: 768px) {
-    .article-main { padding: 24px 16px; }
-    .article-title { font-size: 1.4rem; }
+    .article-layout {
+      padding: 20px 14px;
+    }
+    .article-main {
+      padding: 24px 16px;
+    }
+    .article-title {
+      font-size: 1.4rem;
+    }
+    .article-sidebar :global(.sidebar-widget) {
+      flex-direction: column;
+    }
+    .article-sidebar :global(.sidebar-panel) {
+      min-width: auto;
+    }
+    .article-nav {
+      justify-content: center;
+    }
   }
 </style>

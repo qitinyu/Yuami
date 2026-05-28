@@ -1,12 +1,13 @@
 ---
 import { siteConfig } from '../../config';
 import { getCollection } from 'astro:content';
+import { formatDateShort } from '../utils/dateFormat';
 
 interface Props {
   showPersonalInfo?: boolean;
   showSiteAnnouncement?: boolean;
   showSiteStats?: boolean;
-  compact?: boolean;
+  compact?: boolean; // 保留接口兼容性，但不再影响样式
   totalPosts?: number;
   totalWords?: number;
   lastEdit?: string;
@@ -16,7 +17,7 @@ const {
   showPersonalInfo = true,
   showSiteAnnouncement = true,
   showSiteStats = true,
-  compact = false,
+  compact: _compact, // 忽略 compact 参数，始终使用完整样式
   totalPosts: propTotalPosts,
   totalWords: propTotalWords,
   lastEdit: propLastEdit,
@@ -41,8 +42,13 @@ if (totalPosts === undefined || totalWords === undefined || lastEdit === undefin
       ...allPots.map(p => p.data.published || p.data.date || ''),
       ...allDiary.map(d => d.data.date || ''),
     ].filter(Boolean).sort().reverse();
-    lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
+    lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
+}
+
+// 格式化 lastEdit
+if (lastEdit) {
+  lastEdit = formatDateShort(lastEdit);
 }
 
 const isStatsEnabled = siteConfig.siteStats?.enabled !== false && showSiteStats;
@@ -50,7 +56,7 @@ const isAnnouncementEnabled = siteConfig.siteAnnouncements?.enabled !== false &&
 const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnnouncements || [];
 ---
 
-<aside class:list={['sidebar-widget', { compact }]}>
+<aside class="sidebar-widget">
   {showPersonalInfo && (
     <div class="sidebar-panel">
       <div class="panel-header">
@@ -58,11 +64,11 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
         <span>个人信息</span>
       </div>
       <div class="panel-body">
-        <div class:list={['sidebar-avatar-wrap', { mini: compact }]}>
+        <div class="sidebar-avatar-wrap">
           <img src={siteConfig.avatar || '/home/avatar.webp'} alt={siteConfig.author || 'Yuami'} class="sidebar-avatar" />
         </div>
-        <h2 class:list={['sidebar-name', { mini: compact }]}>{siteConfig.author || 'Yuami'}</h2>
-        <p class:list={['sidebar-motto', { mini: compact }]}>{siteConfig.subtitle}</p>
+        <h2 class="sidebar-name">{siteConfig.author || 'Yuami'}</h2>
+        <p class="sidebar-motto">{siteConfig.subtitle}</p>
         <div class="sidebar-social">
           {siteConfig.socialLinks.map((link) => (
             <a href={link.url} target="_blank" rel="noopener" title={link.name} class="social-icon">
@@ -84,7 +90,7 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
         <div class="notice-list">
           {announcements.map((item: { date: string; text: string }) => (
             <div class="notice-item">
-              <span class="notice-date">{item.date}</span>
+              <span class="notice-date">{formatDateShort(item.date)}</span>
               <p class="notice-text">{item.text}</p>
             </div>
           ))}
@@ -141,10 +147,6 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
     gap: 12px;
   }
 
-  .sidebar-widget.compact {
-    width: var(--sidebar-width);
-  }
-
   .sidebar-panel {
     background: var(--bg-card);
     border-radius: var(--radius-md);
@@ -193,13 +195,6 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
     margin-bottom: 10px;
   }
 
-  .sidebar-avatar-wrap.mini {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 6px;
-    border-width: 2px;
-  }
-
   .sidebar-avatar-wrap:hover {
     transform: scale(1.05);
     border-color: var(--primary);
@@ -221,21 +216,12 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
     margin-bottom: 2px;
   }
 
-  .sidebar-name.mini {
-    font-size: 1rem;
-  }
-
   .sidebar-motto {
     font-size: 0.88rem;
     color: var(--text-muted);
     text-align: center;
     font-style: italic;
     margin-bottom: 10px;
-  }
-
-  .sidebar-motto.mini {
-    font-size: 0.78rem;
-    margin-bottom: 6px;
   }
 
   .sidebar-social {
@@ -377,6 +363,7 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
       }
     }
     if (statLastEdit) {
+      // lastEdit 已经在构建时格式化为 YYYY-MM-DD，直接显示
       const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
       statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
     }

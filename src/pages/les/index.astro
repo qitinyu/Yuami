@@ -9,8 +9,6 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
 
 <BaseLayout title="LES">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <div class="type-filter" id="typeFilter">
         {types.map(t => (
@@ -51,6 +49,8 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
       <!-- Twikoo Comments -->
       <Twikoo />
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -202,14 +202,19 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
 
   /* 分页样式已移至 global.css */
 
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column-reverse; }
+    .page-layout { flex-direction: column; }
     .les-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {
     .les-grid { grid-template-columns: 1fr; }
-    .pagination { justify-content: center !important; }
   }
 </style>
 

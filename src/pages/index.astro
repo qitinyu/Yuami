@@ -1,4 +1,392 @@
 ---
-// 首页重定向到博文版块
-return Astro.redirect('/blog');
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SidebarWidget from '../components/SidebarWidget.astro';
+import { getCollection } from 'astro:content';
+import { formatDateShort } from '../utils/dateFormat';
+
+const allPots = await getCollection('pots');
+
+// 构建时计算站点统计数据
+const allDiary = await getCollection('diary');
+const totalPosts = allPots.length + allDiary.length;
+let totalWords = 0;
+allPots.forEach(p => { totalWords += (p.body || '').replace(/\s/g, '').length; });
+allDiary.forEach(d => { totalWords += (d.body || '').replace(/\s/g, '').length; });
+const allDates = [
+  ...allPots.map(p => p.data.published || p.data.date || ''),
+  ...allDiary.map(d => d.data.date || ''),
+].filter(Boolean).sort().reverse();
+const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
+
+const blogPosts = allPots
+  .map(post => ({
+    slug: post.slug,
+    title: post.data.title,
+    date: formatDateShort(post.data.published || post.data.date || ''),
+    tags: post.data.tags || [],
+    excerpt: post.data.description || post.data.excerpt || '',
+    cover: post.data.image || post.data.cover || '',
+    encrypted: post.data.encrypted || false,
+    author: post.data.author || '',
+  }))
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 ---
+
+<BaseLayout title="博文">
+  <div class="page-layout">
+    <div class="page-main">
+      <!-- Search & Filter -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="搜索文章..." class="search-input" />
+        </div>
+        <div class="tag-filter" id="tagFilter">
+          <span class="tag active" data-tag="all">全部</span>
+          {allTags.map(tag => (
+            <span class="tag" data-tag={tag}>{tag}</span>
+          ))}
+        </div>
+      </div>
+
+      <!-- Blog Grid - 3x3 -->
+      <div class="blog-grid" id="blogGrid">
+        {blogPosts.map((post, index) => (
+          <article class="blog-card card" data-tags={post.tags.join(',')} data-title={post.title} data-index={index} style={`animation-delay: ${(index % 9) * 0.06}s`}>
+            <a href={`/blog/${post.slug}`} class="blog-card-link">
+              <div class="blog-card-body">
+                <div class="blog-card-meta">
+                  <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
+                  {post.encrypted && <span class="blog-encrypted"><i class="fa-solid fa-lock"></i></span>}
+                  {post.author && <span class="blog-author"><i class="fa-solid fa-user-pen"></i> {post.author}</span>}
+                </div>
+                <h3 class="blog-card-title">{post.title}</h3>
+                <p class="blog-card-excerpt">{post.excerpt}</p>
+                <div class="blog-card-tags">
+                  {post.tags.map(tag => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <SidebarWidget
+      totalPosts={totalPosts}
+      totalWords={totalWords}
+      lastEdit={lastEdit}
+    />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-layout {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    padding: 28px 24px;
+  }
+
+  .page-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .filter-bar {
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    max-width: 400px;
+  }
+
+  .search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-alpha);
+  }
+
+  .search-box i {
+    color: var(--text-muted);
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: none;
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag-filter .tag.active {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .blog-card {
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .blog-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .blog-card.hidden-page {
+    display: none;
+  }
+
+  .blog-card-body {
+    padding: 16px;
+  }
+
+  .blog-card-meta {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .blog-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .blog-encrypted {
+    font-size: 0.75rem;
+    color: var(--primary);
+    background: var(--primary-alpha);
+    padding: 1px 8px;
+    border-radius: 10px;
+  }
+
+  .blog-author {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .blog-author i {
+    color: var(--primary);
+    margin-right: 3px;
+    font-size: 0.7rem;
+  }
+
+  .blog-card-title {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+  }
+
+  .blog-card:hover .blog-card-title {
+    color: var(--primary);
+  }
+
+  .blog-card-excerpt {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .blog-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  /* 分页样式已移至 global.css */
+
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .page-layout { flex-direction: column; }
+    .blog-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .blog-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const ITEMS_PER_PAGE = 9;
+
+  const tagFilter = document.getElementById('tagFilter');
+  const blogCards = Array.from(document.querySelectorAll('.blog-card'));
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const paginationEl = document.getElementById('pagination');
+
+  let currentPage = 1;
+  let currentTag = 'all';
+  let searchQuery = '';
+
+  function getFilteredCards() {
+    return blogCards.filter(card => {
+      const el = card as HTMLElement;
+      const tags = el.dataset.tags || '';
+      const title = el.dataset.title?.toLowerCase() || '';
+      const tagMatch = currentTag === 'all' || tags.includes(currentTag);
+      const searchMatch = !searchQuery || title.includes(searchQuery);
+      return tagMatch && searchMatch;
+    });
+  }
+
+  function renderPagination(filteredCards: HTMLElement[]) {
+    if (!paginationEl) return;
+    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+
+    if (totalPages <= 1) {
+      paginationEl.classList.add('hidden');
+      return;
+    }
+    paginationEl.classList.remove('hidden');
+
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    let html = '';
+    // 左箭头
+    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+    // 页码按钮 - 简洁模式
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) {
+      html += `<button class="page-btn" data-page="1">1</button>`;
+      if (startPage > 2) {
+        html += `<span class="page-ellipsis">...</span>`;
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        html += `<span class="page-ellipsis">...</span>`;
+      }
+      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+
+    // 右箭头
+    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+    paginationEl.innerHTML = html;
+  }
+
+  function applyFilters() {
+    const filteredCards = getFilteredCards();
+    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    blogCards.forEach(card => {
+      (card as HTMLElement).classList.add('hidden-page');
+    });
+
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const pageCards = filteredCards.slice(start, start + ITEMS_PER_PAGE);
+    pageCards.forEach((card, i) => {
+      (card as HTMLElement).classList.remove('hidden-page');
+      (card as HTMLElement).style.animationDelay = `${i * 0.06}s`;
+    });
+
+    renderPagination(filteredCards);
+  }
+
+  // Tag filter
+  tagFilter?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('tag')) return;
+    tagFilter.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+    target.classList.add('active');
+    currentTag = target.dataset.tag || 'all';
+    currentPage = 1;
+    applyFilters();
+  });
+
+  // Search
+  searchInput?.addEventListener('input', (e) => {
+    searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+    currentPage = 1;
+    applyFilters();
+  });
+
+  // Pagination click
+  paginationEl?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const btn = target.closest('.page-btn') as HTMLElement;
+    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
+
+    const action = btn.dataset.action;
+    const page = btn.dataset.page;
+
+    if (action === 'prev') currentPage--;
+    else if (action === 'next') currentPage++;
+    else if (page) currentPage = parseInt(page);
+
+    applyFilters();
+    const container = document.querySelector('.page-main');
+    if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  applyFilters();
+</script>

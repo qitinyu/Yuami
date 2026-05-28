@@ -5,6 +5,7 @@ import Twikoo from '../../components/Twikoo.astro';
 import Encryptor from '../../components/Encryptor.astro';
 import { getCollection } from 'astro:content';
 import { siteConfig } from '../../../config';
+import { formatDate, formatDateShort } from '../../utils/dateFormat';
 
 export async function getStaticPaths() {
   const pots = await getCollection('pots');
@@ -27,7 +28,7 @@ const { post, prevPost, nextPost } = Astro.props;
 const { Content } = await post.render();
 const title = post.data.title;
 const publishedRaw = post.data.published || post.data.date || '';
-const published = publishedRaw.substring(0, 10);
+const publishedFormatted = formatDate(publishedRaw);
 const tags = post.data.tags || [];
 const description = post.data.description || post.data.excerpt || '';
 const author = post.data.author || '';
@@ -38,32 +39,35 @@ const password = post.data.password || '';
 
 // 随机推荐2篇文章（排除当前文章）
 const allPots = await getCollection('pots');
+const allDiary = await getCollection('diary');
 const otherPots = allPots.filter(p => p.slug !== post.slug);
 const shuffled = otherPots.sort(() => Math.random() - 0.5);
 const recommendPosts = shuffled.slice(0, 2);
+
+// 构建时计算站点统计（传给 SidebarWidget，使用完整日期字符串）
+const totalPostsStat = allPots.length + allDiary.length;
+let totalWordsStat = 0;
+allPots.forEach(p => { totalWordsStat += (p.body || '').replace(/\s/g, '').length; });
+allDiary.forEach(d => { totalWordsStat += (d.body || '').replace(/\s/g, '').length; });
+const allDates = [
+  ...allPots.map(p => p.data.published || p.data.date || ''),
+  ...allDiary.map(d => d.data.date || ''),
+].filter(Boolean).sort().reverse();
+const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 ---
 
 <BaseLayout title={title}>
   <div class="article-layout">
-    <!-- Left Sidebar: 复用全局 SidebarWidget + 目录 -->
+    <!-- Left Sidebar: 3 Plugins (always full style) -->
     <aside class="article-sidebar">
-      <SidebarWidget compact />
-
-      <!-- 目录（TOC） -->
-      <div class="sidebar-panel" id="tocPanel">
-        <div class="panel-header">
-          <i class="fa-solid fa-list"></i><span>目录</span>
-          <button class="toc-collapse-btn" id="tocCollapseBtn" aria-label="折叠目录">
-            <i class="fa-solid fa-chevron-up"></i>
-          </button>
-        </div>
-        <div class="panel-body toc-body" id="tocBody">
-          <nav class="toc-nav" id="tocNav"></nav>
-        </div>
-      </div>
+      <SidebarWidget
+        totalPosts={totalPostsStat}
+        totalWords={totalWordsStat}
+        lastEdit={lastEditStat}
+      />
     </aside>
 
-    <!-- Article Main Content -->
+    <!-- Center: Article Main Content -->
     <article class="article-main">
       <header class="article-header">
         {isEncrypted && (
@@ -73,7 +77,7 @@ const recommendPosts = shuffled.slice(0, 2);
         )}
         <h1 class="article-title">{title}</h1>
         <div class="article-meta">
-          <span class="article-date"><i class="fa-regular fa-calendar"></i> {published}</span>
+          <span class="article-date"><i class="fa-regular fa-calendar"></i> {publishedFormatted}</span>
           {author && <span class="article-author"><i class="fa-solid fa-user-pen"></i> {author}</span>}
           <div class="article-tags">
             {tags.map((tag: string) => <span class="tag">{tag}</span>)}
@@ -147,6 +151,21 @@ const recommendPosts = shuffled.slice(0, 2);
       </div>
       )}
     </article>
+
+    <!-- Right Sidebar: TOC (Table of Contents) -->
+    <aside class="article-toc-sidebar" id="articleTocSidebar">
+      <div class="toc-panel" id="tocPanel">
+        <div class="toc-header">
+          <i class="fa-solid fa-list"></i><span>目录</span>
+          <button class="toc-collapse-btn" id="tocCollapseBtn" aria-label="折叠目录">
+            <i class="fa-solid fa-chevron-up"></i>
+          </button>
+        </div>
+        <div class="toc-body" id="tocBody">
+          <nav class="toc-nav" id="tocNav"></nav>
+        </div>
+      </div>
+    </aside>
   </div>
 </BaseLayout>
 
@@ -159,22 +178,39 @@ const recommendPosts = shuffled.slice(0, 2);
     padding: 28px 24px;
   }
 
-  /* --- Left Sidebar --- */
+  /* --- Left Sidebar (3 plugins, always full style) --- */
   .article-sidebar {
     width: var(--sidebar-width);
+    flex-shrink: 0;
+    order: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 16px);
+    height: fit-content;
+  }
+
+  /* --- Article Main Content --- */
+  .article-main {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 32px 36px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* --- Right Sidebar: TOC --- */
+  .article-toc-sidebar {
+    width: 240px;
     flex-shrink: 0;
     position: sticky;
     top: calc(var(--nav-height) + 16px);
     height: fit-content;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     max-height: calc(100vh - var(--nav-height) - 32px);
     overflow-y: auto;
   }
 
-  /* TOC Panel - 使用与 SidebarWidget 一致的样式 */
-  .sidebar-panel {
+  .toc-panel {
     background: var(--bg-card);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
@@ -184,11 +220,11 @@ const recommendPosts = shuffled.slice(0, 2);
     transition: all var(--transition-normal);
   }
 
-  .sidebar-panel:hover {
+  .toc-panel:hover {
     box-shadow: var(--shadow-hover);
   }
 
-  .panel-header {
+  .toc-header {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -200,11 +236,7 @@ const recommendPosts = shuffled.slice(0, 2);
     color: var(--primary);
   }
 
-  .panel-header i { font-size: 0.85rem; }
-
-  .panel-body {
-    padding: 16px;
-  }
+  .toc-header i { font-size: 0.85rem; }
 
   /* TOC collapse button */
   .toc-collapse-btn {
@@ -230,13 +262,14 @@ const recommendPosts = shuffled.slice(0, 2);
   }
 
   .toc-body {
+    padding: 12px;
     transition: all var(--transition-fast);
     overflow: hidden;
   }
 
   .toc-body.collapsed {
     max-height: 0 !important;
-    padding: 0 16px;
+    padding: 0 14px;
   }
 
   .toc-nav {
@@ -254,7 +287,7 @@ const recommendPosts = shuffled.slice(0, 2);
     gap: 8px;
     padding: 7px 10px;
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: var(--text-primary);
     cursor: pointer;
@@ -280,14 +313,14 @@ const recommendPosts = shuffled.slice(0, 2);
 
   /* TOC Level: ## (h2) - 缩进一格 */
   .toc-nav .toc-h2-list {
-    padding-left: 20px;
+    padding-left: 18px;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.3s ease;
   }
 
   .toc-nav .toc-h2-list.expanded {
-    max-height: 800px;
+    max-height: 2000px;
   }
 
   .toc-nav .toc-h2-item {
@@ -300,7 +333,7 @@ const recommendPosts = shuffled.slice(0, 2);
     gap: 6px;
     padding: 5px 8px;
     border-radius: 6px;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
@@ -324,28 +357,29 @@ const recommendPosts = shuffled.slice(0, 2);
     transform: rotate(90deg);
   }
 
-  /* TOC Level: ### (h3) - 缩进二格 */
+  /* TOC Level: ### (h3) - 缩进二格，每个独占一行 */
   .toc-nav .toc-h3-list {
-    padding-left: 20px;
+    padding-left: 16px;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.3s ease;
   }
 
   .toc-nav .toc-h3-list.expanded {
-    max-height: 500px;
+    max-height: 1000px;
   }
 
   .toc-nav .toc-h3-link {
     display: block;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     color: var(--text-muted);
     cursor: pointer;
     transition: all var(--transition-fast);
     text-decoration: none;
-    line-height: 1.5;
+    line-height: 1.6;
+    white-space: normal;
   }
 
   .toc-nav .toc-h3-link:hover,
@@ -354,17 +388,7 @@ const recommendPosts = shuffled.slice(0, 2);
     background: var(--primary-alpha);
   }
 
-  /* --- Article Main --- */
-  .article-main {
-    flex: 1;
-    min-width: 0;
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-    padding: 32px 36px;
-    box-shadow: var(--shadow-sm);
-  }
-
+  /* --- Article Header & Content --- */
   .article-header {
     margin-bottom: 24px;
     padding-bottom: 18px;
@@ -513,40 +537,69 @@ const recommendPosts = shuffled.slice(0, 2);
     transform: translateX(-50%) translateY(0);
   }
 
+  /* --- Tablet (≤1200px) - 隐藏右侧目录 --- */
+  @media (max-width: 1200px) {
+    .article-toc-sidebar {
+      display: none;
+    }
+  }
+
+  /* --- Tablet (≤1024px) - 侧边栏移到底部 --- */
   @media (max-width: 1024px) {
-    .article-layout { flex-direction: column; }
+    .article-layout {
+      flex-direction: column;
+    }
     .article-sidebar {
+      position: static;
+      width: 100%;
+    }
+    .article-sidebar :global(.sidebar-widget) {
       position: static;
       width: 100%;
       flex-direction: row;
       flex-wrap: wrap;
-      max-height: none;
-      order: 2;
     }
-    .article-main { order: 1; }
-    .sidebar-panel { flex: 1; min-width: 240px; }
+    .article-sidebar :global(.sidebar-panel) {
+      flex: 1;
+      min-width: 260px;
+    }
   }
 
+  /* --- Mobile (≤768px) --- */
   @media (max-width: 768px) {
-    .article-layout { padding: 20px 14px; flex-direction: column; }
-    .article-main { padding: 22px 16px; order: 1; }
-    .article-title { font-size: 1.4rem; }
-    .recommend-grid { grid-template-columns: 1fr; }
-    .article-sidebar { flex-direction: column; order: 2; }
-    .sidebar-panel { min-width: auto; }
-    .pagination { justify-content: center !important; }
+    .article-layout {
+      padding: 20px 14px;
+    }
+    .article-main {
+      padding: 22px 16px;
+    }
+    .article-title {
+      font-size: 1.4rem;
+    }
+    .article-sidebar :global(.sidebar-widget) {
+      flex-direction: column;
+    }
+    .article-sidebar :global(.sidebar-panel) {
+      min-width: auto;
+    }
+    .recommend-grid {
+      grid-template-columns: 1fr;
+    }
+    .article-nav {
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      text-align: center;
+    }
   }
 </style>
 
 <script>
-  const articleContent = document.getElementById('articleContent');
-
   // Share - 直接复制链接到剪贴板
   const shareBtn = document.getElementById('shareBtn');
   shareBtn?.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      // 显示toast提示
       let toast = document.querySelector('.share-toast') as HTMLElement;
       if (!toast) {
         toast = document.createElement('div');
@@ -559,7 +612,6 @@ const recommendPosts = shuffled.slice(0, 2);
         toast.classList.remove('show');
       }, 2000);
     } catch {
-      // fallback
       const textArea = document.createElement('textarea');
       textArea.value = window.location.href;
       textArea.style.position = 'fixed';
@@ -573,18 +625,33 @@ const recommendPosts = shuffled.slice(0, 2);
   });
 
   // ====== TOC (Table of Contents) Generator ======
-  if (articleContent) {
-    const tocNav = document.getElementById('tocNav');
+  const articleContent = document.getElementById('articleContent');
+  const tocNav = document.getElementById('tocNav');
+  const tocSidebar = document.getElementById('articleTocSidebar');
+
+  if (articleContent && tocNav) {
+    // 查找所有 h1-h3 标题
     const headings = articleContent.querySelectorAll('h1, h2, h3');
-    if (headings.length > 0 && tocNav) {
+
+    if (headings.length > 0) {
+      // 显示 TOC 侧边栏
+      if (tocSidebar) tocSidebar.style.display = '';
+
       // Build TOC tree structure: h1 -> h2[] -> h3[]
-      const tocTree: { id: string; text: string; level: number; children: { id: string; text: string; level: number; children: { id: string; text: string; level: number }[] }[] }[] = [];
-      let currentH1: { id: string; text: string; level: number; children: { id: string; text: string; level: number; children: { id: string; text: string; level: number }[] }[] } | null = null;
-      let currentH2: { id: string; text: string; level: number; children: { id: string; text: string; level: number }[] } | null = null;
+      interface TocH3 { id: string; text: string; level: number; }
+      interface TocH2 { id: string; text: string; level: number; children: TocH3[]; }
+      interface TocH1 { id: string; text: string; level: number; children: TocH2[]; }
+
+      const tocTree: TocH1[] = [];
+      let currentH1: TocH1 | null = null;
+      let currentH2: TocH2 | null = null;
 
       headings.forEach((heading, index) => {
         const el = heading as HTMLElement;
-        if (!el.id) el.id = 'heading-' + index;
+        // 确保每个标题都有唯一 ID
+        if (!el.id) {
+          el.id = 'heading-' + index;
+        }
         const text = el.textContent || '';
 
         if (el.tagName === 'H1') {
@@ -592,30 +659,64 @@ const recommendPosts = shuffled.slice(0, 2);
           currentH2 = null;
           tocTree.push(currentH1);
         } else if (el.tagName === 'H2') {
-          const h2Item = { id: el.id, text, level: 2, children: [] as { id: string; text: string; level: number }[] };
+          const h2Item: TocH2 = { id: el.id, text, level: 2, children: [] };
           currentH2 = h2Item;
           if (currentH1) {
             currentH1.children.push(h2Item);
           } else {
+            // 没有 h1 的情况下，创建虚拟 h1
             currentH1 = { id: '', text: '', level: 1, children: [h2Item] };
             tocTree.push(currentH1);
           }
         } else if (el.tagName === 'H3') {
-          const h3Item = { id: el.id, text, level: 3 };
+          const h3Item: TocH3 = { id: el.id, text, level: 3 };
           if (currentH2) {
             currentH2.children.push(h3Item);
           } else if (currentH1) {
-            const virtualH2 = { id: '', text: '', level: 2, children: [h3Item] };
+            // 没有 h2 的情况下，创建虚拟 h2
+            const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
             currentH1.children.push(virtualH2);
             currentH2 = virtualH2;
+          } else {
+            // 既没有 h1 也没有 h2，创建虚拟结构
+            const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
+            currentH1 = { id: '', text: '', level: 1, children: [virtualH2] };
+            currentH2 = virtualH2;
+            tocTree.push(currentH1);
           }
         }
       });
 
-      // Render TOC HTML with proper indentation
+      // Render TOC HTML
       let tocHtml = '';
       tocTree.forEach((h1, i) => {
-        if (!h1.text) return;
+        if (!h1.text) {
+          // 虚拟 h1，直接渲染其子元素
+          h1.children.forEach((h2, j) => {
+            const h2HasChildren = h2.children.length > 0;
+            if (h2.text) {
+              tocHtml += `<div class="toc-h1">`;
+              tocHtml += `<a href="#${h2.id}" class="toc-h1-link" data-id="${h2.id}">`;
+              if (h2HasChildren) {
+                tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+              } else {
+                tocHtml += `<span class="toc-arrow" style="visibility:hidden"><i class="fa-solid fa-chevron-right"></i></span>`;
+              }
+              tocHtml += `${h2.text}</a>`;
+
+              if (h2HasChildren) {
+                tocHtml += `<div class="toc-h2-list expanded" id="toc-h2-${i}-${j}">`;
+                h2.children.forEach(h3 => {
+                  tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">${h3.text}</a>`;
+                });
+                tocHtml += `</div>`;
+              }
+              tocHtml += `</div>`;
+            }
+          });
+          return;
+        }
+
         const hasChildren = h1.children.length > 0;
         tocHtml += `<div class="toc-h1">`;
         tocHtml += `<a href="#${h1.id}" class="toc-h1-link" data-id="${h1.id}">`;
@@ -723,8 +824,8 @@ const recommendPosts = shuffled.slice(0, 2);
       });
 
       // Auto-expand first h1 and its first h2
-      const firstH2List = tocNav.querySelector('.toc-h2-list');
-      const firstH1Link = tocNav.querySelector('.toc-h1-link');
+      const firstH2List = tocNav.querySelector('.toc-h2-list:not(.expanded)');
+      const firstH1Link = tocNav.querySelector('.toc-h1-link:not(.expanded)');
       if (firstH2List) firstH2List.classList.add('expanded');
       if (firstH1Link) firstH1Link.classList.add('expanded');
       const firstH3List = tocNav.querySelector('.toc-h3-list');
@@ -733,10 +834,10 @@ const recommendPosts = shuffled.slice(0, 2);
       if (firstH2Link) firstH2Link.classList.add('expanded');
 
       // Scroll spy - highlight active heading
-      const allHeadings = Array.from(headings) as HTMLElement[];
+      const allHeadingEls = Array.from(headings) as HTMLElement[];
       window.addEventListener('scroll', () => {
         let activeId = '';
-        allHeadings.forEach(h => {
+        allHeadingEls.forEach(h => {
           const rect = h.getBoundingClientRect();
           if (rect.top <= 140) {
             activeId = h.id;
@@ -751,9 +852,12 @@ const recommendPosts = shuffled.slice(0, 2);
         }
       });
     } else {
-      const tocPanel = document.getElementById('tocPanel');
-      if (tocPanel) tocPanel.style.display = 'none';
+      // 没有标题时隐藏 TOC 侧边栏
+      if (tocSidebar) tocSidebar.style.display = 'none';
     }
+  } else {
+    // 没有文章内容或TOC容器时隐藏
+    if (tocSidebar) tocSidebar.style.display = 'none';
   }
 
   // TOC collapse button

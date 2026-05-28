@@ -2,13 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
 import { getCollection } from 'astro:content';
+import { formatDateShort } from '../../utils/dateFormat';
 
 const allDiary = await getCollection('diary');
 const dairyPosts = allDiary
   .map(post => ({
     slug: post.slug,
     title: post.data.title,
-    date: post.data.date,
+    date: formatDateShort(post.data.date),
     tags: post.data.tags,
     excerpt: post.data.excerpt || '',
     cover: post.data.cover || '',
@@ -20,8 +21,6 @@ const allTags = [...new Set(dairyPosts.flatMap(p => p.tags))];
 
 <BaseLayout title="旅记">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <div class="filter-bar">
         <div class="search-box">
@@ -60,6 +59,8 @@ const allTags = [...new Set(dairyPosts.flatMap(p => p.tags))];
       <!-- Pagination -->
       <div class="pagination" id="pagination"></div>
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -184,14 +185,19 @@ const allTags = [...new Set(dairyPosts.flatMap(p => p.tags))];
 
   /* 分页样式已移至 global.css */
 
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column-reverse; }
+    .page-layout { flex-direction: column; }
     .blog-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {
     .blog-grid { grid-template-columns: 1fr; }
-    .pagination { justify-content: center !important; }
   }
 </style>
 

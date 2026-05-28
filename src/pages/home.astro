@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../../config';
 import { getCollection } from 'astro:content';
+import { formatDateShort } from '../utils/dateFormat';
 
 const allPots = await getCollection('pots');
 const allDiary = await getCollection('diary');
@@ -15,12 +16,67 @@ const allDates = [
   ...allPots.map(p => p.data.published || p.data.date || ''),
   ...allDiary.map(d => d.data.date || ''),
 ].filter(Boolean).sort().reverse();
-const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
+const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
 ---
 
 <BaseLayout title="尺素">
   <div class="home-container">
-    <!-- Left Sidebar - 三个小板块竖直排列 -->
+    <!-- Right Content (first in DOM for mobile, reordered on desktop) -->
+    <main class="home-main">
+      <!-- 青矜 (Typewriter) -->
+      <section class="home-section">
+        <h2 class="section-title">青衿</h2>
+        <div class="section-card card">
+          <div class="typewriter-content">
+            <div class="typewriter-text" id="typewriterText"></div>
+            <span class="typewriter-cursor">|</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 悟我 (About Me) -->
+      <section class="home-section">
+        <h2 class="section-title">悟我</h2>
+        <div class="section-card card">
+          <p>你好，欢迎来到我的个人主页。</p>
+          <p>这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。</p>
+          <p>这里存放的，不仅是我的思考，还有对美好生活的向往。</p>
+          <div class="about-links">
+            <a href="https://github.com/qitinyu" target="_blank" rel="noopener" class="about-link">
+              <i class="fa-brands fa-github"></i> GitHub
+            </a>
+            <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
+              <i class="fa-solid fa-globe"></i> 主站
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 项目展示 -->
+      <section class="home-section">
+        <h2 class="section-title">项目展示</h2>
+        <div class="projects-grid">
+          {siteConfig.projects.map((project) => (
+            <article class="project-card card">
+              <div class="project-card-body">
+                <h3 class="project-name">{project.name}</h3>
+                <p class="project-desc">{project.desc}</p>
+              </div>
+              <div class="project-card-footer">
+                <a href={project.preview} target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+                  <i class="fa-solid fa-eye"></i> 预览
+                </a>
+                <a href={project.github} target="_blank" rel="noopener" class="project-github" title="查看源码">
+                  <i class="fa-brands fa-github"></i>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+
+    <!-- Left Sidebar (after content in DOM for mobile, reordered to left on desktop) -->
     <aside class="home-sidebar">
 
       <!-- 板块1：个人信息 -->
@@ -31,7 +87,7 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
         </div>
         <div class="panel-body">
           <div class="sidebar-avatar-wrap">
-            <img src={siteConfig.avatar || '/home/avatar.webp'} alt={siteConfig.author || 'Yuami'} class="sidebar-avatar" />
+            <img src={siteConfig.avatar || '/home/avatar.webp'} alt="Yuami" class="sidebar-avatar" />
           </div>
           <h2 class="sidebar-name">{siteConfig.author || 'Yuami'}</h2>
           <p class="sidebar-motto">{siteConfig.subtitle}</p>
@@ -102,61 +158,6 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
       )}
 
     </aside>
-
-    <!-- Right Content -->
-    <main class="home-main">
-      <!-- 青矜 (Typewriter) -->
-      <section class="home-section">
-        <h2 class="section-title">青衿</h2>
-        <div class="section-card card">
-          <div class="typewriter-content">
-            <div class="typewriter-text" id="typewriterText"></div>
-            <span class="typewriter-cursor">|</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 悟我 (About Me) -->
-      <section class="home-section">
-        <h2 class="section-title">悟我</h2>
-        <div class="section-card card">
-          <p>你好，欢迎来到我的个人主页。</p>
-          <p>这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。</p>
-          <p>这里存放的，不仅是我的思考，还有对美好生活的向往。</p>
-          <div class="about-links">
-            <a href="https://github.com/qitinyu" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-brands fa-github"></i> GitHub
-            </a>
-            <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-solid fa-globe"></i> 主站
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- 项目展示 -->
-      <section class="home-section">
-        <h2 class="section-title">项目展示</h2>
-        <div class="projects-grid">
-          {siteConfig.projects.map((project) => (
-            <article class="project-card card">
-              <div class="project-card-body">
-                <h3 class="project-name">{project.name}</h3>
-                <p class="project-desc">{project.desc}</p>
-              </div>
-              <div class="project-card-footer">
-                <a href={project.preview} target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
-                  <i class="fa-solid fa-eye"></i> 预览
-                </a>
-                <a href={project.github} target="_blank" rel="noopener" class="project-github" title="查看源码">
-                  <i class="fa-brands fa-github"></i>
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
   </div>
 </BaseLayout>
 
@@ -170,11 +171,12 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
     min-height: calc(100vh - var(--nav-height) - 80px);
   }
 
-  /* --- Left Sidebar --- */
+  /* --- Left Sidebar (appears on left on desktop, below content on mobile) --- */
   .home-sidebar {
     width: var(--sidebar-width);
     min-width: 260px;
     flex-shrink: 0;
+    order: -1; /* Move to left side on desktop */
     position: sticky;
     top: calc(var(--nav-height) + 16px);
     height: fit-content;
@@ -487,9 +489,10 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
   }
 
   @media (max-width: 1024px) {
-    .home-container { flex-direction: column-reverse; }
+    .home-container { flex-direction: column; }
     .home-sidebar {
       position: static;
+      order: 0;
       width: 100%;
       flex-direction: row;
       flex-wrap: wrap;
@@ -499,10 +502,12 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
 
   @media (max-width: 768px) {
     .projects-grid { grid-template-columns: 1fr; }
-    .home-sidebar { flex-direction: column; }
+    .home-sidebar {
+      flex-direction: column;
+      order: 0;
+    }
     .sidebar-panel { min-width: auto; }
     .home-container { padding: 20px 14px; gap: 16px; }
-    .pagination { justify-content: center !important; }
   }
 </style>
 

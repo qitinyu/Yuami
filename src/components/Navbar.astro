@@ -2,14 +2,21 @@
 import { siteConfig } from '../../config';
 const currentPath = Astro.url.pathname;
 const colorPickerEnabled = siteConfig.themeColorPicker?.enabled ?? false;
+const logoType = siteConfig.logo?.type || 'both';
+const logoText = siteConfig.logo?.text || siteConfig.title || 'Yuami';
+const logoImage = siteConfig.logo?.image || '';
 ---
 
 <nav class="navbar glass" id="navbar">
   <div class="navbar-inner">
     <!-- Logo -->
-    <a href="/blog" class="navbar-logo" title={siteConfig.title}>
-      {siteConfig.logo?.image && <img src={siteConfig.logo.image} alt={siteConfig.title} class="logo-img" />}
-      {siteConfig.logo?.text && <span class="logo-text">{siteConfig.logo.text}</span>}
+    <a href="/blog" class="navbar-logo" title={logoText}>
+      {(logoType === 'image' || logoType === 'both') && logoImage && (
+        <img src={logoImage} alt={logoText} class="logo-img" />
+      )}
+      {(logoType === 'text' || logoType === 'both') && (
+        <span class="logo-text">{logoText}</span>
+      )}
     </a>
 
     <!-- Desktop Navigation -->
