@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
 import { getCollection } from 'astro:content';
+import { formatDateShort } from '../../utils/dateFormat';
 
 const allPots = await getCollection('pots');
 
@@ -15,33 +16,26 @@ const allDates = [
   ...allPots.map(p => p.data.published || p.data.date || ''),
   ...allDiary.map(d => d.data.date || ''),
 ].filter(Boolean).sort().reverse();
-const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
+const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
 
 const blogPosts = allPots
   .map(post => ({
     slug: post.slug,
     title: post.data.title,
-    date: (post.data.published || post.data.date || '').substring(0, 10),
-    isoDate: post.data.published || post.data.date || '',
+    date: formatDateShort(post.data.published || post.data.date || ''),
     tags: post.data.tags || [],
     excerpt: post.data.description || post.data.excerpt || '',
     cover: post.data.image || post.data.cover || '',
     encrypted: post.data.encrypted || false,
     author: post.data.author || '',
   }))
-  .sort((a, b) => new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime());
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 ---
 
 <BaseLayout title="博文">
   <div class="page-layout">
-    <SidebarWidget
-      totalPosts={totalPosts}
-      totalWords={totalWords}
-      lastEdit={lastEdit}
-    />
-
     <div class="page-main">
       <!-- Search & Filter -->
       <div class="filter-bar">
@@ -65,7 +59,6 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
               <div class="blog-card-body">
                 <div class="blog-card-meta">
                   <span class="blog-date"><i class="fa-regular fa-calendar"></i> {post.date}</span>
-                  <time datetime={post.isoDate} class="sr-only">{post.isoDate}</time>
                   {post.encrypted && <span class="blog-encrypted"><i class="fa-solid fa-lock"></i></span>}
                   {post.author && <span class="blog-author"><i class="fa-solid fa-user-pen"></i> {post.author}</span>}
                 </div>
@@ -85,6 +78,12 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
       <!-- Pagination -->
       <div class="pagination" id="pagination"></div>
     </div>
+
+    <SidebarWidget
+      totalPosts={totalPosts}
+      totalWords={totalWords}
+      lastEdit={lastEdit}
+    />
   </div>
 </BaseLayout>
 
@@ -243,8 +242,14 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 
   /* 分页样式已移至 global.css */
 
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column-reverse; }
+    .page-layout { flex-direction: column; }
     .blog-grid {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -254,7 +259,6 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
     .blog-grid {
       grid-template-columns: 1fr;
     }
-    .pagination { justify-content: center !important; }
   }
 </style>
 

@@ -14,8 +14,6 @@ const statusLabels: Record<string, string> = {
 
 <BaseLayout title="番剧">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <div class="status-filter" id="statusFilter">
         {statuses.map(s => (
@@ -72,6 +70,8 @@ const statusLabels: Record<string, string> = {
       <!-- Twikoo Comments -->
       <Twikoo />
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -280,14 +280,19 @@ const statusLabels: Record<string, string> = {
 
   /* 分页样式已移至 global.css */
 
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column-reverse; }
+    .page-layout { flex-direction: column; }
     .anime-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {
     .anime-grid { grid-template-columns: 1fr; }
-    .pagination { justify-content: center !important; }
   }
 </style>
 

@@ -6,8 +6,6 @@ import { gameList, carouselImages, reflectionText } from '../../data/game';
 
 <BaseLayout title="闲游">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <!-- 页面标题 -->
       <div class="page-header">
@@ -97,6 +95,8 @@ import { gameList, carouselImages, reflectionText } from '../../data/game';
         </div>
       )}
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -432,8 +432,14 @@ import { gameList, carouselImages, reflectionText } from '../../data/game';
   }
 
   /* 手机端适配 */
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column-reverse; }
+    .page-layout { flex-direction: column; }
   }
 
   @media (max-width: 768px) {

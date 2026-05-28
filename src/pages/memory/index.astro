@@ -52,8 +52,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
 
 <BaseLayout title="回忆">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <!-- 相册列表视图 -->
       <div id="albumListView">
@@ -107,6 +105,8 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
         <div class="lightbox-counter" id="lightboxCounter"></div>
       </div>
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -428,8 +428,14 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
 
   /* 分页样式已移至 global.css */
 
+  @media (min-width: 769px) {
+    .page-layout > :global(.sidebar-widget) {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column-reverse; }
+    .page-layout { flex-direction: column; }
     .album-grid { grid-template-columns: repeat(2, 1fr); }
     .photo-grid-view { column-count: 3; }
   }
@@ -437,7 +443,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   @media (max-width: 640px) {
     .album-grid { grid-template-columns: 1fr; }
     .photo-grid-view { column-count: 2; }
-    .pagination { justify-content: center !important; }
   }
 </style>
 
