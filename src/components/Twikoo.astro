@@ -16,6 +16,13 @@ const bare = Astro.props.bare === true;
 
 const twikooEnvId = comment?.twikoo?.envId || '';
 const twikooLang = comment?.twikoo?.lang || 'zh-CN';
+const twikooVersion = comment?.twikoo?.version || '1.7.10';
+const twikooCdn = comment?.twikoo?.cdn || 'https://cdn.jsdelivr.net/npm/twikoo@{version}/dist/twikoo.min.js';
+const twikooFallbackCdn = comment?.twikoo?.fallbackCdn || 'https://registry.npmmirror.com/twikoo@{version}/files/dist/twikoo.min.js';
+
+// 替换 {version} 占位符
+const twikooCdnUrl = twikooCdn.replace('{version}', twikooVersion);
+const twikooFallbackCdnUrl = twikooFallbackCdn.replace('{version}', twikooVersion);
 
 const giscusConfig = comment?.giscus || {};
 ---
@@ -77,7 +84,7 @@ const giscusConfig = comment?.giscus || {};
 )}
 
 {isCommentEnabled && system === 'twikoo' && (
-  <script define:vars={{ twikooEnvId, twikooLang }} is:inline>
+  <script define:vars={{ twikooEnvId, twikooLang, twikooCdnUrl, twikooFallbackCdnUrl }} is:inline>
     (function() {
       const container = document.getElementById('commentContainer');
       if (!container || container.dataset.system !== 'twikoo') return;
@@ -115,10 +122,10 @@ const giscusConfig = comment?.giscus || {};
         }
       }
 
-      loadScript('https://cdn.jsdelivr.net/npm/twikoo@1.7.9/dist/twikoo.min.js')
+      loadScript(twikooCdnUrl)
         .then(initTwikoo)
         .catch(() => {
-          loadScript('https://registry.npmmirror.com/twikoo/1.7.9/files/dist/twikoo.min.js')
+          loadScript(twikooFallbackCdnUrl)
             .then(initTwikoo)
             .catch(() => {
               container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:16px;">评论系统加载失败，请检查网络后刷新重试</p>';

@@ -59,7 +59,7 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
       </div>
       <div class="panel-body">
         <div class:list={['sidebar-avatar-wrap', { mini: compact }]}>
-          <img src="/avatar.webp" alt="Yuami" class="sidebar-avatar" />
+          <img src={siteConfig.avatar || '/home/avatar.webp'} alt={siteConfig.author || 'Yuami'} class="sidebar-avatar" />
         </div>
         <h2 class:list={['sidebar-name', { mini: compact }]}>{siteConfig.author || 'Yuami'}</h2>
         <p class:list={['sidebar-motto', { mini: compact }]}>{siteConfig.subtitle}</p>

@@ -7,9 +7,9 @@ const colorPickerEnabled = siteConfig.themeColorPicker?.enabled ?? false;
 <nav class="navbar glass" id="navbar">
   <div class="navbar-inner">
     <!-- Logo -->
-    <a href="/blog" class="navbar-logo" title="Yuami">
-      <img src="/logo.webp" alt="Yuami" class="logo-img" />
-      <span class="logo-text">Yuami</span>
+    <a href="/blog" class="navbar-logo" title={siteConfig.title}>
+      {siteConfig.logo?.image && <img src={siteConfig.logo.image} alt={siteConfig.title} class="logo-img" />}
+      {siteConfig.logo?.text && <span class="logo-text">{siteConfig.logo.text}</span>}
     </a>
 
     <!-- Desktop Navigation -->

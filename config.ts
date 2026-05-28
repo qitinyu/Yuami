@@ -3,7 +3,23 @@ export const siteConfig = {
   title: 'Yuami',
   subtitle: '生命绚烂，别被黑暗压垮',
   description: 'Yuami的个人博客 - 记录生活、思考与创造',
-  url: 'https://yqamm.cc.cd',
+  url: 'https://8872388.xyz',
+
+  // ========== 头像/Logo/图标配置 ==========
+  // 头像 - 用于侧边栏个人信息展示
+  avatar: '/home/avatar.webp',
+  // 网站图标 - 浏览器标签栏图标 (favicon)
+  icon: '/home/icon.ico',
+  // Logo 配置 - 导航栏左上角显示
+  // 支持三种模式:
+  //   1. 只显示文字logo: logo: { text: 'Yuami' }
+  //   2. 只显示图片logo: logo: { image: '/assets/logo.webp' }
+  //   3. 同时显示图片和文字: logo: { image: '/assets/logo.webp', text: 'Yuami' }
+  logo: {
+    image: '/home/logo.webp',
+    text: 'Yuami',
+  },
+
   author: 'Yuami',
   email: '484894496@qq.com',
   themeColor: '#7D98F5',
@@ -30,19 +46,19 @@ export const siteConfig = {
 
   // ========== 樱花飘落效果配置 ==========
   sakura: {
-    enabled: true,        // 开启/关闭樱花飘落效果（true: 开启, false: 关闭）
-    petals: 30,           // 同时飘落的花瓣数量
-    minSize: 12,          // 最小花瓣大小（px）
-    maxSize: 26,          // 最大花瓣大小（px）
-    minDuration: 5,       // 最短飘落时间（秒）
-    maxDuration: 10,      // 最长飘落时间（秒）
-    color: '#ffb7c5',     // 花瓣主色
-    mobileOff: false,     // 手机端是否关闭
+    enabled: true,
+    petals: 30,
+    minSize: 12,
+    maxSize: 26,
+    minDuration: 5,
+    maxDuration: 10,
+    color: '#ffb7c5',
+    mobileOff: false,
   },
 
   // ========== 音乐播放器配置 ==========
   music: {
-    enabled: true,       // 开启/关闭音乐播放器（true: 开启, false: 关闭）
+    enabled: true,
     api: 'https://api.qijieya.cn/meting/',
     server: 'netease',
     type: 'playlist',
@@ -51,11 +67,18 @@ export const siteConfig = {
 
   // ========== 评论系统配置 ==========
   comment: {
-    enable: true,         // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
-    system: 'twikoo',     // 评论系统选择: "twikoo" | "giscus"
+    enable: true,
+    system: 'twikoo',
     twikoo: {
       envId: 'https://netlify-nt.netlify.app/.netlify/functions/twikoo',
       lang: 'zh-CN',
+      // Twikoo 前端 CDN 版本配置
+      // 修改 version 可升级前端版本，如 '1.7.10'
+      // cdn 可替换为自定义 CDN 地址
+      version: '1.7.10',
+      cdn: 'https://s4.zstatic.net/npm/twikoo@{version}/dist/twikoo.min.js',
+      // 备用 CDN（主 CDN 加载失败时使用）
+      fallbackCdn: 'https://registry.npmmirror.com/twikoo@{version}/files/dist/twikoo.min.js',
     },
     giscus: {
       repo: 'qitinyu/yuami-giscus',
@@ -75,7 +98,7 @@ export const siteConfig = {
 
   // ========== Umami 统计配置 ==========
   umami: {
-    enabled: false,        // 开启/关闭Umami统计（true: 开启, false: 关闭）
+    enabled: false,
     src: 'https://cloud.umami.is/script.js',
     websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
   },
@@ -101,15 +124,13 @@ export const siteConfig = {
 
   // ========== 站点统计配置 ==========
   siteStats: {
-    enabled: true,        // 开启/关闭站点统计显示（true: 开启, false: 关闭）
+    enabled: true,
     startDate: '2026-05-21',
-    // totalPosts 和 totalWords 现在由构建时自动统计，无需手动填写
-    // lastEdit 也由构建时自动统计
   },
 
   // ========== 站点公告 ==========
   siteAnnouncements: {
-    enabled: true,        // 开启/关闭站点公告显示（true: 开启, false: 关闭）
+    enabled: true,
     items: [
       { date: '2026-05-21', text: '博客功能持续更新中，欢迎反馈建议！' },
       { date: '2026-05-18', text: '博客正式上线，欢迎访问！' },

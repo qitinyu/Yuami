@@ -120,14 +120,14 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
       <section class="home-section">
         <h2 class="section-title">悟我</h2>
         <div class="section-card card">
-          <p>欢迎来到我的个人主页。</p>
+          <p>你好，欢迎来到我的个人主页。</p>
           <p>这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。</p>
           <p>这里存放的，不仅是我的思考，还有对美好生活的向往。</p>
           <div class="about-links">
             <a href="https://github.com/qitinyu" target="_blank" rel="noopener" class="about-link">
               <i class="fa-brands fa-github"></i> GitHub
             </a>
-            <a href="https://8872388.xyz" target="_blank" rel="noopener" class="about-link">
+            <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
               <i class="fa-solid fa-globe"></i> 主站
             </a>
           </div>
@@ -227,8 +227,8 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
 
   /* 圆形头像 - 较大 */
   .sidebar-avatar-wrap {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid var(--primary-alpha-30);
@@ -487,7 +487,7 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
   }
 
   @media (max-width: 1024px) {
-    .home-container { flex-direction: column; }
+    .home-container { flex-direction: column-reverse; }
     .home-sidebar {
       position: static;
       width: 100%;
@@ -502,6 +502,7 @@ const lastEdit = allDates[0] ? allDates[0].substring(0, 10) : '';
     .home-sidebar { flex-direction: column; }
     .sidebar-panel { min-width: auto; }
     .home-container { padding: 20px 14px; gap: 16px; }
+    .pagination { justify-content: center !important; }
   }
 </style>
 

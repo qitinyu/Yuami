@@ -300,6 +300,24 @@ button {
   .container {
     padding: 0 14px;
   }
+  /* 移动端侧边栏移到内容下方 */
+  .page-layout {
+    flex-direction: column-reverse;
+  }
+  .article-layout {
+    flex-direction: column;
+  }
+  .article-layout .article-sidebar {
+    order: 2;
+  }
+  .article-layout .article-main {
+    order: 1;
+  }
+  /* 移动端分页居中 */
+  .pagination {
+    justify-content: center !important;
+    text-align: center;
+  }
 }
 
 @media (max-width: 480px) {

@@ -10,7 +10,7 @@ export const carouselImages = [
 ];
 
 // 闲游感悟
-export const reflectionText = '可是世界，真的是如此美丽！';
+export const reflectionText = '游戏是另一种人生，每一局都是新的开始。';
 
 // 游戏列表
 export const gameList = [

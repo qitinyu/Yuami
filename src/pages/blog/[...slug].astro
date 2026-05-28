@@ -64,7 +64,7 @@ const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
         <div class="panel-header"><i class="fa-solid fa-user"></i><span>个人信息</span></div>
         <div class="panel-body">
           <div class="mini-avatar">
-            <img src="/avatar.webp" alt="Yuami" />
+            <img src={siteConfig.avatar || '/home/avatar.webp'} alt="Yuami" />
           </div>
           <div class="mini-name">{author || 'Yuami'}</div>
           <div class="mini-motto">生命绚烂，别被黑暗压垮</div>
@@ -637,17 +637,20 @@ const startDateStat = siteConfig.siteStats?.startDate || '2026-01-01';
       flex-direction: row;
       flex-wrap: wrap;
       max-height: none;
+      order: 2;
     }
+    .article-main { order: 1; }
     .sidebar-panel { flex: 1; min-width: 240px; }
   }
 
   @media (max-width: 768px) {
-    .article-layout { padding: 20px 14px; }
-    .article-main { padding: 22px 16px; }
+    .article-layout { padding: 20px 14px; flex-direction: column; }
+    .article-main { padding: 22px 16px; order: 1; }
     .article-title { font-size: 1.4rem; }
     .recommend-grid { grid-template-columns: 1fr; }
-    .article-sidebar { flex-direction: column; }
+    .article-sidebar { flex-direction: column; order: 2; }
     .sidebar-panel { min-width: auto; }
+    .pagination { justify-content: center !important; }
   }
 </style>
 

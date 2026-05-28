@@ -185,12 +185,13 @@ const allTags = [...new Set(dairyPosts.flatMap(p => p.tags))];
   /* 分页样式已移至 global.css */
 
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column; }
+    .page-layout { flex-direction: column-reverse; }
     .blog-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {
     .blog-grid { grid-template-columns: 1fr; }
+    .pagination { justify-content: center !important; }
   }
 </style>
 
