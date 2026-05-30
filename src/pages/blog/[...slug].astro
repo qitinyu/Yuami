@@ -637,330 +637,340 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 </style>
 
 <script>
-  // Share - 直接复制链接到剪贴板
-  const shareBtn = document.getElementById('shareBtn');
-  shareBtn?.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      let toast = document.querySelector('.share-toast') as HTMLElement;
-      if (!toast) {
-        toast = document.createElement('div');
-        toast.className = 'share-toast';
-        toast.textContent = '链接已复制到剪贴板';
-        document.body.appendChild(toast);
-      }
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 2000);
-    } catch {
-      const textArea = document.createElement('textarea');
-      textArea.value = window.location.href;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      alert('链接已复制到剪贴板！');
-    }
-  });
+  let tocAbortController = new AbortController();
 
-  // ====== TOC (Table of Contents) Generator ======
-  // 使用 MutationObserver 确保加密文章解锁后也能正确生成 TOC
-  function buildTOC() {
+  document.addEventListener('astro:page-load', () => {
     const articleContent = document.getElementById('articleContent');
-    const tocNav = document.getElementById('tocNav');
-    const tocSidebar = document.getElementById('articleTocSidebar');
+    if (!articleContent) return;
 
-    if (!articleContent || !tocNav) {
-      if (tocSidebar) tocSidebar.style.display = 'none';
-      return;
-    }
+    tocAbortController.abort();
+    tocAbortController = new AbortController();
+    const tocSignal = tocAbortController.signal;
 
-    // 查找所有 h1-h3 标题（包括加密内容中隐藏的标题）
-    const headings = articleContent.querySelectorAll('h1, h2, h3');
-
-    if (headings.length === 0) {
-      if (tocSidebar) tocSidebar.style.display = 'none';
-      return;
-    }
-
-    // 显示 TOC 侧边栏
-    if (tocSidebar) tocSidebar.style.display = '';
-
-    // Build TOC tree structure
-    interface TocH3 { id: string; text: string; level: number; }
-    interface TocH2 { id: string; text: string; level: number; children: TocH3[]; }
-    interface TocH1 { id: string; text: string; level: number; children: TocH2[]; }
-
-    const tocTree: TocH1[] = [];
-    let currentH1: TocH1 | null = null;
-    let currentH2: TocH2 | null = null;
-    let headingIndex = 0;
-
-    headings.forEach((heading) => {
-      const el = heading as HTMLElement;
-      // 跳过没有文本内容的标题
-      const text = (el.textContent || '').trim();
-      if (!text) return;
-
-      // 确保每个标题都有唯一 ID
-      if (!el.id) {
-        el.id = 'toc-heading-' + headingIndex;
-      }
-      headingIndex++;
-
-      if (el.tagName === 'H1') {
-        currentH1 = { id: el.id, text, level: 1, children: [] };
-        currentH2 = null;
-        tocTree.push(currentH1);
-      } else if (el.tagName === 'H2') {
-        const h2Item: TocH2 = { id: el.id, text, level: 2, children: [] };
-        currentH2 = h2Item;
-        if (currentH1) {
-          currentH1.children.push(h2Item);
-        } else {
-          currentH1 = { id: '', text: '', level: 1, children: [h2Item] };
-          tocTree.push(currentH1);
+    // Share - 直接复制链接到剪贴板
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        let toast = document.querySelector('.share-toast') as HTMLElement;
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.className = 'share-toast';
+          toast.textContent = '链接已复制到剪贴板';
+          document.body.appendChild(toast);
         }
-      } else if (el.tagName === 'H3') {
-        const h3Item: TocH3 = { id: el.id, text, level: 3 };
-        if (currentH2) {
-          currentH2.children.push(h3Item);
-        } else if (currentH1) {
-          const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
-          currentH1.children.push(virtualH2);
-          currentH2 = virtualH2;
-        } else {
-          const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
-          currentH1 = { id: '', text: '', level: 1, children: [virtualH2] };
-          currentH2 = virtualH2;
-          tocTree.push(currentH1);
-        }
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2000);
+      } catch {
+        const textArea = document.createElement('textarea');
+        textArea.value = window.location.href;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('链接已复制到剪贴板！');
       }
     });
 
-    // Render TOC HTML
-    let tocHtml = '';
+    // ====== TOC (Table of Contents) Generator ======
+    // 使用 MutationObserver 确保加密文章解锁后也能正确生成 TOC
+    function buildTOC() {
+      const tocNav = document.getElementById('tocNav');
+      const tocSidebar = document.getElementById('articleTocSidebar');
 
-    function renderH1(h1: TocH1, i: number) {
-      if (!h1.text) {
-        // 虚拟 h1，直接渲染其 h2 子元素（提升为顶级）
-        h1.children.forEach((h2, j) => {
-          renderH2AsTop(h2, i, j);
-        });
+      if (!articleContent || !tocNav) {
+        if (tocSidebar) tocSidebar.style.display = 'none';
         return;
       }
 
-      const hasChildren = h1.children.length > 0;
-      tocHtml += `<div class="toc-h1">`;
-      tocHtml += `<a href="#${h1.id}" class="toc-h1-link" data-id="${h1.id}">`;
-      tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
-      tocHtml += `<span class="toc-text">${h1.text}</span></a>`;
+      // 查找所有 h1-h3 标题（包括加密内容中隐藏的标题）
+      const headings = articleContent.querySelectorAll('h1, h2, h3');
 
-      if (hasChildren) {
-        tocHtml += `<div class="toc-h2-list" id="toc-h2-${i}">`;
-        h1.children.forEach((h2, j) => {
-          renderH2(h2, i, j);
-        });
+      if (headings.length === 0) {
+        if (tocSidebar) tocSidebar.style.display = 'none';
+        return;
+      }
+
+      // 显示 TOC 侧边栏
+      if (tocSidebar) tocSidebar.style.display = '';
+
+      // Build TOC tree structure
+      interface TocH3 { id: string; text: string; level: number; }
+      interface TocH2 { id: string; text: string; level: number; children: TocH3[]; }
+      interface TocH1 { id: string; text: string; level: number; children: TocH2[]; }
+
+      const tocTree: TocH1[] = [];
+      let currentH1: TocH1 | null = null;
+      let currentH2: TocH2 | null = null;
+      let headingIndex = 0;
+
+      headings.forEach((heading) => {
+        const el = heading as HTMLElement;
+        // 跳过没有文本内容的标题
+        const text = (el.textContent || '').trim();
+        if (!text) return;
+
+        // 确保每个标题都有唯一 ID
+        if (!el.id) {
+          el.id = 'toc-heading-' + headingIndex;
+        }
+        headingIndex++;
+
+        if (el.tagName === 'H1') {
+          currentH1 = { id: el.id, text, level: 1, children: [] };
+          currentH2 = null;
+          tocTree.push(currentH1);
+        } else if (el.tagName === 'H2') {
+          const h2Item: TocH2 = { id: el.id, text, level: 2, children: [] };
+          currentH2 = h2Item;
+          if (currentH1) {
+            currentH1.children.push(h2Item);
+          } else {
+            currentH1 = { id: '', text: '', level: 1, children: [h2Item] };
+            tocTree.push(currentH1);
+          }
+        } else if (el.tagName === 'H3') {
+          const h3Item: TocH3 = { id: el.id, text, level: 3 };
+          if (currentH2) {
+            currentH2.children.push(h3Item);
+          } else if (currentH1) {
+            const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
+            currentH1.children.push(virtualH2);
+            currentH2 = virtualH2;
+          } else {
+            const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
+            currentH1 = { id: '', text: '', level: 1, children: [virtualH2] };
+            currentH2 = virtualH2;
+            tocTree.push(currentH1);
+          }
+        }
+      });
+
+      // Render TOC HTML
+      let tocHtml = '';
+
+      function renderH1(h1: TocH1, i: number) {
+        if (!h1.text) {
+          // 虚拟 h1，直接渲染其 h2 子元素（提升为顶级）
+          h1.children.forEach((h2, j) => {
+            renderH2AsTop(h2, i, j);
+          });
+          return;
+        }
+
+        const hasChildren = h1.children.length > 0;
+        tocHtml += `<div class="toc-h1">`;
+        tocHtml += `<a href="#${h1.id}" class="toc-h1-link" data-id="${h1.id}">`;
+        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-text">${h1.text}</span></a>`;
+
+        if (hasChildren) {
+          tocHtml += `<div class="toc-h2-list" id="toc-h2-${i}">`;
+          h1.children.forEach((h2, j) => {
+            renderH2(h2, i, j);
+          });
+          tocHtml += `</div>`;
+        }
         tocHtml += `</div>`;
       }
-      tocHtml += `</div>`;
-    }
 
-    function renderH2AsTop(h2: TocH2, i: number, j: number) {
-      const h2HasChildren = h2.children.length > 0;
-      if (!h2.text) return;
-      tocHtml += `<div class="toc-h1">`;
-      tocHtml += `<a href="#${h2.id}" class="toc-h1-link" data-id="${h2.id}">`;
-      tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
-      tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
+      function renderH2AsTop(h2: TocH2, i: number, j: number) {
+        const h2HasChildren = h2.children.length > 0;
+        if (!h2.text) return;
+        tocHtml += `<div class="toc-h1">`;
+        tocHtml += `<a href="#${h2.id}" class="toc-h1-link" data-id="${h2.id}">`;
+        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
 
-      if (h2HasChildren) {
-        tocHtml += `<div class="toc-h2-list expanded" id="toc-h2-v-${i}-${j}">`;
-        h2.children.forEach((h3, k) => {
-          renderH3(h3, i, j, k);
-        });
-        tocHtml += `</div>`;
-      }
-      tocHtml += `</div>`;
-    }
-
-    function renderH2(h2: TocH2, i: number, j: number) {
-      const h2HasChildren = h2.children.length > 0;
-      if (!h2.text) {
-        // 虚拟 h2，直接渲染 h3
         if (h2HasChildren) {
+          tocHtml += `<div class="toc-h2-list expanded" id="toc-h2-v-${i}-${j}">`;
           h2.children.forEach((h3, k) => {
             renderH3(h3, i, j, k);
           });
+          tocHtml += `</div>`;
         }
-        return;
-      }
-      tocHtml += `<div class="toc-h2-item">`;
-      tocHtml += `<a href="#${h2.id}" class="toc-h2-link" data-id="${h2.id}">`;
-      tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
-      tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
-
-      if (h2HasChildren) {
-        tocHtml += `<div class="toc-h3-list" id="toc-h3-${i}-${j}">`;
-        h2.children.forEach((h3, k) => {
-          renderH3(h3, i, j, k);
-        });
         tocHtml += `</div>`;
       }
-      tocHtml += `</div>`;
-    }
 
-    function renderH3(h3: TocH3, i: number, j: number, k: number) {
-      tocHtml += `<div class="toc-h3-item">`;
-      tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">${h3.text}</a>`;
-      tocHtml += `</div>`;
-    }
-
-    tocTree.forEach((h1, i) => renderH1(h1, i));
-    tocNav.innerHTML = tocHtml;
-
-    // ===== 展开折叠逻辑 =====
-    const h1Links = tocNav.querySelectorAll('.toc-h1-link');
-    const h2Links = tocNav.querySelectorAll('.toc-h2-link');
-    const h3Links = tocNav.querySelectorAll('.toc-h3-link');
-
-    // h1 点击展开/折叠 h2 列表
-    h1Links.forEach(link => {
-      link.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
-        const h1Div = target.closest('.toc-h1');
-        const subList = h1Div?.querySelector('.toc-h2-list') as HTMLElement | null;
-        if (subList) {
-          e.preventDefault();
-          subList.classList.toggle('expanded');
-          target.classList.toggle('expanded');
-        }
-        const headingId = target.getAttribute('data-id');
-        if (headingId) {
-          const headingEl = document.getElementById(headingId);
-          if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-    });
-
-    // h2 点击展开/折叠 h3 列表
-    h2Links.forEach(link => {
-      link.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
-        const h2Item = target.closest('.toc-h2-item');
-        const subList = h2Item?.querySelector('.toc-h3-list') as HTMLElement | null;
-        if (subList) {
-          e.preventDefault();
-          subList.classList.toggle('expanded');
-          target.classList.toggle('expanded');
-        }
-        const headingId = target.getAttribute('data-id');
-        if (headingId) {
-          const headingEl = document.getElementById(headingId);
-          if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-    });
-
-    // h3 点击直接跳转
-    h3Links.forEach(link => {
-      link.addEventListener('click', () => {
-        const target = link as HTMLElement;
-        const headingId = target.getAttribute('data-id');
-        if (headingId) {
-          const headingEl = document.getElementById(headingId);
-          if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-    });
-
-    // 自动展开第一级 h1 和 h2
-    const firstH2List = tocNav.querySelector('.toc-h2-list:not(.expanded)');
-    const firstH1Link = tocNav.querySelector('.toc-h1-link:not(.expanded)');
-    if (firstH2List) firstH2List.classList.add('expanded');
-    if (firstH1Link) firstH1Link.classList.add('expanded');
-    const firstH3List = tocNav.querySelector('.toc-h3-list');
-    const firstH2Link = tocNav.querySelector('.toc-h2-link');
-    if (firstH3List) firstH3List.classList.add('expanded');
-    if (firstH2Link) firstH2Link.classList.add('expanded');
-
-    // ===== Scroll Spy - 滚动时高亮当前标题 =====
-    const allHeadingEls = Array.from(headings) as HTMLElement[];
-    let scrollTick = false;
-
-    function updateActiveHeading() {
-      let activeId = '';
-      allHeadingEls.forEach(h => {
-        const rect = h.getBoundingClientRect();
-        if (rect.top <= 140) {
-          activeId = h.id;
-        }
-      });
-
-      // 移除所有 active
-      h1Links.forEach(l => l.classList.remove('active'));
-      h2Links.forEach(l => l.classList.remove('active'));
-      h3Links.forEach(l => l.classList.remove('active'));
-
-      if (activeId) {
-        const activeLink = tocNav.querySelector(`[data-id="${activeId}"]`);
-        if (activeLink) {
-          activeLink.classList.add('active');
-          // 确保父级列表展开
-          const parentH2List = activeLink.closest('.toc-h2-list');
-          if (parentH2List && !parentH2List.classList.contains('expanded')) {
-            parentH2List.classList.add('expanded');
-            const parentH1Link = parentH2List.previousElementSibling;
-            if (parentH1Link) parentH1Link.classList.add('expanded');
+      function renderH2(h2: TocH2, i: number, j: number) {
+        const h2HasChildren = h2.children.length > 0;
+        if (!h2.text) {
+          // 虚拟 h2，直接渲染 h3
+          if (h2HasChildren) {
+            h2.children.forEach((h3, k) => {
+              renderH3(h3, i, j, k);
+            });
           }
-          const parentH3List = activeLink.closest('.toc-h3-list');
-          if (parentH3List && !parentH3List.classList.contains('expanded')) {
-            parentH3List.classList.add('expanded');
-            const parentH2Link = parentH3List.previousElementSibling;
-            if (parentH2Link) parentH2Link.classList.add('expanded');
-          }
+          return;
         }
+        tocHtml += `<div class="toc-h2-item">`;
+        tocHtml += `<a href="#${h2.id}" class="toc-h2-link" data-id="${h2.id}">`;
+        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
+
+        if (h2HasChildren) {
+          tocHtml += `<div class="toc-h3-list" id="toc-h3-${i}-${j}">`;
+          h2.children.forEach((h3, k) => {
+            renderH3(h3, i, j, k);
+          });
+          tocHtml += `</div>`;
+        }
+        tocHtml += `</div>`;
       }
-    }
 
-    window.addEventListener('scroll', () => {
-      if (!scrollTick) {
-        requestAnimationFrame(() => {
-          updateActiveHeading();
-          scrollTick = false;
+      function renderH3(h3: TocH3, i: number, j: number, k: number) {
+        tocHtml += `<div class="toc-h3-item">`;
+        tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">${h3.text}</a>`;
+        tocHtml += `</div>`;
+      }
+
+      tocTree.forEach((h1, i) => renderH1(h1, i));
+      tocNav.innerHTML = tocHtml;
+
+      // ===== 展开折叠逻辑 =====
+      const h1Links = tocNav.querySelectorAll('.toc-h1-link');
+      const h2Links = tocNav.querySelectorAll('.toc-h2-link');
+      const h3Links = tocNav.querySelectorAll('.toc-h3-link');
+
+      // h1 点击展开/折叠 h2 列表
+      h1Links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const h1Div = target.closest('.toc-h1');
+          const subList = h1Div?.querySelector('.toc-h2-list') as HTMLElement | null;
+          if (subList) {
+            e.preventDefault();
+            subList.classList.toggle('expanded');
+            target.classList.toggle('expanded');
+          }
+          const headingId = target.getAttribute('data-id');
+          if (headingId) {
+            const headingEl = document.getElementById(headingId);
+            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         });
-        scrollTick = true;
+      });
+
+      // h2 点击展开/折叠 h3 列表
+      h2Links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const h2Item = target.closest('.toc-h2-item');
+          const subList = h2Item?.querySelector('.toc-h3-list') as HTMLElement | null;
+          if (subList) {
+            e.preventDefault();
+            subList.classList.toggle('expanded');
+            target.classList.toggle('expanded');
+          }
+          const headingId = target.getAttribute('data-id');
+          if (headingId) {
+            const headingEl = document.getElementById(headingId);
+            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // h3 点击直接跳转
+      h3Links.forEach(link => {
+        link.addEventListener('click', () => {
+          const target = link as HTMLElement;
+          const headingId = target.getAttribute('data-id');
+          if (headingId) {
+            const headingEl = document.getElementById(headingId);
+            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // 自动展开第一级 h1 和 h2
+      const firstH2List = tocNav.querySelector('.toc-h2-list:not(.expanded)');
+      const firstH1Link = tocNav.querySelector('.toc-h1-link:not(.expanded)');
+      if (firstH2List) firstH2List.classList.add('expanded');
+      if (firstH1Link) firstH1Link.classList.add('expanded');
+      const firstH3List = tocNav.querySelector('.toc-h3-list');
+      const firstH2Link = tocNav.querySelector('.toc-h2-link');
+      if (firstH3List) firstH3List.classList.add('expanded');
+      if (firstH2Link) firstH2Link.classList.add('expanded');
+
+      // ===== Scroll Spy - 滚动时高亮当前标题 =====
+      const allHeadingEls = Array.from(headings) as HTMLElement[];
+      let scrollTick = false;
+
+      function updateActiveHeading() {
+        let activeId = '';
+        allHeadingEls.forEach(h => {
+          const rect = h.getBoundingClientRect();
+          if (rect.top <= 140) {
+            activeId = h.id;
+          }
+        });
+
+        // 移除所有 active
+        h1Links.forEach(l => l.classList.remove('active'));
+        h2Links.forEach(l => l.classList.remove('active'));
+        h3Links.forEach(l => l.classList.remove('active'));
+
+        if (activeId) {
+          const activeLink = tocNav.querySelector(`[data-id="${activeId}"]`);
+          if (activeLink) {
+            activeLink.classList.add('active');
+            // 确保父级列表展开
+            const parentH2List = activeLink.closest('.toc-h2-list');
+            if (parentH2List && !parentH2List.classList.contains('expanded')) {
+              parentH2List.classList.add('expanded');
+              const parentH1Link = parentH2List.previousElementSibling;
+              if (parentH1Link) parentH1Link.classList.add('expanded');
+            }
+            const parentH3List = activeLink.closest('.toc-h3-list');
+            if (parentH3List && !parentH3List.classList.contains('expanded')) {
+              parentH3List.classList.add('expanded');
+              const parentH2Link = parentH3List.previousElementSibling;
+              if (parentH2Link) parentH2Link.classList.add('expanded');
+            }
+          }
+        }
       }
+
+      window.addEventListener('scroll', () => {
+        if (!scrollTick) {
+          requestAnimationFrame(() => {
+            updateActiveHeading();
+            scrollTick = false;
+          });
+          scrollTick = true;
+        }
+      }, { signal: tocSignal });
+
+      // 初始检查一次
+      updateActiveHeading();
+    }
+
+    // 初始构建 TOC
+    buildTOC();
+
+    // 监听加密内容解锁后重新构建 TOC
+    const encryptorContent = document.getElementById('encryptorContent');
+    if (encryptorContent) {
+      const observer = new MutationObserver(() => {
+        // 加密内容显示后重新构建
+        if (encryptorContent.style.display !== 'none') {
+          setTimeout(buildTOC, 100);
+          observer.disconnect(); // 只需重建一次
+        }
+      });
+      observer.observe(encryptorContent, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    // TOC collapse button
+    const tocCollapseBtn = document.getElementById('tocCollapseBtn');
+    const tocBody = document.getElementById('tocBody');
+    tocCollapseBtn?.addEventListener('click', () => {
+      tocCollapseBtn.classList.toggle('collapsed');
+      tocBody?.classList.toggle('collapsed');
     });
-
-    // 初始检查一次
-    updateActiveHeading();
-  }
-
-  // 初始构建 TOC
-  buildTOC();
-
-  // 监听加密内容解锁后重新构建 TOC
-  const encryptorContent = document.getElementById('encryptorContent');
-  if (encryptorContent) {
-    const observer = new MutationObserver(() => {
-      // 加密内容显示后重新构建
-      if (encryptorContent.style.display !== 'none') {
-        setTimeout(buildTOC, 100);
-        observer.disconnect(); // 只需重建一次
-      }
-    });
-    observer.observe(encryptorContent, { attributes: true, attributeFilter: ['style'] });
-  }
-
-  // TOC collapse button
-  const tocCollapseBtn = document.getElementById('tocCollapseBtn');
-  const tocBody = document.getElementById('tocBody');
-  tocCollapseBtn?.addEventListener('click', () => {
-    tocCollapseBtn.classList.toggle('collapsed');
-    tocBody?.classList.toggle('collapsed');
   });
 </script>

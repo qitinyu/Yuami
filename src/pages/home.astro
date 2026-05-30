@@ -46,7 +46,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
               <i class="fa-brands fa-github"></i> GitHub
             </a>
             <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-solid fa-globe"></i> 导航
+              <i class="fa-solid fa-globe"></i> 主站
             </a>
           </div>
         </div>
@@ -54,7 +54,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
 
       <!-- 项目展示 -->
       <section class="home-section">
-        <h2 class="section-title">拾遗</h2>
+        <h2 class="section-title">项目展示</h2>
         <div class="projects-grid">
           {siteConfig.projects.map((project) => (
             <article class="project-card card">
@@ -512,70 +512,76 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
 </style>
 
 <script>
-  // 站点统计数据 - 从 data attributes 读取配置
-  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
-  if (statList) {
-    const startDate = statList.dataset.startDate || '2026-01-01';
-    const totalPosts = parseInt(statList.dataset.totalPosts || '0');
-    const totalWords = parseInt(statList.dataset.totalWords || '0');
-    const lastEdit = statList.dataset.lastEdit || '';
+  let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  document.addEventListener('astro:page-load', () => {
+    // 站点统计数据 - 从 data attributes 读取配置
+    const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
+    if (statList) {
+      const startDate = statList.dataset.startDate || '2026-01-01';
+      const totalPosts = parseInt(statList.dataset.totalPosts || '0');
+      const totalWords = parseInt(statList.dataset.totalWords || '0');
+      const lastEdit = statList.dataset.lastEdit || '';
 
-    const statPosts = document.getElementById('homeStatPosts');
-    const statWords = document.getElementById('homeStatWords');
-    const statDays = document.getElementById('homeStatDays');
-    const statLastEdit = document.getElementById('homeStatLastEdit');
+      const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
 
-    if (statDays) statDays.textContent = days + ' 天';
-    if (statPosts) statPosts.textContent = totalPosts + ' 篇';
-    if (statWords) {
-      if (totalWords >= 10000) {
-        statWords.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
-      } else {
-        statWords.textContent = totalWords + ' 字';
+      const statPosts = document.getElementById('homeStatPosts');
+      const statWords = document.getElementById('homeStatWords');
+      const statDays = document.getElementById('homeStatDays');
+      const statLastEdit = document.getElementById('homeStatLastEdit');
+
+      if (statDays) statDays.textContent = days + ' 天';
+      if (statPosts) statPosts.textContent = totalPosts + ' 篇';
+      if (statWords) {
+        if (totalWords >= 10000) {
+          statWords.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
+        } else {
+          statWords.textContent = totalWords + ' 字';
+        }
+      }
+      if (statLastEdit) {
+        // 只显示日期部分（如 2026-05-24）
+        const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
+        statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
       }
     }
-    if (statLastEdit) {
-      // 只显示日期部分（如 2026-05-24）
-      const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
-      statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
-    }
-  }
 
-  // Typewriter effect
-  const texts = [
-    '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
-    '生活不止眼前的代码，还有星辰与大海。',
-    '生命绚烂，别被黑暗压垮。',
-    '记录生活中的每一份美好与感动。',
-  ];
-
-  const typewriterEl = document.getElementById('typewriterText');
-  let textIndex = 0;
-  let charIndex = 0;
-  let isDeleting = false;
-
-  function typewrite() {
+    // Typewriter effect - clear old timer first
+    if (typewriterTimer) clearTimeout(typewriterTimer);
+    const typewriterEl = document.getElementById('typewriterText');
     if (!typewriterEl) return;
-    const currentText = texts[textIndex];
-    if (isDeleting) {
-      typewriterEl.textContent = currentText.substring(0, charIndex - 1);
-      charIndex--;
-    } else {
-      typewriterEl.textContent = currentText.substring(0, charIndex + 1);
-      charIndex++;
+
+    const texts = [
+      '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
+      '生活不止眼前的代码，还有星辰与大海。',
+      '生命绚烂，别被黑暗压垮。',
+      '记录生活中的每一份美好与感动。',
+    ];
+
+    let textIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    function typewrite() {
+      const currentText = texts[textIndex];
+      if (isDeleting) {
+        typewriterEl.textContent = currentText.substring(0, charIndex - 1);
+        charIndex--;
+      } else {
+        typewriterEl.textContent = currentText.substring(0, charIndex + 1);
+        charIndex++;
+      }
+      let delay = isDeleting ? 40 : 80;
+      if (!isDeleting && charIndex === currentText.length) {
+        delay = 2500;
+        isDeleting = true;
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        textIndex = (textIndex + 1) % texts.length;
+        delay = 500;
+      }
+      typewriterTimer = setTimeout(typewrite, delay);
     }
-    let delay = isDeleting ? 40 : 80;
-    if (!isDeleting && charIndex === currentText.length) {
-      delay = 2500;
-      isDeleting = true;
-    } else if (isDeleting && charIndex === 0) {
-      isDeleting = false;
-      textIndex = (textIndex + 1) % texts.length;
-      delay = 500;
-    }
-    setTimeout(typewrite, delay);
-  }
-  typewrite();
+    typewrite();
+  });
 </script>

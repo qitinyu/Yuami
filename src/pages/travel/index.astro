@@ -208,103 +208,108 @@ const allTags = [...new Set(dairyPosts.flatMap(p => p.tags))];
 </style>
 
 <script>
-  const ITEMS_PER_PAGE = 6;
+  document.addEventListener('astro:page-load', () => {
+    const blogGrid = document.getElementById('blogGrid');
+    if (!blogGrid) return;
 
-  const tagFilter = document.getElementById('tagFilter');
-  const cards = Array.from(document.querySelectorAll('.blog-card'));
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  const paginationEl = document.getElementById('pagination');
+    const ITEMS_PER_PAGE = 6;
 
-  let currentPage = 1;
-  let currentTag = 'all';
-  let searchQuery = '';
+    const tagFilter = document.getElementById('tagFilter');
+    const cards = Array.from(document.querySelectorAll('.blog-card'));
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const paginationEl = document.getElementById('pagination');
 
-  function getFilteredCards() {
-    return cards.filter(card => {
-      const el = card as HTMLElement;
-      const tags = el.dataset.tags || '';
-      const title = el.dataset.title?.toLowerCase() || '';
-      const tagMatch = currentTag === 'all' || tags.includes(currentTag);
-      const searchMatch = !searchQuery || title.includes(searchQuery);
-      return tagMatch && searchMatch;
-    });
-  }
+    let currentPage = 1;
+    let currentTag = 'all';
+    let searchQuery = '';
 
-  function renderPagination(filteredCards: HTMLElement[]) {
-    if (!paginationEl) return;
-    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
-    if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
-    paginationEl.classList.remove('hidden');
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    let html = '';
-    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
+    function getFilteredCards() {
+      return cards.filter(card => {
+        const el = card as HTMLElement;
+        const tags = el.dataset.tags || '';
+        const title = el.dataset.title?.toLowerCase() || '';
+        const tagMatch = currentTag === 'all' || tags.includes(currentTag);
+        const searchMatch = !searchQuery || title.includes(searchQuery);
+        return tagMatch && searchMatch;
+      });
     }
-    if (startPage > 1) {
-      html += `<button class="page-btn" data-page="1">1</button>`;
-      if (startPage > 2) {
-        html += `<span class="page-ellipsis">...</span>`;
+
+    function renderPagination(filteredCards: HTMLElement[]) {
+      if (!paginationEl) return;
+      const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+      if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
+      paginationEl.classList.remove('hidden');
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      let html = '';
+      html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
       }
-    }
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-    }
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        html += `<span class="page-ellipsis">...</span>`;
+      if (startPage > 1) {
+        html += `<button class="page-btn" data-page="1">1</button>`;
+        if (startPage > 2) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
       }
-      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      }
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
+        html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      }
+      html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+      paginationEl.innerHTML = html;
     }
-    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
-    paginationEl.innerHTML = html;
-  }
 
-  function applyFilters() {
-    const filteredCards = getFilteredCards();
-    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
-    if (currentPage > totalPages) currentPage = totalPages;
+    function applyFilters() {
+      const filteredCards = getFilteredCards();
+      const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+      if (currentPage > totalPages) currentPage = totalPages;
 
-    cards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    filteredCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
-      (card as HTMLElement).classList.remove('hidden-page');
-      (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+      cards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      filteredCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
+        (card as HTMLElement).classList.remove('hidden-page');
+        (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+      });
+      renderPagination(filteredCards);
+    }
+
+    tagFilter?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.classList.contains('tag')) return;
+      tagFilter.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+      target.classList.add('active');
+      currentTag = target.dataset.tag || 'all';
+      currentPage = 1;
+      applyFilters();
     });
-    renderPagination(filteredCards);
-  }
 
-  tagFilter?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.classList.contains('tag')) return;
-    tagFilter.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
-    target.classList.add('active');
-    currentTag = target.dataset.tag || 'all';
-    currentPage = 1;
+    searchInput?.addEventListener('input', (e) => {
+      searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+      currentPage = 1;
+      applyFilters();
+    });
+
+    paginationEl?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLElement;
+      if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
+      const action = btn.dataset.action;
+      const page = btn.dataset.page;
+      if (action === 'prev') currentPage--;
+      else if (action === 'next') currentPage++;
+      else if (page) currentPage = parseInt(page);
+      applyFilters();
+      document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
     applyFilters();
   });
-
-  searchInput?.addEventListener('input', (e) => {
-    searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
-    currentPage = 1;
-    applyFilters();
-  });
-
-  paginationEl?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLElement;
-    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
-    const action = btn.dataset.action;
-    const page = btn.dataset.page;
-    if (action === 'prev') currentPage--;
-    else if (action === 'next') currentPage++;
-    else if (page) currentPage = parseInt(page);
-    applyFilters();
-    document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  applyFilters();
 </script>

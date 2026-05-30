@@ -5,6 +5,7 @@ import Footer from '../components/Footer.astro';
 import Sakura from '../components/Sakura.astro';
 import FloatingButtons from '../components/FloatingButtons.astro';
 import Live2D from '../components/Live2D.astro';
+import { ViewTransitions } from 'astro:transitions';
 import { siteConfig } from '../../config';
 
 interface Props {
@@ -63,6 +64,7 @@ const sakuraEnabled = siteConfig.sakura?.enabled !== false;
       }
     </style>
     <title>{fullTitle}</title>
+    <ViewTransitions />
     <!-- Prevent flash of wrong theme -->
     <script is:inline>
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');

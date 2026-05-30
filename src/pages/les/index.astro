@@ -18,7 +18,7 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
 
       <div class="les-grid" id="lesGrid">
         {lesList.map((item, index) => (
-          <article class="les-card card" data-type={item.type} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
+          <article class="les-card card" data-type={item.type} data-status={item.status} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
             <a href={item.url || 'javascript:void(0)'} class="les-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
               <div class="les-cover">
                 {item.cover ? (
@@ -27,7 +27,7 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
                 <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
                   <i class="fa-solid fa-palette"></i>
                 </div>
-                <span class="type-badge">{item.type}</span>
+                <span class="type-badge">{item.status}</span>
               </div>
               <div class="les-info">
                 <h3 class="les-title">{item.title}</h3>
@@ -219,91 +219,96 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
 </style>
 
 <script>
-  const ITEMS_PER_PAGE = 6;
+  document.addEventListener('astro:page-load', () => {
+    const lesGrid = document.getElementById('lesGrid');
+    if (!lesGrid) return;
 
-  const typeFilter = document.getElementById('typeFilter');
-  const lesCards = Array.from(document.querySelectorAll('.les-card'));
-  const paginationEl = document.getElementById('pagination');
+    const ITEMS_PER_PAGE = 6;
 
-  let currentPage = 1;
-  let currentType = '全部';
+    const typeFilter = document.getElementById('typeFilter');
+    const lesCards = Array.from(document.querySelectorAll('.les-card'));
+    const paginationEl = document.getElementById('pagination');
 
-  function getFilteredCards() {
-    return lesCards.filter(card => {
-      const el = card as HTMLElement;
-      return currentType === '全部' || el.dataset.type === currentType;
-    });
-  }
+    let currentPage = 1;
+    let currentType = '全部';
 
-  function renderPagination(filteredCards: HTMLElement[]) {
-    if (!paginationEl) return;
-    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
-    if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
-    paginationEl.classList.remove('hidden');
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    let html = '';
-    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
+    function getFilteredCards() {
+      return lesCards.filter(card => {
+        const el = card as HTMLElement;
+        return currentType === '全部' || el.dataset.status === currentType;
+      });
     }
-    if (startPage > 1) {
-      html += `<button class="page-btn" data-page="1">1</button>`;
-      if (startPage > 2) {
-        html += `<span class="page-ellipsis">...</span>`;
+
+    function renderPagination(filteredCards: HTMLElement[]) {
+      if (!paginationEl) return;
+      const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+      if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
+      paginationEl.classList.remove('hidden');
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      let html = '';
+      html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
       }
-    }
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-    }
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        html += `<span class="page-ellipsis">...</span>`;
+      if (startPage > 1) {
+        html += `<button class="page-btn" data-page="1">1</button>`;
+        if (startPage > 2) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
       }
-      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      }
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
+        html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      }
+      html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+      paginationEl.innerHTML = html;
     }
-    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
-    paginationEl.innerHTML = html;
-  }
 
-  function applyFilters() {
-    const filteredCards = getFilteredCards();
-    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
-    if (currentPage > totalPages) currentPage = totalPages;
+    function applyFilters() {
+      const filteredCards = getFilteredCards();
+      const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+      if (currentPage > totalPages) currentPage = totalPages;
 
-    lesCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    filteredCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
-      (card as HTMLElement).classList.remove('hidden-page');
-      (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+      lesCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      filteredCards.slice(start, start + ITEMS_PER_PAGE).forEach((card, i) => {
+        (card as HTMLElement).classList.remove('hidden-page');
+        (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+      });
+      renderPagination(filteredCards);
+    }
+
+    typeFilter?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.classList.contains('filter-tab')) return;
+      typeFilter.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      target.classList.add('active');
+      currentType = target.dataset.type || '全部';
+      currentPage = 1;
+      applyFilters();
     });
-    renderPagination(filteredCards);
-  }
 
-  typeFilter?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.classList.contains('filter-tab')) return;
-    typeFilter.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-    target.classList.add('active');
-    currentType = target.dataset.type || '全部';
-    currentPage = 1;
+    paginationEl?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLElement;
+      if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
+      const action = btn.dataset.action;
+      const page = btn.dataset.page;
+      if (action === 'prev') currentPage--;
+      else if (action === 'next') currentPage++;
+      else if (page) currentPage = parseInt(page);
+      applyFilters();
+      document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
     applyFilters();
   });
-
-  paginationEl?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLElement;
-    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
-    const action = btn.dataset.action;
-    const page = btn.dataset.page;
-    if (action === 'prev') currentPage--;
-    else if (action === 'next') currentPage++;
-    else if (page) currentPage = parseInt(page);
-    applyFilters();
-    document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  applyFilters();
 </script>

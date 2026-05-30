@@ -452,221 +452,231 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
 </script>
 
 <script>
-  const ALBUMS_PER_PAGE = 6;
-  const PHOTOS_PER_PAGE = 24;
+  let memoryAbortController = new AbortController();
 
-  const albumCards = Array.from(document.querySelectorAll('.album-card'));
-  const albumListView = document.getElementById('albumListView');
-  const photoGridView = document.getElementById('photoGridView');
-  const albumPaginationEl = document.getElementById('albumPagination');
-  const photoPaginationEl = document.getElementById('photoPagination');
-  const backBtn = document.getElementById('backBtn');
-  const photoViewTitle = document.getElementById('photoViewTitle');
-  const photoViewCount = document.getElementById('photoViewCount');
-  const photoGridContainer = document.getElementById('photoGridContainer');
+  document.addEventListener('astro:page-load', () => {
+    const albumListView = document.getElementById('albumListView');
+    if (!albumListView) return;
 
-  // Lightbox elements
-  const lightbox = document.getElementById('lightbox');
-  const lightboxOverlay = document.getElementById('lightboxOverlay');
-  const lightboxClose = document.getElementById('lightboxClose');
-  const lightboxPrev = document.getElementById('lightboxPrev');
-  const lightboxNext = document.getElementById('lightboxNext');
-  const lightboxImg = document.getElementById('lightboxImg') as HTMLImageElement;
-  const lightboxCounter = document.getElementById('lightboxCounter');
+    memoryAbortController.abort();
+    memoryAbortController = new AbortController();
+    const memorySignal = memoryAbortController.signal;
 
-  let albumPage = 1;
-  let photoPage = 1;
-  let currentAlbumImages: string[] = [];
-  let currentAlbumTitle = '';
-  let lightboxIndex = 0;
+    const ALBUMS_PER_PAGE = 6;
+    const PHOTOS_PER_PAGE = 24;
 
-  // ====== 通用分页渲染 ======
-  function renderPagination(el: HTMLElement | null, totalPages: number, currentPage: number, onPageChange: (page: number) => void) {
-    if (!el) return;
-    if (totalPages <= 1) { el.classList.add('hidden'); return; }
-    el.classList.remove('hidden');
+    const albumCards = Array.from(document.querySelectorAll('.album-card'));
+    const photoGridView = document.getElementById('photoGridView');
+    const albumPaginationEl = document.getElementById('albumPagination');
+    const photoPaginationEl = document.getElementById('photoPagination');
+    const backBtn = document.getElementById('backBtn');
+    const photoViewTitle = document.getElementById('photoViewTitle');
+    const photoViewCount = document.getElementById('photoViewCount');
+    const photoGridContainer = document.getElementById('photoGridContainer');
 
-    let html = '';
-    // 上一页
-    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+    // Lightbox elements
+    const lightbox = document.getElementById('lightbox');
+    const lightboxOverlay = document.getElementById('lightboxOverlay');
+    const lightboxClose = document.getElementById('lightboxClose');
+    const lightboxPrev = document.getElementById('lightboxPrev');
+    const lightboxNext = document.getElementById('lightboxNext');
+    const lightboxImg = document.getElementById('lightboxImg') as HTMLImageElement;
+    const lightboxCounter = document.getElementById('lightboxCounter');
 
-    // 页码
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
+    let albumPage = 1;
+    let photoPage = 1;
+    let currentAlbumImages: string[] = [];
+    let currentAlbumTitle = '';
+    let lightboxIndex = 0;
 
-    if (startPage > 1) {
-      html += `<button class="page-btn" data-page="1">1</button>`;
-      if (startPage > 2) {
-        html += `<span class="page-ellipsis">...</span>`;
+    // ====== 通用分页渲染 ======
+    function renderPagination(el: HTMLElement | null, totalPages: number, currentPage: number, onPageChange: (page: number) => void) {
+      if (!el) return;
+      if (totalPages <= 1) { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+
+      let html = '';
+      // 上一页
+      html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+      // 页码
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
       }
-    }
 
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        html += `<span class="page-ellipsis">...</span>`;
+      if (startPage > 1) {
+        html += `<button class="page-btn" data-page="1">1</button>`;
+        if (startPage > 2) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
       }
-      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
-    }
 
-    // 下一页
-    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
-    el.innerHTML = html;
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      }
 
-    // 绑定事件
-    el.querySelectorAll('.page-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const b = btn as HTMLElement;
-        if (b.classList.contains('disabled') || b.classList.contains('active')) return;
-        const action = b.dataset.action;
-        const page = b.dataset.page;
-        let newPage = currentPage;
-        if (action === 'prev') newPage = currentPage - 1;
-        else if (action === 'next') newPage = currentPage + 1;
-        else if (page) newPage = parseInt(page);
-        onPageChange(newPage);
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
+        html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      }
+
+      // 下一页
+      html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+      el.innerHTML = html;
+
+      // 绑定事件
+      el.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const b = btn as HTMLElement;
+          if (b.classList.contains('disabled') || b.classList.contains('active')) return;
+          const action = b.dataset.action;
+          const page = b.dataset.page;
+          let newPage = currentPage;
+          if (action === 'prev') newPage = currentPage - 1;
+          else if (action === 'next') newPage = currentPage + 1;
+          else if (page) newPage = parseInt(page);
+          onPageChange(newPage);
+        });
       });
-    });
-  }
+    }
 
-  // ====== 相册列表分页 ======
-  function applyAlbumPage() {
-    const totalPages = Math.max(1, Math.ceil(albumCards.length / ALBUMS_PER_PAGE));
-    if (albumPage > totalPages) albumPage = totalPages;
+    // ====== 相册列表分页 ======
+    function applyAlbumPage() {
+      const totalPages = Math.max(1, Math.ceil(albumCards.length / ALBUMS_PER_PAGE));
+      if (albumPage > totalPages) albumPage = totalPages;
 
-    albumCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
-    const start = (albumPage - 1) * ALBUMS_PER_PAGE;
-    albumCards.slice(start, start + ALBUMS_PER_PAGE).forEach((card, i) => {
-      (card as HTMLElement).classList.remove('hidden-page');
-      (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
-    });
+      albumCards.forEach(card => { (card as HTMLElement).classList.add('hidden-page'); });
+      const start = (albumPage - 1) * ALBUMS_PER_PAGE;
+      albumCards.slice(start, start + ALBUMS_PER_PAGE).forEach((card, i) => {
+        (card as HTMLElement).classList.remove('hidden-page');
+        (card as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+      });
 
-    renderPagination(albumPaginationEl, totalPages, albumPage, (page) => {
-      albumPage = page;
-      applyAlbumPage();
-      document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
+      renderPagination(albumPaginationEl, totalPages, albumPage, (page) => {
+        albumPage = page;
+        applyAlbumPage();
+        document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
 
-  // ====== 图片网格分页 ======
-  function applyPhotoPage() {
-    const photoItems = Array.from(photoGridContainer?.querySelectorAll('.photo-grid-item') || []);
-    const totalPages = Math.max(1, Math.ceil(currentAlbumImages.length / PHOTOS_PER_PAGE));
-    if (photoPage > totalPages) photoPage = totalPages;
+    // ====== 图片网格分页 ======
+    function applyPhotoPage() {
+      const photoItems = Array.from(photoGridContainer?.querySelectorAll('.photo-grid-item') || []);
+      const totalPages = Math.max(1, Math.ceil(currentAlbumImages.length / PHOTOS_PER_PAGE));
+      if (photoPage > totalPages) photoPage = totalPages;
 
-    photoItems.forEach(item => { (item as HTMLElement).classList.add('hidden-page'); });
-    const start = (photoPage - 1) * PHOTOS_PER_PAGE;
-    photoItems.slice(start, start + PHOTOS_PER_PAGE).forEach((item, i) => {
-      (item as HTMLElement).classList.remove('hidden-page');
-      (item as HTMLElement).style.animationDelay = `${i * 0.04}s`;
-    });
+      photoItems.forEach(item => { (item as HTMLElement).classList.add('hidden-page'); });
+      const start = (photoPage - 1) * PHOTOS_PER_PAGE;
+      photoItems.slice(start, start + PHOTOS_PER_PAGE).forEach((item, i) => {
+        (item as HTMLElement).classList.remove('hidden-page');
+        (item as HTMLElement).style.animationDelay = `${i * 0.04}s`;
+      });
 
-    renderPagination(photoPaginationEl, totalPages, photoPage, (page) => {
-      photoPage = page;
+      renderPagination(photoPaginationEl, totalPages, photoPage, (page) => {
+        photoPage = page;
+        applyPhotoPage();
+        document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    // ====== 打开相册 ======
+    function openAlbum(albumId: string) {
+      const albums: Array<{id: string; title: string; images: string[]; count: number}> = (window as any).__yuamiAlbums || [];
+      const album = albums.find(a => a.id === albumId);
+      if (!album || !album.images || album.images.length === 0) return;
+
+      currentAlbumImages = album.images;
+      currentAlbumTitle = album.title;
+      photoPage = 1;
+
+      if (photoViewTitle) photoViewTitle.textContent = album.title;
+      if (photoViewCount) photoViewCount.textContent = `${album.images.length} 张`;
+
+      // 渲染图片网格
+      if (photoGridContainer) {
+        photoGridContainer.innerHTML = '';
+        album.images.forEach((src, index) => {
+          const item = document.createElement('div');
+          item.className = 'photo-grid-item';
+          item.style.animationDelay = `${(index % PHOTOS_PER_PAGE) * 0.04}s`;
+          item.innerHTML = `<img src="${src}" alt="照片 ${index + 1}" loading="lazy" onerror="this.parentElement.style.display='none'" />`;
+          item.addEventListener('click', () => openLightbox(index));
+          photoGridContainer.appendChild(item);
+        });
+      }
+
+      // 切换视图
+      if (albumListView) albumListView.style.display = 'none';
+      if (photoGridView) photoGridView.style.display = 'block';
+
       applyPhotoPage();
       document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ====== 返回相册列表 ======
+    backBtn?.addEventListener('click', () => {
+      if (photoGridView) photoGridView.style.display = 'none';
+      if (albumListView) albumListView.style.display = 'block';
+      closeLightbox();
     });
-  }
 
-  // ====== 打开相册 ======
-  function openAlbum(albumId: string) {
-    const albums: Array<{id: string; title: string; images: string[]; count: number}> = (window as any).__yuamiAlbums || [];
-    const album = albums.find(a => a.id === albumId);
-    if (!album || !album.images || album.images.length === 0) return;
+    // ====== Lightbox ======
+    function openLightbox(index: number) {
+      lightboxIndex = index;
+      updateLightbox();
+      lightbox?.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
 
-    currentAlbumImages = album.images;
-    currentAlbumTitle = album.title;
-    photoPage = 1;
+    function closeLightbox() {
+      lightbox?.classList.remove('active');
+      document.body.style.overflow = '';
+    }
 
-    if (photoViewTitle) photoViewTitle.textContent = album.title;
-    if (photoViewCount) photoViewCount.textContent = `${album.images.length} 张`;
+    function updateLightbox() {
+      if (!lightboxImg) return;
+      lightboxImg.src = currentAlbumImages[lightboxIndex] || '';
+      if (lightboxCounter) lightboxCounter.textContent = `${lightboxIndex + 1} / ${currentAlbumImages.length}`;
 
-    // 渲染图片网格
-    if (photoGridContainer) {
-      photoGridContainer.innerHTML = '';
-      album.images.forEach((src, index) => {
-        const item = document.createElement('div');
-        item.className = 'photo-grid-item';
-        item.style.animationDelay = `${(index % PHOTOS_PER_PAGE) * 0.04}s`;
-        item.innerHTML = `<img src="${src}" alt="照片 ${index + 1}" loading="lazy" onerror="this.parentElement.style.display='none'" />`;
-        item.addEventListener('click', () => openLightbox(index));
-        photoGridContainer.appendChild(item);
+      if (lightboxPrev) {
+        lightboxPrev.classList.toggle('disabled', lightboxIndex === 0);
+      }
+      if (lightboxNext) {
+        lightboxNext.classList.toggle('disabled', lightboxIndex === currentAlbumImages.length - 1);
+      }
+    }
+
+    lightboxOverlay?.addEventListener('click', closeLightbox);
+    lightboxClose?.addEventListener('click', closeLightbox);
+    lightboxPrev?.addEventListener('click', () => {
+      if (lightboxIndex > 0) { lightboxIndex--; updateLightbox(); }
+    });
+    lightboxNext?.addEventListener('click', () => {
+      if (lightboxIndex < currentAlbumImages.length - 1) { lightboxIndex++; updateLightbox(); }
+    });
+
+    // 键盘导航
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox?.classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft' && lightboxIndex > 0) { lightboxIndex--; updateLightbox(); }
+      if (e.key === 'ArrowRight' && lightboxIndex < currentAlbumImages.length - 1) { lightboxIndex++; updateLightbox(); }
+    }, { signal: memorySignal });
+
+    // ====== 相册卡片点击 ======
+    albumCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const albumId = (card as HTMLElement).dataset.albumId;
+        if (albumId) openAlbum(albumId);
       });
-    }
-
-    // 切换视图
-    if (albumListView) albumListView.style.display = 'none';
-    if (photoGridView) photoGridView.style.display = 'block';
-
-    applyPhotoPage();
-    document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  // ====== 返回相册列表 ======
-  backBtn?.addEventListener('click', () => {
-    if (photoGridView) photoGridView.style.display = 'none';
-    if (albumListView) albumListView.style.display = 'block';
-    closeLightbox();
-  });
-
-  // ====== Lightbox ======
-  function openLightbox(index: number) {
-    lightboxIndex = index;
-    updateLightbox();
-    lightbox?.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeLightbox() {
-    lightbox?.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  function updateLightbox() {
-    if (!lightboxImg) return;
-    lightboxImg.src = currentAlbumImages[lightboxIndex] || '';
-    if (lightboxCounter) lightboxCounter.textContent = `${lightboxIndex + 1} / ${currentAlbumImages.length}`;
-
-    if (lightboxPrev) {
-      lightboxPrev.classList.toggle('disabled', lightboxIndex === 0);
-    }
-    if (lightboxNext) {
-      lightboxNext.classList.toggle('disabled', lightboxIndex === currentAlbumImages.length - 1);
-    }
-  }
-
-  lightboxOverlay?.addEventListener('click', closeLightbox);
-  lightboxClose?.addEventListener('click', closeLightbox);
-  lightboxPrev?.addEventListener('click', () => {
-    if (lightboxIndex > 0) { lightboxIndex--; updateLightbox(); }
-  });
-  lightboxNext?.addEventListener('click', () => {
-    if (lightboxIndex < currentAlbumImages.length - 1) { lightboxIndex++; updateLightbox(); }
-  });
-
-  // 键盘导航
-  document.addEventListener('keydown', (e) => {
-    if (!lightbox?.classList.contains('active')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft' && lightboxIndex > 0) { lightboxIndex--; updateLightbox(); }
-    if (e.key === 'ArrowRight' && lightboxIndex < currentAlbumImages.length - 1) { lightboxIndex++; updateLightbox(); }
-  });
-
-  // ====== 相册卡片点击 ======
-  albumCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const albumId = (card as HTMLElement).dataset.albumId;
-      if (albumId) openAlbum(albumId);
     });
-  });
 
-  // ====== 初始化 ======
-  applyAlbumPage();
+    // ====== 初始化 ======
+    applyAlbumPage();
+  });
 </script>

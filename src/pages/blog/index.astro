@@ -269,130 +269,135 @@ const allTags = [...new Set(blogPosts.flatMap(p => p.tags))];
 </style>
 
 <script>
-  const ITEMS_PER_PAGE = 9;
+  document.addEventListener('astro:page-load', () => {
+    const blogGrid = document.getElementById('blogGrid');
+    if (!blogGrid) return;
 
-  const tagFilter = document.getElementById('tagFilter');
-  const blogCards = Array.from(document.querySelectorAll('.blog-card'));
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  const paginationEl = document.getElementById('pagination');
+    const ITEMS_PER_PAGE = 9;
 
-  let currentPage = 1;
-  let currentTag = 'all';
-  let searchQuery = '';
+    const tagFilter = document.getElementById('tagFilter');
+    const blogCards = Array.from(document.querySelectorAll('.blog-card'));
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const paginationEl = document.getElementById('pagination');
 
-  function getFilteredCards() {
-    return blogCards.filter(card => {
-      const el = card as HTMLElement;
-      const tags = el.dataset.tags || '';
-      const title = el.dataset.title?.toLowerCase() || '';
-      const tagMatch = currentTag === 'all' || tags.includes(currentTag);
-      const searchMatch = !searchQuery || title.includes(searchQuery);
-      return tagMatch && searchMatch;
-    });
-  }
+    let currentPage = 1;
+    let currentTag = 'all';
+    let searchQuery = '';
 
-  function renderPagination(filteredCards: HTMLElement[]) {
-    if (!paginationEl) return;
-    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
-
-    if (totalPages <= 1) {
-      paginationEl.classList.add('hidden');
-      return;
-    }
-    paginationEl.classList.remove('hidden');
-
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    let html = '';
-    // 左箭头
-    html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
-
-    // 页码按钮 - 简洁模式
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
+    function getFilteredCards() {
+      return blogCards.filter(card => {
+        const el = card as HTMLElement;
+        const tags = el.dataset.tags || '';
+        const title = el.dataset.title?.toLowerCase() || '';
+        const tagMatch = currentTag === 'all' || tags.includes(currentTag);
+        const searchMatch = !searchQuery || title.includes(searchQuery);
+        return tagMatch && searchMatch;
+      });
     }
 
-    if (startPage > 1) {
-      html += `<button class="page-btn" data-page="1">1</button>`;
-      if (startPage > 2) {
-        html += `<span class="page-ellipsis">...</span>`;
+    function renderPagination(filteredCards: HTMLElement[]) {
+      if (!paginationEl) return;
+      const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+
+      if (totalPages <= 1) {
+        paginationEl.classList.add('hidden');
+        return;
       }
-    }
+      paginationEl.classList.remove('hidden');
 
-    for (let i = startPage; i <= endPage; i++) {
-      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-    }
+      if (currentPage > totalPages) currentPage = totalPages;
 
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        html += `<span class="page-ellipsis">...</span>`;
+      let html = '';
+      // 左箭头
+      html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+      // 页码按钮 - 简洁模式
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
       }
-      html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+
+      if (startPage > 1) {
+        html += `<button class="page-btn" data-page="1">1</button>`;
+        if (startPage > 2) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          html += `<span class="page-ellipsis">...</span>`;
+        }
+        html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+      }
+
+      // 右箭头
+      html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
+      paginationEl.innerHTML = html;
     }
 
-    // 右箭头
-    html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
-    paginationEl.innerHTML = html;
-  }
+    function applyFilters() {
+      const filteredCards = getFilteredCards();
+      const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
 
-  function applyFilters() {
-    const filteredCards = getFilteredCards();
-    const totalPages = Math.max(1, Math.ceil(filteredCards.length / ITEMS_PER_PAGE));
+      if (currentPage > totalPages) currentPage = totalPages;
 
-    if (currentPage > totalPages) currentPage = totalPages;
+      blogCards.forEach(card => {
+        (card as HTMLElement).classList.add('hidden-page');
+      });
 
-    blogCards.forEach(card => {
-      (card as HTMLElement).classList.add('hidden-page');
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const pageCards = filteredCards.slice(start, start + ITEMS_PER_PAGE);
+      pageCards.forEach((card, i) => {
+        (card as HTMLElement).classList.remove('hidden-page');
+        (card as HTMLElement).style.animationDelay = `${i * 0.06}s`;
+      });
+
+      renderPagination(filteredCards);
+    }
+
+    // Tag filter
+    tagFilter?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.classList.contains('tag')) return;
+      tagFilter.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+      target.classList.add('active');
+      currentTag = target.dataset.tag || 'all';
+      currentPage = 1;
+      applyFilters();
     });
 
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const pageCards = filteredCards.slice(start, start + ITEMS_PER_PAGE);
-    pageCards.forEach((card, i) => {
-      (card as HTMLElement).classList.remove('hidden-page');
-      (card as HTMLElement).style.animationDelay = `${i * 0.06}s`;
+    // Search
+    searchInput?.addEventListener('input', (e) => {
+      searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+      currentPage = 1;
+      applyFilters();
     });
 
-    renderPagination(filteredCards);
-  }
+    // Pagination click
+    paginationEl?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest('.page-btn') as HTMLElement;
+      if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
 
-  // Tag filter
-  tagFilter?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.classList.contains('tag')) return;
-    tagFilter.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
-    target.classList.add('active');
-    currentTag = target.dataset.tag || 'all';
-    currentPage = 1;
-    applyFilters();
-  });
+      const action = btn.dataset.action;
+      const page = btn.dataset.page;
 
-  // Search
-  searchInput?.addEventListener('input', (e) => {
-    searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
-    currentPage = 1;
-    applyFilters();
-  });
+      if (action === 'prev') currentPage--;
+      else if (action === 'next') currentPage++;
+      else if (page) currentPage = parseInt(page);
 
-  // Pagination click
-  paginationEl?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    const btn = target.closest('.page-btn') as HTMLElement;
-    if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
-
-    const action = btn.dataset.action;
-    const page = btn.dataset.page;
-
-    if (action === 'prev') currentPage--;
-    else if (action === 'next') currentPage++;
-    else if (page) currentPage = parseInt(page);
+      applyFilters();
+      const container = document.querySelector('.page-main');
+      if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     applyFilters();
-    const container = document.querySelector('.page-main');
-    if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-
-  applyFilters();
 </script>

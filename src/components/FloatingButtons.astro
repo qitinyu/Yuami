@@ -4,7 +4,7 @@ import { siteConfig } from '../../config';
 const musicEnabled = siteConfig.music?.enabled !== false;
 ---
 
-<div class="floating-buttons" id="floatingButtons">
+<div class="floating-buttons" id="floatingButtons" transition:persist="floatingButtons">
   {musicEnabled && (
     <button class="float-btn" id="musicBtn" title="音乐播放器" aria-label="音乐播放器">
       <i class="fa-solid fa-music"></i>

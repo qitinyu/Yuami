@@ -4,7 +4,7 @@ const cfg = siteConfig.live2d;
 ---
 
 {cfg.enabled && (
-  <div class="live2d-wrapper" id="live2dWrapper">
+  <div class="live2d-wrapper" id="live2dWrapper" transition:persist="live2dWrapper">
     <div class="live2d-tip" id="live2dTip">你好呀～</div>
     <canvas id="live2dCanvas"></canvas>
     <!-- 控制按钮 - 始终在模型右侧 -->

@@ -7,7 +7,7 @@ const isMobileOff = sakura.mobileOff;
 ---
 
 {isEnabled && (
-  <div class="sakura-container" id="sakuraContainer"
+  <div class="sakura-container" id="sakuraContainer" transition:persist="sakuraContainer"
     data-petals={sakura.petals}
     data-min-size={sakura.minSize}
     data-max-size={sakura.maxSize}

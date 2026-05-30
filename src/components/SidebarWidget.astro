@@ -339,8 +339,10 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
 </style>
 
 <script>
-  const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
-  if (statList) {
+  document.addEventListener('astro:page-load', () => {
+    const statList = document.querySelector('.stat-list[data-start-date]') as HTMLElement;
+    if (!statList) return;
+
     const startDate = statList.dataset.startDate || '2026-01-01';
     const totalPosts = parseInt(statList.dataset.totalPosts || '0');
     const totalWords = parseInt(statList.dataset.totalWords || '0');
@@ -367,5 +369,5 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
       const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
       statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
     }
-  }
+  });
 </script>

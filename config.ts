@@ -132,8 +132,8 @@ export const siteConfig = {
   siteAnnouncements: {
     enabled: true,
     items: [
-      { date: '2026-05-28', text: '博客更新v1.0.7正式版，欢迎反馈建议！' },
-      { date: '2026-05-26', text: '博客更新1.0.6正式版，1.0.7beta正在完善！' },
+      { date: '2026-05-30', text: '博客更新v1.0.8正式版，修复音乐播放器相关问题！' },
+      { date: '2026-05-28', text: '博客更新1.0.7正式版，1.0.8beta正在完善！' },
       { date: '2026-05-24', text: 'Yuami 框架修缮。' },
     ],
   },
