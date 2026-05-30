@@ -166,4 +166,11 @@ export const friendsList = [
     url: "https://upxuu.com/",
     desc: "逐光而上",
   },
+  {
+    id:20,
+		name: "𝔖𝔥𝔞𝔴𝔜𝔬𝔲𝔫𝔤",
+		avatar: "https://yoviz.dpdns.org/_astro/avatar.JHDUpy2g_1YHEgb.webp",
+		url: "https://yoviz.dpdns.org/",
+    desc: "过往皆为序章，未来自有光芒",
+	},
 ];

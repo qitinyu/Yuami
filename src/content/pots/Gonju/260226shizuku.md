@@ -3,12 +3,9 @@ title: "Shizuku-你的搞机好帮手"
 published: 2026-02-26
 description: "Shizuku-你的搞机好帮手"
 tags: [工具]
-category: "工具"
 licenseName: "CC BY 4.0"
-author: "QTY"
-image: "./cover1.png"
-sourceLink: "https://yqamm.cc.cd/posts/Gonju/260226shizuku/"
-date: 2026-02-26
+author: "Yuami"
+image: ""
 pubDate: 2026-02-26
 # encrypted: false
 # password: "0723"

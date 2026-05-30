@@ -2,7 +2,7 @@
 title: "Yuami本地安装使用"
 published: 2026-05-23
 description: "Yuami本地安装使用教程"
-tags: [技巧]
+tags: [BLOG]
 licenseName: "CC BY 4.0"
 author: "Yuami"
 image: ""
