@@ -169,7 +169,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   </div>
 </BaseLayout>
 
-<style>
+<style is:inline>
   .article-layout {
     max-width: var(--max-width);
     margin: 0 auto;
@@ -326,9 +326,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     transform: rotate(90deg);
   }
 
-  /* ## (h2) - 缩进 2em */
+  /* ## (h2) - 缩进，圆点标识，字号略小 */
   .toc-nav .toc-h2-list {
-    padding-left: 2em;
+    padding-left: 1.2em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -346,14 +346,32 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px;
+    padding: 5px 10px 5px 6px;
     border-radius: 5px;
-    font-size: 0.86rem;
+    font-size: 0.84rem;
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
     text-decoration: none;
+  }
+
+  /* h2 圆点标识 */
+  .toc-nav .toc-h2-link .toc-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    transition: background var(--transition-fast);
+  }
+
+  .toc-nav .toc-h2-link:hover .toc-dot {
+    background: var(--primary);
+  }
+
+  .toc-nav .toc-h2-link.active .toc-dot {
+    background: #fff;
   }
 
   .toc-nav .toc-h2-link:hover {
@@ -382,9 +400,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     transform: rotate(90deg);
   }
 
-  /* ### (h3) - 缩进 4em，每个独占一行 */
+  /* ### (h3) - 再缩进，更小圆点，字号再小 */
   .toc-nav .toc-h3-list {
-    padding-left: 2em;
+    padding-left: 1.2em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -401,10 +419,12 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .toc-nav .toc-h3-link {
-    display: block;
-    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px 4px 6px;
     border-radius: 4px;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -413,6 +433,24 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* h3 圆点标识 - 更小 */
+  .toc-nav .toc-h3-link .toc-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    transition: background var(--transition-fast);
+  }
+
+  .toc-nav .toc-h3-link:hover .toc-dot {
+    background: var(--primary);
+  }
+
+  .toc-nav .toc-h3-link.active .toc-dot {
+    background: #fff;
   }
 
   .toc-nav .toc-h3-link:hover {
@@ -789,10 +827,18 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         if (h2HasChildren) {
           tocHtml += `<div class="toc-h2-list expanded" id="toc-h2-v-${i}-${j}">`;
           h2.children.forEach((h3, k) => {
-            renderH3(h3, i, j, k);
+            renderH3AsH2(h3, i, j, k);
           });
           tocHtml += `</div>`;
         }
+        tocHtml += `</div>`;
+      }
+
+      function renderH3AsH2(h3: TocH3, i: number, j: number, k: number) {
+        tocHtml += `<div class="toc-h2-item">`;
+        tocHtml += `<a href="#${h3.id}" class="toc-h2-link" data-id="${h3.id}">`;
+        tocHtml += `<span class="toc-dot"></span>`;
+        tocHtml += `<span class="toc-text">${h3.text}</span></a>`;
         tocHtml += `</div>`;
       }
 
@@ -809,7 +855,10 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         }
         tocHtml += `<div class="toc-h2-item">`;
         tocHtml += `<a href="#${h2.id}" class="toc-h2-link" data-id="${h2.id}">`;
-        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-dot"></span>`;
+        if (h2HasChildren) {
+          tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        }
         tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
 
         if (h2HasChildren) {
@@ -824,7 +873,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
       function renderH3(h3: TocH3, i: number, j: number, k: number) {
         tocHtml += `<div class="toc-h3-item">`;
-        tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">${h3.text}</a>`;
+        tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}"><span class="toc-dot"></span><span class="toc-text">${h3.text}</span></a>`;
         tocHtml += `</div>`;
       }
 

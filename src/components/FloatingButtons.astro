@@ -70,7 +70,7 @@ const musicEnabled = siteConfig.music?.enabled !== false;
   )}
 </div>
 
-<style>
+<style is:inline>
   .floating-buttons {
     position: fixed;
     right: 20px;
@@ -311,11 +311,11 @@ const musicEnabled = siteConfig.music?.enabled !== false;
   }
 
   .music-playlist.expanded {
-    max-height: 300px;
+    max-height: 400px;
   }
 
   .music-playlist-inner {
-    max-height: 280px;
+    max-height: 380px;
     overflow-y: auto;
     border-top: 1px solid var(--border-color);
     padding-top: 6px;
@@ -324,58 +324,116 @@ const musicEnabled = siteConfig.music?.enabled !== false;
   .playlist-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 6px;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all var(--transition-fast);
-    font-size: 0.82rem;
     color: var(--text-secondary);
   }
 
   .playlist-item:hover {
     background: var(--primary-alpha);
-    color: var(--primary);
   }
 
   .playlist-item.active {
-    color: var(--primary);
     background: var(--primary-alpha);
-    font-weight: 500;
-  }
-
-  .playlist-item-index {
-    width: 20px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    flex-shrink: 0;
-  }
-
-  .playlist-item.active .playlist-item-index {
-    color: var(--primary);
   }
 
   .playlist-item-cover {
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
     background: var(--primary-alpha);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .playlist-item-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .playlist-item-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 0.7rem;
+  }
+
+  .playlist-item-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .playlist-item-name {
-    flex: 1;
+    font-size: 0.84rem;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .playlist-item.active .playlist-item-name {
+    color: var(--primary);
+    font-weight: 600;
   }
 
   .playlist-item-artist {
-    color: var(--text-muted);
     font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+
+  .playlist-item.active .playlist-item-artist {
+    color: var(--primary);
+    opacity: 0.8;
+  }
+
+  .playlist-item-playing-icon {
     flex-shrink: 0;
+    display: none;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+    padding-right: 2px;
+  }
+
+  .playlist-item.active .playlist-item-playing-icon {
+    display: flex;
+  }
+
+  .playlist-item-playing-icon span {
+    width: 3px;
+    background: var(--primary);
+    border-radius: 1px;
+    animation: playing-bar 0.8s ease-in-out infinite alternate;
+  }
+
+  .playlist-item-playing-icon span:nth-child(1) { height: 60%; animation-delay: 0s; }
+  .playlist-item-playing-icon span:nth-child(2) { height: 100%; animation-delay: 0.2s; }
+  .playlist-item-playing-icon span:nth-child(3) { height: 40%; animation-delay: 0.4s; }
+
+  @keyframes playing-bar {
+    0% { height: 30%; }
+    100% { height: 100%; }
   }
 
   @media (max-width: 768px) {
@@ -496,20 +554,22 @@ const musicEnabled = siteConfig.music?.enabled !== false;
       const item = document.createElement('div');
       item.className = `playlist-item ${i === currentTrack ? 'active' : ''}`;
 
-      // 构建播放列表项，包含封面
+      // 构建播放列表项：左侧圆形封面 + 右侧歌曲名/艺术家 + 播放指示器
       const coverUrl = track.pic || track.cover || track.album_img || '';
-      let coverHtml = '';
+      let coverInnerHtml = '';
       if (coverUrl) {
-        coverHtml = `<img class="playlist-item-cover" src="${coverUrl}" alt="" onerror="this.style.display='none'" />`;
+        coverInnerHtml = `<img src="${coverUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="playlist-item-cover-placeholder" style="display:none;"><i class="fa-solid fa-music"></i></div>`;
       } else {
-        coverHtml = `<div class="playlist-item-cover" style="display:flex;align-items:center;justify-content:center;font-size:0.6rem;"><i class="fa-solid fa-music"></i></div>`;
+        coverInnerHtml = `<div class="playlist-item-cover-placeholder"><i class="fa-solid fa-music"></i></div>`;
       }
 
       item.innerHTML = `
-        <span class="playlist-item-index">${i + 1}</span>
-        ${coverHtml}
-        <span class="playlist-item-name">${track.title || track.name || '未知'}</span>
-        <span class="playlist-item-artist">${track.author || track.artist || ''}</span>
+        <div class="playlist-item-cover">${coverInnerHtml}</div>
+        <div class="playlist-item-text">
+          <span class="playlist-item-name">${track.title || track.name || '未知'}</span>
+          <span class="playlist-item-artist">${track.author || track.artist || ''}</span>
+        </div>
+        <div class="playlist-item-playing-icon"><span></span><span></span><span></span></div>
       `;
       item.addEventListener('click', () => {
         currentTrack = i;
