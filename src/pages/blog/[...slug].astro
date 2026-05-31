@@ -9,10 +9,15 @@ import { formatDate, formatDateShort } from '../../utils/dateFormat';
 
 export async function getStaticPaths() {
   const pots = await getCollection('pots');
+  // 置顶文章优先排序，同级别按日期倒序
   const sortedPots = [...pots].sort((a, b) => {
+    const pinnedA = a.data.pinned === true;
+    const pinnedB = b.data.pinned === true;
+    if (pinnedA && !pinnedB) return -1;
+    if (!pinnedA && pinnedB) return 1;
     const dateA = a.data.published || a.data.date || '';
     const dateB = b.data.published || b.data.date || '';
-    return new Date(dateB).getTime() - new Date(dateA).getTime();
+    return dateB.localeCompare(dateA);
   });
   return sortedPots.map((post, index) => ({
     params: { slug: post.slug },
@@ -36,6 +41,7 @@ const licenseName = post.data.licenseName || '';
 const image = post.data.image || post.data.cover || '';
 const isEncrypted = !!(post.data.encrypted && post.data.password);
 const password = post.data.password || '';
+const isPinned = post.data.pinned === true;
 
 // 随机推荐2篇文章（排除当前文章）
 const allPots = await getCollection('pots');
@@ -65,6 +71,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
           <div class="encrypted-badge">
             <i class="fa-solid fa-lock"></i> 加密文章
           </div>
+        )}
+        {isPinned && (
+          <span class="pinned-badge"><i class="fa-solid fa-thumbtack"></i> 置顶</span>
         )}
         <h1 class="article-title">{title}</h1>
         <div class="article-meta">
@@ -169,7 +178,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   </div>
 </BaseLayout>
 
-<style is:inline>
+<style>
   .article-layout {
     max-width: var(--max-width);
     margin: 0 auto;
@@ -326,9 +335,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     transform: rotate(90deg);
   }
 
-  /* ## (h2) - 缩进，圆点标识，字号略小 */
+  /* ## (h2) - 缩进 2em */
   .toc-nav .toc-h2-list {
-    padding-left: 1.2em;
+    padding-left: 2em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -346,32 +355,14 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px 5px 6px;
+    padding: 5px 10px;
     border-radius: 5px;
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
     text-decoration: none;
-  }
-
-  /* h2 圆点标识 */
-  .toc-nav .toc-h2-link .toc-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    flex-shrink: 0;
-    transition: background var(--transition-fast);
-  }
-
-  .toc-nav .toc-h2-link:hover .toc-dot {
-    background: var(--primary);
-  }
-
-  .toc-nav .toc-h2-link.active .toc-dot {
-    background: #fff;
   }
 
   .toc-nav .toc-h2-link:hover {
@@ -400,9 +391,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     transform: rotate(90deg);
   }
 
-  /* ### (h3) - 再缩进，更小圆点，字号再小 */
+  /* ### (h3) - 缩进 4em，每个独占一行 */
   .toc-nav .toc-h3-list {
-    padding-left: 1.2em;
+    padding-left: 2em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -419,12 +410,10 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .toc-nav .toc-h3-link {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px 4px 6px;
+    display: block;
+    padding: 4px 10px;
     border-radius: 4px;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -433,24 +422,6 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  /* h3 圆点标识 - 更小 */
-  .toc-nav .toc-h3-link .toc-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    flex-shrink: 0;
-    transition: background var(--transition-fast);
-  }
-
-  .toc-nav .toc-h3-link:hover .toc-dot {
-    background: var(--primary);
-  }
-
-  .toc-nav .toc-h3-link.active .toc-dot {
-    background: #fff;
   }
 
   .toc-nav .toc-h3-link:hover {
@@ -462,6 +433,51 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     color: #fff;
     background: var(--primary);
     font-weight: 600;
+  }
+
+  /* #### (h4) - 最深层缩进 */
+  .toc-nav .toc-h4-list {
+    padding-left: 2em;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s ease;
+  }
+
+  .toc-nav .toc-h4-list.expanded {
+    max-height: 1500px;
+  }
+
+  .toc-nav .toc-h4-item {
+    display: block;
+    margin-bottom: 1px;
+  }
+
+  .toc-nav .toc-h4-link {
+    display: block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.85;
+  }
+
+  .toc-nav .toc-h4-link:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .toc-nav .toc-h4-link.active {
+    color: #fff;
+    background: var(--primary);
+    font-weight: 600;
+    opacity: 1;
   }
 
   /* --- Article Header & Content --- */
@@ -725,8 +741,25 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         return;
       }
 
-      // 查找所有 h1-h3 标题（包括加密内容中隐藏的标题）
-      const headings = articleContent.querySelectorAll('h1, h2, h3');
+      // 查找所有 h1-h4 标题
+      const allHeadings = articleContent.querySelectorAll('h1, h2, h3, h4');
+
+      // 过滤掉装饰性 motto 标题（如 ### <span style="color:red"><u><i>...</i></u></span>）
+      const headings = Array.from(allHeadings).filter((heading) => {
+        const el = heading as HTMLElement;
+        // 跳过 H3 中包含 color:red 样式 span 的 motto 装饰标题
+        if (el.tagName === 'H3' || el.tagName === 'H2') {
+          const styledSpan = el.querySelector('span[style]');
+          if (styledSpan) {
+            const style = styledSpan.getAttribute('style') || '';
+            if (/color:\s*red/i.test(style)) return false;
+          }
+        }
+        // 跳过没有文本内容的标题
+        const text = (el.textContent || '').trim();
+        if (!text) return false;
+        return true;
+      });
 
       if (headings.length === 0) {
         if (tocSidebar) tocSidebar.style.display = 'none';
@@ -737,34 +770,57 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       if (tocSidebar) tocSidebar.style.display = '';
 
       // Build TOC tree structure
-      interface TocH3 { id: string; text: string; level: number; }
+      interface TocH4 { id: string; text: string; level: number; }
+      interface TocH3 { id: string; text: string; level: number; children: TocH4[]; }
       interface TocH2 { id: string; text: string; level: number; children: TocH3[]; }
       interface TocH1 { id: string; text: string; level: number; children: TocH2[]; }
 
       const tocTree: TocH1[] = [];
       let currentH1: TocH1 | null = null;
       let currentH2: TocH2 | null = null;
+      let currentH3: TocH3 | null = null;
       let headingIndex = 0;
+      const usedIds = new Set<string>();
+
+      // 改进的 ID 生成：提取纯文本并生成更健壮的 slug
+      function generateSlug(text: string): string {
+        return text
+          .toLowerCase()
+          .replace(/<[^>]*>/g, '')           // 移除 HTML 标签
+          .replace(/[^\w\u4e00-\u9fff\s-]/g, '') // 保留字母数字中文和连字符
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          .substring(0, 60);
+      }
 
       headings.forEach((heading) => {
         const el = heading as HTMLElement;
-        // 跳过没有文本内容的标题
         const text = (el.textContent || '').trim();
-        if (!text) return;
 
         // 确保每个标题都有唯一 ID
         if (!el.id) {
-          el.id = 'toc-heading-' + headingIndex;
+          const slug = generateSlug(text);
+          let finalId = slug || 'toc-heading';
+          let counter = 1;
+          while (usedIds.has(finalId)) {
+            finalId = slug + '-' + counter;
+            counter++;
+          }
+          el.id = finalId;
         }
+        usedIds.add(el.id);
         headingIndex++;
 
         if (el.tagName === 'H1') {
           currentH1 = { id: el.id, text, level: 1, children: [] };
           currentH2 = null;
+          currentH3 = null;
           tocTree.push(currentH1);
         } else if (el.tagName === 'H2') {
           const h2Item: TocH2 = { id: el.id, text, level: 2, children: [] };
           currentH2 = h2Item;
+          currentH3 = null;
           if (currentH1) {
             currentH1.children.push(h2Item);
           } else {
@@ -772,7 +828,8 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
             tocTree.push(currentH1);
           }
         } else if (el.tagName === 'H3') {
-          const h3Item: TocH3 = { id: el.id, text, level: 3 };
+          const h3Item: TocH3 = { id: el.id, text, level: 3, children: [] };
+          currentH3 = h3Item;
           if (currentH2) {
             currentH2.children.push(h3Item);
           } else if (currentH1) {
@@ -783,6 +840,28 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
             const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [h3Item] };
             currentH1 = { id: '', text: '', level: 1, children: [virtualH2] };
             currentH2 = virtualH2;
+            tocTree.push(currentH1);
+          }
+        } else if (el.tagName === 'H4') {
+          const h4Item: TocH4 = { id: el.id, text, level: 4 };
+          if (currentH3) {
+            currentH3.children.push(h4Item);
+          } else if (currentH2) {
+            const virtualH3: TocH3 = { id: '', text: '', level: 3, children: [h4Item] };
+            currentH2.children.push(virtualH3);
+            currentH3 = virtualH3;
+          } else if (currentH1) {
+            const virtualH3: TocH3 = { id: '', text: '', level: 3, children: [h4Item] };
+            const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [virtualH3] };
+            currentH1.children.push(virtualH2);
+            currentH2 = virtualH2;
+            currentH3 = virtualH3;
+          } else {
+            const virtualH3: TocH3 = { id: '', text: '', level: 3, children: [h4Item] };
+            const virtualH2: TocH2 = { id: '', text: '', level: 2, children: [virtualH3] };
+            currentH1 = { id: '', text: '', level: 1, children: [virtualH2] };
+            currentH2 = virtualH2;
+            currentH3 = virtualH3;
             tocTree.push(currentH1);
           }
         }
@@ -818,7 +897,15 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
       function renderH2AsTop(h2: TocH2, i: number, j: number) {
         const h2HasChildren = h2.children.length > 0;
-        if (!h2.text) return;
+        if (!h2.text) {
+          // 虚拟 h2 作为顶层，直接渲染 h3
+          if (h2HasChildren) {
+            h2.children.forEach((h3, k) => {
+              renderH3AsTop(h3, i, j, k);
+            });
+          }
+          return;
+        }
         tocHtml += `<div class="toc-h1">`;
         tocHtml += `<a href="#${h2.id}" class="toc-h1-link" data-id="${h2.id}">`;
         tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
@@ -827,18 +914,10 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         if (h2HasChildren) {
           tocHtml += `<div class="toc-h2-list expanded" id="toc-h2-v-${i}-${j}">`;
           h2.children.forEach((h3, k) => {
-            renderH3AsH2(h3, i, j, k);
+            renderH3(h3, i, j, k);
           });
           tocHtml += `</div>`;
         }
-        tocHtml += `</div>`;
-      }
-
-      function renderH3AsH2(h3: TocH3, i: number, j: number, k: number) {
-        tocHtml += `<div class="toc-h2-item">`;
-        tocHtml += `<a href="#${h3.id}" class="toc-h2-link" data-id="${h3.id}">`;
-        tocHtml += `<span class="toc-dot"></span>`;
-        tocHtml += `<span class="toc-text">${h3.text}</span></a>`;
         tocHtml += `</div>`;
       }
 
@@ -855,10 +934,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         }
         tocHtml += `<div class="toc-h2-item">`;
         tocHtml += `<a href="#${h2.id}" class="toc-h2-link" data-id="${h2.id}">`;
-        tocHtml += `<span class="toc-dot"></span>`;
-        if (h2HasChildren) {
-          tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
-        }
+        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
         tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
 
         if (h2HasChildren) {
@@ -871,9 +947,52 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         tocHtml += `</div>`;
       }
 
+      function renderH3AsTop(h3: TocH3, i: number, j: number, k: number) {
+        const h3HasChildren = h3.children.length > 0;
+        if (!h3.text) return;
+        tocHtml += `<div class="toc-h1">`;
+        tocHtml += `<a href="#${h3.id}" class="toc-h1-link" data-id="${h3.id}">`;
+        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-text">${h3.text}</span></a>`;
+
+        if (h3HasChildren) {
+          tocHtml += `<div class="toc-h2-list expanded" id="toc-h3-v-${i}-${j}-${k}">`;
+          h3.children.forEach((h4, l) => {
+            renderH4(h4, i, j, k, l);
+          });
+          tocHtml += `</div>`;
+        }
+        tocHtml += `</div>`;
+      }
+
       function renderH3(h3: TocH3, i: number, j: number, k: number) {
+        const h3HasChildren = h3.children.length > 0;
+        if (!h3.text) {
+          if (h3HasChildren) {
+            h3.children.forEach((h4, l) => {
+              renderH4(h4, i, j, k, l);
+            });
+          }
+          return;
+        }
         tocHtml += `<div class="toc-h3-item">`;
-        tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}"><span class="toc-dot"></span><span class="toc-text">${h3.text}</span></a>`;
+        tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">`;
+        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-text">${h3.text}</span></a>`;
+
+        if (h3HasChildren) {
+          tocHtml += `<div class="toc-h4-list" id="toc-h4-${i}-${j}-${k}">`;
+          h3.children.forEach((h4, l) => {
+            renderH4(h4, i, j, k, l);
+          });
+          tocHtml += `</div>`;
+        }
+        tocHtml += `</div>`;
+      }
+
+      function renderH4(h4: TocH4, i: number, j: number, k: number, l: number) {
+        tocHtml += `<div class="toc-h4-item">`;
+        tocHtml += `<a href="#${h4.id}" class="toc-h4-link" data-id="${h4.id}">${h4.text}</a>`;
         tocHtml += `</div>`;
       }
 
@@ -884,6 +1003,20 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       const h1Links = tocNav.querySelectorAll('.toc-h1-link');
       const h2Links = tocNav.querySelectorAll('.toc-h2-link');
       const h3Links = tocNav.querySelectorAll('.toc-h3-link');
+      const h4Links = tocNav.querySelectorAll('.toc-h4-link');
+
+      // 辅助函数：点击标题链接后，跳转到对应标题并自动展开 <details>
+      function navigateToHeading(headingId: string) {
+        if (!headingId) return;
+        const headingEl = document.getElementById(headingId);
+        if (!headingEl) return;
+        // 自动展开包含该标题的 <details> 元素
+        const detailsEl = headingEl.closest('details');
+        if (detailsEl && !detailsEl.open) {
+          detailsEl.open = true;
+        }
+        headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
       // h1 点击展开/折叠 h2 列表
       h1Links.forEach(link => {
@@ -896,11 +1029,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
             subList.classList.toggle('expanded');
             target.classList.toggle('expanded');
           }
-          const headingId = target.getAttribute('data-id');
-          if (headingId) {
-            const headingEl = document.getElementById(headingId);
-            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+          navigateToHeading(target.getAttribute('data-id') || '');
         });
       });
 
@@ -915,23 +1044,30 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
             subList.classList.toggle('expanded');
             target.classList.toggle('expanded');
           }
-          const headingId = target.getAttribute('data-id');
-          if (headingId) {
-            const headingEl = document.getElementById(headingId);
-            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+          navigateToHeading(target.getAttribute('data-id') || '');
         });
       });
 
-      // h3 点击直接跳转
+      // h3 点击展开/折叠 h4 列表
       h3Links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const h3Item = target.closest('.toc-h3-item');
+          const subList = h3Item?.querySelector('.toc-h4-list') as HTMLElement | null;
+          if (subList) {
+            e.preventDefault();
+            subList.classList.toggle('expanded');
+            target.classList.toggle('expanded');
+          }
+          navigateToHeading(target.getAttribute('data-id') || '');
+        });
+      });
+
+      // h4 点击直接跳转
+      h4Links.forEach(link => {
         link.addEventListener('click', () => {
           const target = link as HTMLElement;
-          const headingId = target.getAttribute('data-id');
-          if (headingId) {
-            const headingEl = document.getElementById(headingId);
-            if (headingEl) headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+          navigateToHeading(target.getAttribute('data-id') || '');
         });
       });
 
@@ -962,6 +1098,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         h1Links.forEach(l => l.classList.remove('active'));
         h2Links.forEach(l => l.classList.remove('active'));
         h3Links.forEach(l => l.classList.remove('active'));
+        h4Links.forEach(l => l.classList.remove('active'));
 
         if (activeId) {
           const activeLink = tocNav.querySelector(`[data-id="${activeId}"]`);
@@ -979,6 +1116,12 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
               parentH3List.classList.add('expanded');
               const parentH2Link = parentH3List.previousElementSibling;
               if (parentH2Link) parentH2Link.classList.add('expanded');
+            }
+            const parentH4List = activeLink.closest('.toc-h4-list');
+            if (parentH4List && !parentH4List.classList.contains('expanded')) {
+              parentH4List.classList.add('expanded');
+              const parentH3Link = parentH4List.previousElementSibling;
+              if (parentH3Link) parentH3Link.classList.add('expanded');
             }
           }
         }
@@ -1021,5 +1164,59 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       tocCollapseBtn.classList.toggle('collapsed');
       tocBody?.classList.toggle('collapsed');
     });
+
+    // ====== :spoiler[text] 隐藏文字处理 ======
+    // 将 :spoiler[内容] 语法转换为可点击的隐藏文字
+    function processSpoilers() {
+      if (!articleContent) return;
+      const walker = document.createTreeWalker(articleContent, NodeFilter.SHOW_TEXT);
+      const textNodes: Text[] = [];
+      let node: Text | null;
+      while ((node = walker.nextNode() as Text | null)) {
+        if (node.textContent && node.textContent.includes(':spoiler[')) {
+          textNodes.push(node);
+        }
+      }
+
+      textNodes.forEach(textNode => {
+        const text = textNode.textContent || '';
+        const spoilerRegex = /:spoiler\[([^\]]*)\]/g;
+
+        if (!spoilerRegex.test(text)) return;
+        spoilerRegex.lastIndex = 0;
+
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+
+        let match: RegExpExecArray | null;
+
+        while ((match = spoilerRegex.exec(text)) !== null) {
+          // 添加 spoiler 之前的文本
+          if (match.index > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+          }
+          // 创建 spoiler span
+          const span = document.createElement('span');
+          span.className = 'spoiler-text';
+          span.textContent = match[1];
+          span.addEventListener('click', () => {
+            span.classList.toggle('revealed');
+          });
+          fragment.appendChild(span);
+          lastIndex = spoilerRegex.lastIndex;
+        }
+
+        // 添加剩余文本
+        if (lastIndex < text.length) {
+          fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+
+        if (fragment.childNodes.length > 0) {
+          textNode.parentNode?.replaceChild(fragment, textNode);
+        }
+      });
+    }
+
+    processSpoilers();
   });
 </script>

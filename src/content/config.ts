@@ -33,12 +33,16 @@ const pots = defineCollection({
     author: z.string().optional(),
     image: z.string().optional(),
     pubDate: dateString.optional(),
-    encrypted: z.boolean().optional().default(false),
+    encrypted: z.coerce.boolean().optional().default(false),
     password: z.string().optional(),
+    pinned: z.coerce.boolean().optional().default(false),
     // 兼容旧字段
     date: dateString.optional(),
     excerpt: z.string().optional(),
     cover: z.string().optional(),
+    category: z.string().optional(),
+    sourceLink: z.string().optional(),
+    draft: z.coerce.boolean().optional().default(false),
   }),
 });
 

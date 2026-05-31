@@ -42,6 +42,30 @@
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
+
+  /* Callout Colors */
+  --callout-note: #198754;
+  --callout-tip: #0d6efd;
+  --callout-important: #7c4dff;
+  --callout-warning: #dc3545;
+  --callout-caution: #dc3545;
+  --callout-danger: #dc3545;
+  --callout-error: #dc3545;
+  --callout-info: #0d6efd;
+  --callout-success: #198754;
+  --callout-question: #ffab00;
+  --callout-faq: #ffab00;
+  --callout-bug: #f50057;
+  --callout-example: #7c4dff;
+  --callout-quote: #6c757d;
+  --callout-abstract: #0d6efd;
+  --callout-failure: #dc3545;
+  --callout-todo: #0d6efd;
+  --callout-default: var(--primary);
+
+  /* Spoiler Color */
+  --spoiler-bg: skyblue;
+  --spoiler-text: inherit;
 }
 
 /* Dark Mode */
@@ -560,6 +584,124 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
     min-width: 38px;
     height: 38px;
   }
+}
+
+/* ====== Callout / Admonition 提示块样式 ====== */
+/* 参考 GitHub 风格：浅色背景 + 左侧彩色边框 + 图标标题行 */
+.prose blockquote.callout {
+  --callout-color: var(--callout-default);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--callout-color);
+  background: var(--bg-card);
+  padding: 0;
+  margin: 1.2em 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* 标题行 */
+.prose blockquote.callout .callout-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  margin: 0;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--callout-color) 8%, transparent);
+}
+
+.prose blockquote.callout .callout-title .callout-icon {
+  font-size: 1.1em;
+  flex-shrink: 0;
+}
+
+.prose blockquote.callout .callout-title .callout-title-text {
+  font-weight: 600;
+  color: var(--callout-color);
+}
+
+/* 内容区域 */
+.prose blockquote.callout > p:not(.callout-title),
+.prose blockquote.callout > ul,
+.prose blockquote.callout > ol {
+  padding: 8px 14px;
+}
+
+.prose blockquote.callout > p:not(.callout-title):first-of-type,
+.prose blockquote.callout > ul:first-of-type,
+.prose blockquote.callout > ol:first-of-type {
+  margin-top: 4px;
+}
+
+.prose blockquote.callout > p:not(.callout-title):last-child,
+.prose blockquote.callout > ul:last-child,
+.prose blockquote.callout > ol:last-child {
+  margin-bottom: 8px;
+}
+
+/* 各类型 callout 的左边框颜色 */
+.prose blockquote.callout-note     { --callout-color: var(--callout-note); }
+.prose blockquote.callout-tip      { --callout-color: var(--callout-tip); }
+.prose blockquote.callout-hint     { --callout-color: var(--callout-tip); }
+.prose blockquote.callout-important{ --callout-color: var(--callout-important); }
+.prose blockquote.callout-warning  { --callout-color: var(--callout-warning); }
+.prose blockquote.callout-caution  { --callout-color: var(--callout-caution); }
+.prose blockquote.callout-attention{ --callout-color: var(--callout-warning); }
+.prose blockquote.callout-danger   { --callout-color: var(--callout-danger); }
+.prose blockquote.callout-error    { --callout-color: var(--callout-error); }
+.prose blockquote.callout-info     { --callout-color: var(--callout-info); }
+.prose blockquote.callout-success  { --callout-color: var(--callout-success); }
+.prose blockquote.callout-check    { --callout-color: var(--callout-success); }
+.prose blockquote.callout-done     { --callout-color: var(--callout-success); }
+.prose blockquote.callout-question { --callout-color: var(--callout-question); }
+.prose blockquote.callout-help     { --callout-color: var(--callout-question); }
+.prose blockquote.callout-faq      { --callout-color: var(--callout-faq); }
+.prose blockquote.callout-bug      { --callout-color: var(--callout-bug); }
+.prose blockquote.callout-example  { --callout-color: var(--callout-example); }
+.prose blockquote.callout-quote    { --callout-color: var(--callout-quote); }
+.prose blockquote.callout-cite     { --callout-color: var(--callout-quote); }
+.prose blockquote.callout-abstract { --callout-color: var(--callout-abstract); }
+.prose blockquote.callout-summary  { --callout-color: var(--callout-abstract); }
+.prose blockquote.callout-tldr     { --callout-color: var(--callout-abstract); }
+.prose blockquote.callout-todo     { --callout-color: var(--callout-todo); }
+.prose blockquote.callout-failure  { --callout-color: var(--callout-failure); }
+.prose blockquote.callout-fail     { --callout-color: var(--callout-failure); }
+.prose blockquote.callout-missing  { --callout-color: var(--callout-failure); }
+
+/* ====== :spoiler[text] 隐藏文字样式 ====== */
+.spoiler-text {
+  background: var(--spoiler-bg);
+  color: transparent;
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  display: inline;
+}
+
+.spoiler-text:hover {
+  opacity: 0.8;
+}
+
+.spoiler-text.revealed {
+  background: var(--primary-alpha);
+  color: var(--spoiler-text);
+}
+
+/* ====== 文章置顶标记 ====== */
+.pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(238, 90, 36, 0.3);
 }
 
 /* --- Page Transitions --- */
