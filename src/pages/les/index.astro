@@ -18,7 +18,7 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
 
       <div class="les-grid" id="lesGrid">
         {lesList.map((item, index) => (
-          <article class="les-card card" data-type={item.type} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
+          <article class="les-card card" data-type={item.type} data-status={item.status} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
             <a href={item.url || 'javascript:void(0)'} class="les-card-link" target={item.url ? '_blank' : undefined} rel={item.url ? 'noopener noreferrer' : undefined}>
               <div class="les-cover">
                 {item.cover ? (
@@ -27,7 +27,7 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
                 <div class="cover-placeholder" style={item.cover ? 'display:none;' : ''}>
                   <i class="fa-solid fa-palette"></i>
                 </div>
-                <span class="type-badge">{item.type}</span>
+                <span class="type-badge">{item.status}</span>
               </div>
               <div class="les-info">
                 <h3 class="les-title">{item.title}</h3>
@@ -235,7 +235,7 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
     function getFilteredCards() {
       return lesCards.filter(card => {
         const el = card as HTMLElement;
-        return currentType === '全部' || el.dataset.type === currentType;
+        return currentType === '全部' || el.dataset.status === currentType;
       });
     }
 
