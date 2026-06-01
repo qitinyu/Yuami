@@ -132,9 +132,8 @@ export const siteConfig = {
   siteAnnouncements: {
     enabled: true,
     items: [
-      { date: '2026-05-30', text: '博客更新v1.0.8正式版，修复音乐播放器相关问题！' },
-      { date: '2026-05-28', text: '博客更新1.0.7正式版，1.0.8beta正在完善！' },
-      { date: '2026-05-24', text: 'Yuami 框架修缮。' },
+      { date: '2026-06-01', text: '博客更新2.0.0正式版，增加用户自定义背景图片功能！' },
+      { date: '2026-05-31', text: '博客更新v1.0.9正式版，修复文章格式和目录相关问题！' },
     ],
   },
 
@@ -191,14 +190,14 @@ export const siteConfig = {
   background: {
     enabled: true,
     mobile: [
-       'https://loliapi.com/acg',
+       //'https://loliapi.com/acg',
        //'/public/home/mobile/ht.jpg'
     ],
     
     pc: [
       //'https://loliapi.com/acg',
-      '/public/home/pc/ht.png'
+      //'/public/home/pc/ht.png'
     ],
-    interval: 5000, // 轮播间隔（毫秒），默认3秒
+    interval: 5000, // 轮播间隔（毫秒），默认5秒
   },
 };
