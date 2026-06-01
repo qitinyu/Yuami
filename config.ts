@@ -196,7 +196,7 @@ export const siteConfig = {
     ],
     
     pc: [
-      //'https://loliapi.com/acg',
+      //'https://mu.baimu.live/img/fj/',
       '/public/home/pc/ht.png'
     ],
     interval: 5000, // 轮播间隔（毫秒），默认3秒
