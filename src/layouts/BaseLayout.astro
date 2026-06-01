@@ -136,7 +136,6 @@ const bgInterval = bgConfig?.interval || 3000;
       >
         <div class="bg-image bg-current" id="bgCurrent"></div>
         <div class="bg-image bg-next" id="bgNext"></div>
-        <div class="bg-overlay" id="bgOverlay"></div>
       </div>
     )}
 
@@ -180,29 +179,7 @@ const bgInterval = bgConfig?.interval || 3000;
         opacity: 0;
         z-index: 2;
       }
-      .site-background .bg-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 3;
-        background: linear-gradient(
-          to bottom,
-          rgba(248, 249, 252, 0.5) 0%,
-          rgba(248, 249, 252, 0.35) 50%,
-          rgba(248, 249, 252, 0.6) 100%
-        );
-        pointer-events: none;
-      }
-      [data-theme="dark"] .site-background .bg-overlay {
-        background: linear-gradient(
-          to bottom,
-          rgba(15, 18, 37, 0.55) 0%,
-          rgba(15, 18, 37, 0.4) 50%,
-          rgba(15, 18, 37, 0.65) 100%
-        );
-      }
+      /* 遮罩层已移除，背景图片直接展示，通过卡片毛玻璃效果保证内容可读性 */
       /* 背景启用时，内容区域需要半透明背景增强可读性 */
       .site-background ~ .page-content .card,
       .site-background ~ .page-content .sidebar-panel {
@@ -228,6 +205,20 @@ const bgInterval = bgConfig?.interval || 3000;
     {bgEnabled && (
     <script is:inline>
       (function() {
+        // 全局定时器ID，确保每次初始化前清除旧定时器
+        var _bgTimerId = null;
+        // 记录上次使用的设备类型，避免相同设备重复初始化
+        var _lastDeviceType = null;
+
+        function isApiUrl(url) {
+          return url.startsWith('http') && !url.startsWith('/') && !url.startsWith('./');
+        }
+
+        function setBgImage(el, url, isApi) {
+          var finalUrl = isApi ? url + (url.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now() : url;
+          el.style.backgroundImage = 'url("' + finalUrl + '")';
+        }
+
         function initBackground() {
           var bgContainer = document.getElementById('siteBackground');
           var bgCurrent = document.getElementById('bgCurrent');
@@ -239,24 +230,30 @@ const bgInterval = bgConfig?.interval || 3000;
           var interval = parseInt(bgContainer.dataset.interval || '3000');
 
           var isMobile = window.innerWidth <= 768;
-          var images = isMobile && mobileImages.length > 0 ? mobileImages : pcImages;
+          var deviceType = isMobile ? 'mobile' : 'pc';
 
-          function isApiUrl(url) {
-            return url.startsWith('http') && !url.startsWith('/') && !url.startsWith('./');
+          // 相同设备类型不重复初始化（避免astro:page-load重复触发）
+          if (_lastDeviceType === deviceType && _bgTimerId !== null) return;
+          _lastDeviceType = deviceType;
+
+          // 清除旧定时器，防止叠加
+          if (_bgTimerId !== null) {
+            clearInterval(_bgTimerId);
+            _bgTimerId = null;
           }
 
+          var images = isMobile && mobileImages.length > 0 ? mobileImages : pcImages;
           var hasApiUrl = images.some(isApiUrl);
           if (images.length === 0) return;
 
           var currentIndex = 0;
 
-          function setBgImage(el, url) {
-            var finalUrl = isApiUrl(url) ? url + (url.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now() : url;
-            el.style.backgroundImage = 'url("' + finalUrl + '")';
-          }
+          // 重置显示状态
+          bgCurrent.style.opacity = '1';
+          bgNext.style.opacity = '0';
 
           // 初始化第一张图
-          setBgImage(bgCurrent, images[0]);
+          setBgImage(bgCurrent, images[0], isApiUrl(images[0]));
 
           // 单图且非API → 固定显示，不轮播
           if (images.length === 1 && !hasApiUrl) return;
@@ -265,7 +262,7 @@ const bgInterval = bgConfig?.interval || 3000;
           function rotate() {
             currentIndex = (currentIndex + 1) % images.length;
             var nextUrl = images[currentIndex];
-            setBgImage(bgNext, nextUrl);
+            setBgImage(bgNext, nextUrl, isApiUrl(nextUrl));
 
             // 淡入淡出动画
             bgNext.style.opacity = '1';
@@ -278,18 +275,26 @@ const bgInterval = bgConfig?.interval || 3000;
             }, 1000);
           }
 
-          setInterval(rotate, interval);
+          _bgTimerId = setInterval(rotate, interval);
         }
 
         // 首次加载
         initBackground();
         // View Transitions 导航后重新初始化
-        document.addEventListener('astro:page-load', initBackground);
-        // 响应窗口尺寸变化
+        document.addEventListener('astro:page-load', function() {
+          // 页面导航后重置状态，强制重新初始化
+          _lastDeviceType = null;
+          initBackground();
+        });
+        // 响应窗口尺寸变化（移动端/PC端切换）
         var resizeTimer;
         window.addEventListener('resize', function() {
           clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(initBackground, 500);
+          resizeTimer = setTimeout(function() {
+            // resize时重置设备类型检查，确保切换时能重新初始化
+            _lastDeviceType = null;
+            initBackground();
+          }, 500);
         });
       })();
     </script>
