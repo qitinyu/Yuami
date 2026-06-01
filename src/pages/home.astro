@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../../config';
+import { projects, typewriterTexts, aboutMe } from '../data/chisu';
 import { getCollection } from 'astro:content';
 import { formatDateShort } from '../utils/dateFormat';
 
@@ -38,16 +39,13 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
       <section class="home-section">
         <h2 class="section-title">悟我</h2>
         <div class="section-card card">
-          <p>你好，欢迎来到我的个人主页。</p>
-          <p>这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。</p>
-          <p>这里存放的，不仅是我的思考，还有对美好生活的向往。</p>
+          {aboutMe.paragraphs.map(p => <p>{p}</p>)}
           <div class="about-links">
-            <a href="https://github.com/qitinyu" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-brands fa-github"></i> GitHub
-            </a>
-            <a href="https://yqamm.cc.cd" target="_blank" rel="noopener" class="about-link">
-              <i class="fa-solid fa-globe"></i> 主站
-            </a>
+            {aboutMe.links.map(link => (
+              <a href={link.url} target="_blank" rel="noopener" class="about-link">
+                <i class={link.icon}></i> {link.name}
+              </a>
+            ))}
           </div>
         </div>
       </section>
@@ -56,7 +54,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
       <section class="home-section">
         <h2 class="section-title">项目展示</h2>
         <div class="projects-grid">
-          {siteConfig.projects.map((project) => (
+          {projects.map((project) => (
             <article class="project-card card">
               <div class="project-card-body">
                 <h3 class="project-name">{project.name}</h3>
@@ -511,6 +509,11 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 </style>
 
+<script define:vars={{ typewriterTexts }}>
+  // 打字机文字从chisu.ts注入
+  window.__yuami_typewriter_texts = typewriterTexts;
+</script>
+
 <script>
   let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -540,18 +543,17 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
         }
       }
       if (statLastEdit) {
-        // 只显示日期部分（如 2026-05-24）
         const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
         statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
       }
     }
 
-    // Typewriter effect - clear old timer first
+    // Typewriter effect - 从chisu.ts注入的文字
     if (typewriterTimer) clearTimeout(typewriterTimer);
     const typewriterEl = document.getElementById('typewriterText');
     if (!typewriterEl) return;
 
-    const texts = [
+    const texts = window.__yuami_typewriter_texts || [
       '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
       '生活不止眼前的代码，还有星辰与大海。',
       '生命绚烂，别被黑暗压垮。',

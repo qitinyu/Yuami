@@ -181,36 +181,21 @@ export const siteConfig = {
       icon: 'fa-solid fa-envelope' },
   ],
 
-  // ========== 项目展示 ==========
-  projects: [
-    { name: '雨祁小窝', 
-      desc: '基于Astro-Mizuki的现代化个人博客', 
-      preview: 'https://yqamm.cc.cd', 
-      github: 'https://github.com/qitinyu/yuqi/' },
-
-    { name: '雨祁云盘', 
-      desc: '基于openlist搭载cloudflared tunnle实现的网盘合集', 
-      preview: 'https://qitinyu.github.io/yq-twt/', 
-      github: 'https://github.com/qitinyu/yq-twt' },
-
-    { name: '胡桃-手风琴', 
-      desc: 'HTML+CSS+JS 制作的简易网页', 
-      preview: 'https://qitinyu.github.io/hutao-sfq/', 
-      github: 'https://github.com/qitinyu/hutao-sfq' },
-
-    { name: '雨祁导航', 
-      desc: 'HTML+CSS+JS 制作的网页导航', 
-      preview: 'https://qitinyu.github.io/YQ-nav/', 
-      github: 'https://github.com/qitinyu/YQ-nav' },
-
-    { name: '雨祁-网页练习', 
-      desc: 'HTML+CSS+JS 制作的较完整网页练习', 
-      preview: 'https://yq-wz.pages.dev/', 
-      github: 'https://github.com/qitinyu/yq-wz' },
-
-    { name: '雨祁-自学练习', 
-      desc: 'HTML+CSS+JS 制作的自学练习', 
-      preview: 'https://qitinyu.github.io/hutao-J/', 
-      github: 'https://github.com/qitinyu/hutao-J' },
-  ],
+  // ========== 全局背景配置 ==========
+  // enabled: 是否启用全屏背景图片
+  // mobile: 移动端背景图片数组（填入1张时固定，填入多张时3秒轮播）
+  // pc: PC端背景图片数组（填入1张时固定，填入多张时3秒轮播）
+  // 可以填入随机图片API地址（如 https://api.example.com/random），
+  // 此时无论pc和移动端均自由3秒轮播
+  // 背景图片会根据设备自动适配（移动端用mobile，PC端用pc）
+  background: {
+    enabled: true,
+    mobile: [
+       'https://loliapi.com/acg',
+    ],
+    pc: [
+      'https://mu.baimu.live/img/fj/',
+    ],
+    interval: 5000, // 轮播间隔（毫秒），默认3秒
+  },
 };

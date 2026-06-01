@@ -587,7 +587,7 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
 }
 
 /* ====== Callout / Admonition 提示块样式 ====== */
-/* Obsidian 风格：浅色背景 + 左侧彩色边框 + SVG图标标题行 */
+/* 参考 GitHub 风格：浅色背景 + 左侧彩色边框 + 图标标题行 */
 .prose blockquote.callout {
   --callout-color: var(--callout-default);
   border: 1px solid var(--border-color);
@@ -611,27 +611,14 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
   background: color-mix(in srgb, var(--callout-color) 8%, transparent);
 }
 
-/* SVG 图标容器 */
 .prose blockquote.callout .callout-title .callout-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 1.1em;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  color: var(--callout-color);
-}
-
-.prose blockquote.callout .callout-title .callout-icon svg {
-  width: 18px;
-  height: 18px;
-  display: block;
 }
 
 .prose blockquote.callout .callout-title .callout-title-text {
   font-weight: 600;
   color: var(--callout-color);
-  letter-spacing: 0.5px;
 }
 
 /* 内容区域 */
