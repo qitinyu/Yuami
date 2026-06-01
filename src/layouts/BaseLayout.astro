@@ -136,6 +136,7 @@ const bgInterval = bgConfig?.interval || 3000;
       >
         <div class="bg-image bg-current" id="bgCurrent"></div>
         <div class="bg-image bg-next" id="bgNext"></div>
+        <div class="bg-overlay" id="bgOverlay"></div>
       </div>
     )}
 
@@ -179,7 +180,29 @@ const bgInterval = bgConfig?.interval || 3000;
         opacity: 0;
         z-index: 2;
       }
-      /* 遮罩层已移除，背景图片直接展示，通过卡片毛玻璃效果保证内容可读性 */
+      .site-background .bg-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        background: linear-gradient(
+          to bottom,
+          rgba(248, 249, 252, 0.5) 0%,
+          rgba(248, 249, 252, 0.35) 50%,
+          rgba(248, 249, 252, 0.6) 100%
+        );
+        pointer-events: none;
+      }
+      [data-theme="dark"] .site-background .bg-overlay {
+        background: linear-gradient(
+          to bottom,
+          rgba(15, 18, 37, 0.55) 0%,
+          rgba(15, 18, 37, 0.4) 50%,
+          rgba(15, 18, 37, 0.65) 100%
+        );
+      }
       /* 背景启用时，内容区域需要半透明背景增强可读性 */
       .site-background ~ .page-content .card,
       .site-background ~ .page-content .sidebar-panel {

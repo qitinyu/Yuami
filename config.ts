@@ -192,9 +192,12 @@ export const siteConfig = {
     enabled: true,
     mobile: [
        'https://loliapi.com/acg',
+       //'/public/home/mobile/ht.jpg'
     ],
+    
     pc: [
-      'https://mu.baimu.live/img/fj/',
+      //'https://loliapi.com/acg',
+      '/public/home/pc/ht.png'
     ],
     interval: 5000, // 轮播间隔（毫秒），默认3秒
   },
