@@ -564,6 +564,16 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
 
     <!-- 加载动画 & 引导页控制脚本（使用module script确保SPA导航后正确执行） -->
     <script>
+      // === astro:after-swap: DOM交换后立即恢复data属性，防止引导页/加载动画闪烁 ===
+      document.addEventListener('astro:after-swap', () => {
+        if (sessionStorage.getItem('yuami_welcome_dismissed')) {
+          document.documentElement.setAttribute('data-welcome-dismissed', 'true');
+        }
+        if (sessionStorage.getItem('yuami_loading_done')) {
+          document.documentElement.setAttribute('data-loading-done', 'true');
+        }
+      });
+
       document.addEventListener('astro:page-load', () => {
         // === 加载动画控制 ===
         const overlay = document.getElementById('loadingOverlay');
@@ -571,36 +581,36 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
           // 如果之前已经完成过加载（SPA导航），立即隐藏
           if (sessionStorage.getItem('yuami_loading_done')) {
             overlay.style.display = 'none';
-            return;
-          }
-
-          const minDuration = parseInt(overlay.dataset.minDuration || '300');
-          const startTime = Date.now();
-          let hidden = false;
-
-          function hideOverlay() {
-            if (hidden) return;
-            hidden = true;
-            const elapsed = Date.now() - startTime;
-            const remaining = Math.max(0, minDuration - elapsed);
-            setTimeout(() => {
-              overlay.classList.add('fade-out');
-              setTimeout(() => {
-                overlay.style.display = 'none';
-              }, 400);
-              // 标记加载动画已完成
-              sessionStorage.setItem('yuami_loading_done', '1');
-              document.documentElement.setAttribute('data-loading-done', 'true');
-            }, remaining);
-          }
-
-          if (document.readyState === 'complete') {
-            hideOverlay();
+            // 注意：不要在这里 return，必须继续执行引导页检查逻辑
           } else {
-            window.addEventListener('load', hideOverlay);
+            const minDuration = parseInt(overlay.dataset.minDuration || '300');
+            const startTime = Date.now();
+            let hidden = false;
+
+            function hideOverlay() {
+              if (hidden) return;
+              hidden = true;
+              const elapsed = Date.now() - startTime;
+              const remaining = Math.max(0, minDuration - elapsed);
+              setTimeout(() => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                  overlay.style.display = 'none';
+                }, 400);
+                // 标记加载动画已完成
+                sessionStorage.setItem('yuami_loading_done', '1');
+                document.documentElement.setAttribute('data-loading-done', 'true');
+              }, remaining);
+            }
+
+            if (document.readyState === 'complete') {
+              hideOverlay();
+            } else {
+              window.addEventListener('load', hideOverlay);
+            }
+            // Safety: force hide after 1.5 seconds
+            setTimeout(hideOverlay, 1500);
           }
-          // Safety: force hide after 1.5 seconds
-          setTimeout(hideOverlay, 1500);
         }
 
         // === 引导页控制 ===
@@ -609,29 +619,30 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
           const dismissed = sessionStorage.getItem('yuami_welcome_dismissed');
           if (dismissed) {
             welcomePage.style.display = 'none';
-            return;
-          }
-
-          const welcomeArrow = document.getElementById('welcomeArrow');
-          if (welcomeArrow) {
-            welcomeArrow.addEventListener('click', function dismissWelcome() {
-              welcomePage.classList.add('slide-up');
-              sessionStorage.setItem('yuami_welcome_dismissed', '1');
-              document.documentElement.setAttribute('data-welcome-dismissed', 'true');
-              // 给博客内容添加入场动画
-              document.querySelectorAll('.page-content .card, .page-content .sidebar-panel').forEach((el, i) => {
-                (el as HTMLElement).style.opacity = '0';
-                (el as HTMLElement).style.transform = 'translateY(20px)';
-                (el as HTMLElement).style.transition = `opacity 0.5s ease ${i * 0.08}s, transform 0.5s ease ${i * 0.08}s`;
+            // 同步恢复data属性，确保CSS规则生效
+            document.documentElement.setAttribute('data-welcome-dismissed', 'true');
+          } else {
+            const welcomeArrow = document.getElementById('welcomeArrow');
+            if (welcomeArrow) {
+              welcomeArrow.addEventListener('click', function dismissWelcome() {
+                welcomePage.classList.add('slide-up');
+                sessionStorage.setItem('yuami_welcome_dismissed', '1');
+                document.documentElement.setAttribute('data-welcome-dismissed', 'true');
+                // 给博客内容添加入场动画
+                document.querySelectorAll('.page-content .card, .page-content .sidebar-panel').forEach((el, i) => {
+                  (el as HTMLElement).style.opacity = '0';
+                  (el as HTMLElement).style.transform = 'translateY(20px)';
+                  (el as HTMLElement).style.transition = `opacity 0.5s ease ${i * 0.08}s, transform 0.5s ease ${i * 0.08}s`;
+                  setTimeout(() => {
+                    (el as HTMLElement).style.opacity = '1';
+                    (el as HTMLElement).style.transform = 'translateY(0)';
+                  }, 800);
+                });
                 setTimeout(() => {
-                  (el as HTMLElement).style.opacity = '1';
-                  (el as HTMLElement).style.transform = 'translateY(0)';
-                }, 800);
+                  welcomePage.style.display = 'none';
+                }, 900);
               });
-              setTimeout(() => {
-                welcomePage.style.display = 'none';
-              }, 900);
-            });
+            }
           }
         }
       });

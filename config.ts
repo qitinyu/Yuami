@@ -200,7 +200,7 @@ export const siteConfig = {
       // '/bg/mobile-1.webp',
     ],
     pc: [
-       '/public/home/pc/ht.png',
+       //'/public/home/pc/ht.png',
     ],
     interval: 3000, // 轮播间隔（毫秒），默认3秒
   },
