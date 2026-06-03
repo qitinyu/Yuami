@@ -115,7 +115,7 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
-    gap: 24px;
+    gap: 20px;
     padding: 28px 24px;
   }
 
@@ -127,7 +127,7 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   /* ====== 相册卡片 ====== */
   .album-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 18px;
   }
 
@@ -427,12 +427,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   }
 
   /* 分页样式已移至 global.css */
-
-  @media (min-width: 769px) {
-    .page-layout > :global(.sidebar-widget) {
-      order: -1;
-    }
-  }
 
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }

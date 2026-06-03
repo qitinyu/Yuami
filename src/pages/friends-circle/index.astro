@@ -12,8 +12,6 @@ const hasArticles = friendsArticles.length > 0;
 
 <BaseLayout title="朋友圈">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <div class="circle-header">
         <h2 class="circle-title"><i class="fa-solid fa-rss"></i> 朋友圈</h2>
@@ -54,6 +52,8 @@ const hasArticles = friendsArticles.length > 0;
         <span>想加入朋友圈？请前往 <a href="/friends">友链</a> 页面申请。</span>
       </div>
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -62,7 +62,7 @@ const hasArticles = friendsArticles.length > 0;
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
-    gap: 24px;
+    gap: 20px;
     padding: 28px 24px;
   }
 

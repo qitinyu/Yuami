@@ -32,7 +32,8 @@
   /* Dimensions */
   --nav-height: 64px;
   --sidebar-width: 280px;
-  --max-width: 1400px;
+  --right-sidebar-width: 260px;
+  --max-width: 1600px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;

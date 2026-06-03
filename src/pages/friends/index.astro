@@ -8,8 +8,6 @@ import { friendsList } from '../../data/friends';
 
 <BaseLayout title="萍踪">
   <div class="page-layout">
-    <SidebarWidget />
-
     <div class="page-main">
       <!-- Apply section -->
       <div class="apply-section card">
@@ -57,6 +55,8 @@ import { friendsList } from '../../data/friends';
       <!-- Twikoo Comments -->
       <Twikoo />
     </div>
+
+    <SidebarWidget />
   </div>
 </BaseLayout>
 
@@ -65,7 +65,7 @@ import { friendsList } from '../../data/friends';
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
-    gap: 24px;
+    gap: 20px;
     padding: 28px 24px;
   }
 
@@ -117,7 +117,7 @@ import { friendsList } from '../../data/friends';
 
   .friends-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     margin-bottom: 24px;
   }

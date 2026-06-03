@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SidebarWidget from '../../components/SidebarWidget.astro';
+import LeftSidebar from '../../components/LeftSidebar.astro';
 import Twikoo from '../../components/Twikoo.astro';
 import Encryptor from '../../components/Encryptor.astro';
 import { getCollection } from 'astro:content';
@@ -154,7 +154,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
     <!-- Left Sidebar: 3 Plugins (DOM second, CSS order: -1 on desktop to move left; mobile: natural order after article) -->
     <aside class="article-sidebar">
-      <SidebarWidget
+      <LeftSidebar
         totalPosts={totalPostsStat}
         totalWords={totalWordsStat}
         lastEdit={lastEditStat}
@@ -649,7 +649,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       position: static;
       width: 100%;
     }
-    .article-sidebar :global(.sidebar-widget) {
+    .article-sidebar :global(.left-sidebar) {
       position: static;
       width: 100%;
       flex-direction: row;
@@ -672,7 +672,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     .article-title {
       font-size: 1.4rem;
     }
-    .article-sidebar :global(.sidebar-widget) {
+    .article-sidebar :global(.left-sidebar) {
       flex-direction: column;
     }
     .article-sidebar :global(.sidebar-panel) {

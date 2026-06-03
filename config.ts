@@ -101,6 +101,12 @@ export const siteConfig = {
     enabled: false,
     src: 'https://cloud.umami.is/script.js',
     websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
+    // Umami统计组件展示配置（侧边栏Umami统计面板）
+    widget: {
+      enabled: true,  // 是否在侧边栏显示Umami统计面板
+      apiUrl: '',     // Umami API地址，如 https://cloud.umami.is/api/websites/{websiteId}/stats
+      // 如果不填apiUrl，则仅展示基础信息（需umami.enabled=true才有脚本注入）
+    },
   },
 
   // ========== Live2D 看板娘配置 ==========
@@ -132,8 +138,9 @@ export const siteConfig = {
   siteAnnouncements: {
     enabled: true,
     items: [
-      { date: '2026-06-01', text: '博客更新2.0.0正式版，增加用户自定义背景图片功能！' },
-      { date: '2026-05-31', text: '博客更新v1.0.9正式版，修复文章格式和目录相关问题！' },
+      { date: '2026-06-03', text: '博客更新v2.0.1beta版，正式版正在完善！' },
+      { date: '2026-06-01', text: '博客更新v2.0.0正式版，修复音乐播放器相关问题！' },
+      
     ],
   },
 
@@ -188,16 +195,45 @@ export const siteConfig = {
   // 此时无论pc和移动端均自由3秒轮播
   // 背景图片会根据设备自动适配（移动端用mobile，PC端用pc）
   background: {
-    enabled: true,
+    enabled: false,
     mobile: [
-       //'https://loliapi.com/acg',
-       //'/public/home/mobile/ht.jpg'
+      // '/bg/mobile-1.webp',
     ],
-    
     pc: [
-      //'https://loliapi.com/acg',
-      //'/public/home/pc/ht.png'
+       '/public/home/pc/ht.png',
     ],
-    interval: 5000, // 轮播间隔（毫秒），默认5秒
+    interval: 3000, // 轮播间隔（毫秒），默认3秒
+  },
+
+  // ========== 加载动画配置 ==========
+  // enabled: 是否启用全局加载动画
+  // type: 加载动画类型
+  //   'gif'   - 自定义GIF/图片，需填写src为图片路径（如 /home/loading.gif）
+  //   'online' - 在线加载样式，需填写src为在线CSS/动画URL
+  //   'builtin' - 内置加载动画（默认旋转圆环），无需额外资源
+  // src: 加载资源路径（gif/online类型必填，builtin类型忽略）
+  // minDuration: 最小显示时长（毫秒），建议200-500ms，过长会影响体验
+  loadingAnimation: {
+    enabled: true,
+    type: 'gif', // 'builtin' | 'gif' | 'online'
+    src: '/public/home/fufu.gif',         // gif类型: '/home/loading.gif' | online类型: CSS URL
+    minDuration: 300,
+  },
+
+  // ========== 引导页配置 ==========
+  // enabled: 是否启用引导页（访客最先看到的页面）
+  // backgroundImage: 引导页背景图片路径
+  //   支持本地路径（如 '/home/welcome-bg.webp'，图片放在 public/home/ 目录下）
+  //   支持在线URL（如 'https://example.com/bg.jpg'）
+  //   为空时使用默认渐变背景（亮色模式：紫蓝渐变，暗色模式：深蓝渐变）
+  // avatar: 引导页头像图片（为空则使用全局avatar）
+  // title: 引导页主标题
+  // subtitle: 引导页副标题
+  welcomePage: {
+    enabled: true,
+    backgroundImage: 'https://i.postimg.cc/TPqcm4zm/hu-tao55.jpg',  // ★ 更换引导页背景图片：填写路径如 '/home/welcome-bg.webp'
+    avatar: '',           // 为空则使用全局avatar
+    title: 'Welcome to Yuami',
+    subtitle: '欢迎来到Yuami',
   },
 };
