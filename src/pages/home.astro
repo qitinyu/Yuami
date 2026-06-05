@@ -1,59 +1,104 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../../config';
-import { projects, typewriterTexts, aboutMe } from '../data/chisu';
+import { projects } from '../data/chisu';
 import SidebarWidget from '../components/SidebarWidget.astro';
 import { getCollection } from 'astro:content';
 import { formatDateShort } from '../utils/dateFormat';
+import { scanDirectoryImages } from '../utils/image-scanner';
 
 const allPots = await getCollection('pots');
 const allDiary = await getCollection('diary');
 const totalPosts = allPots.length + allDiary.length;
-// 计算总字数（从content body的raw content统计）
 let totalWords = 0;
 allPots.forEach(p => { totalWords += (p.body || '').replace(/\s/g, '').length; });
 allDiary.forEach(d => { totalWords += (d.body || '').replace(/\s/g, '').length; });
-// 最后编辑日期
 const allDates = [
   ...allPots.map(p => p.data.published || p.data.date || ''),
   ...allDiary.map(d => d.data.date || ''),
 ].filter(Boolean).sort().reverse();
 const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
+
+// 轩窗配置
+const xcConfig = siteConfig.xuanchuang || {};
+const fixedText = xcConfig.carouselFixedText || '为世界所有美好而战';
+const carouselInterval = xcConfig.carouselInterval || 5000;
+const carouselApiUrl = xcConfig.carouselApiUrl || '';
+const typewriterTexts = siteConfig.typewriterTexts || [
+  '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
+  '生活不止眼前的代码，还有星辰与大海。',
+  '生命绚烂，别被黑暗压垮。',
+];
+
+// 扫描轮播图目录，收集所有图片
+let carouselImages: string[] = [];
+if (!carouselApiUrl) {
+  const rawImages = xcConfig.carouselImages || [];
+  for (const imgPath of rawImages) {
+    // 判断是否为目录路径（无扩展名或以/结尾）
+    const ext = imgPath.split('.').pop()?.toLowerCase() || '';
+    const imageExts = ['webp', 'jpg', 'jpeg', 'png', 'gif', 'avif', 'svg', 'bmp'];
+    if (imageExts.includes(ext)) {
+      // 直接图片URL
+      carouselImages.push(imgPath);
+    } else {
+      // 可能是目录路径，去掉开头的 / 后扫描
+      const dirPath = imgPath.replace(/^\//, '');
+      const scanned = scanDirectoryImages(dirPath);
+      carouselImages.push(...scanned);
+    }
+  }
+  // 去重
+  carouselImages = [...new Set(carouselImages)];
+}
 ---
 
-<BaseLayout title="尺素">
+<BaseLayout title="轩窗">
   <div class="page-layout">
-    <!-- Center Content -->
+    <!-- Left: Sidebar Widgets -->
+    <SidebarWidget
+      totalPosts={totalPosts}
+      totalWords={totalWords}
+      lastEdit={lastEdit}
+    />
+
+    <!-- Right: Main Content -->
     <div class="page-main">
-      <!-- 青矜 (Typewriter) -->
+      <!-- 青衿: Carousel + Typewriter -->
       <section class="home-section">
         <h2 class="section-title">青衿</h2>
-        <div class="section-card card">
-          <div class="typewriter-content">
-            <div class="typewriter-text" id="typewriterText"></div>
-            <span class="typewriter-cursor">|</span>
+        <div class="qingjin-card card">
+          <div class="carousel-wrapper" id="carouselWrapper"
+            data-interval={carouselInterval}
+            data-api-url={carouselApiUrl}
+            data-images={JSON.stringify(carouselImages)}
+          >
+            <div class="carousel-images" id="carouselImages">
+              {carouselImages.length > 0 ? carouselImages.map((src, i) => (
+                <div class={`carousel-img-item ${i === 0 ? 'active' : ''}`} data-src={src}>
+                  <img src={src} alt="" loading="lazy" />
+                </div>
+              )) : (
+                <div class="carousel-img-item active carousel-placeholder">
+                  <i class="fa-solid fa-image"></i>
+                  <span>暂无图片</span>
+                </div>
+              )}
+            </div>
+            <div class="carousel-text-overlay">
+              <div class="carousel-fixed-text" id="carouselFixedText">{fixedText}</div>
+              <div class="carousel-typewriter-row">
+                <span class="typewriter-text" id="typewriterText"></span>
+                <span class="typewriter-cursor">|</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- 悟我 (About Me) -->
+      <!-- 悟我: Projects (原项目展示) -->
       <section class="home-section">
         <h2 class="section-title">悟我</h2>
-        <div class="section-card card">
-          {aboutMe.paragraphs.map(p => <p>{p}</p>)}
-          <div class="about-links">
-            {aboutMe.links.map(link => (
-              <a href={link.url} target="_blank" rel="noopener" class="about-link">
-                <i class={link.icon}></i> {link.name}
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <!-- 项目展示 -->
-      <section class="home-section">
-        <h2 class="section-title">项目展示</h2>
         <div class="projects-grid">
           {projects.map((project) => (
             <article class="project-card card">
@@ -74,12 +119,6 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
         </div>
       </section>
     </div>
-
-    <SidebarWidget
-      totalPosts={totalPosts}
-      totalWords={totalWords}
-      lastEdit={lastEdit}
-    />
   </div>
 </BaseLayout>
 
@@ -107,35 +146,106 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
     flex-direction: column;
   }
 
-  .section-card {
-    padding: 22px;
+  /* ====== 青衿: Carousel + Typewriter ====== */
+  .qingjin-card {
+    padding: 0;
+    overflow: hidden;
+    position: relative;
   }
 
-  .section-card p {
-    color: var(--text-primary);
+  .carousel-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 340px;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+
+  .carousel-images {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 340px;
+  }
+
+  .carousel-img-item {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: opacity 1.2s ease, transform 1.2s ease;
+    z-index: 0;
+  }
+
+  .carousel-img-item.active {
+    opacity: 1;
+    transform: scale(1);
+    z-index: 1;
+  }
+
+  .carousel-img-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .carousel-placeholder {
+    background: linear-gradient(135deg, var(--primary-alpha), var(--primary-alpha-30));
+    color: var(--primary);
+    flex-direction: column;
+    gap: 8px;
+    font-size: 1rem;
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .carousel-placeholder i {
+    font-size: 2.5rem;
+  }
+
+  /* Text overlay on carousel */
+  .carousel-text-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 40px 28px 28px;
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+    color: #fff;
+    pointer-events: none;
+  }
+
+  .carousel-fixed-text {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 1px;
     margin-bottom: 8px;
-    font-size: 0.95rem;
-    line-height: 1.8;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    line-height: 1.5;
   }
 
-  /* Typewriter */
-  .typewriter-content {
+  .carousel-typewriter-row {
     display: flex;
     align-items: baseline;
-    flex-wrap: wrap;
-    min-height: 2em;
+    min-height: 1.8em;
   }
 
   .typewriter-text {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 500;
-    color: var(--text-primary);
-    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.6;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
   }
 
   .typewriter-cursor {
     font-size: 1.1rem;
-    color: var(--primary);
+    color: var(--primary-light);
     animation: blink 1s step-end infinite;
     font-weight: 300;
     margin-left: 2px;
@@ -146,32 +256,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
     50% { opacity: 0; }
   }
 
-  /* About links */
-  .about-links {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .about-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    background: var(--primary-alpha);
-    color: var(--primary);
-    font-size: 0.92rem;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-  }
-
-  .about-link:hover {
-    background: var(--primary);
-    color: #fff;
-  }
-
-  /* Projects */
+  /* ====== 悟我: Projects ====== */
   .projects-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -219,6 +304,7 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
     transform: scale(1.1);
   }
 
+  /* ====== Mobile ====== */
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }
   }
@@ -226,19 +312,85 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
   @media (max-width: 768px) {
     .projects-grid { grid-template-columns: 1fr; }
     .page-layout { padding: 20px 14px; gap: 16px; }
+    .carousel-wrapper { min-height: 260px; }
+    .carousel-images { min-height: 260px; }
+    .carousel-fixed-text { font-size: 1.1rem; }
+    .typewriter-text { font-size: 0.95rem; }
+    .carousel-text-overlay { padding: 30px 18px 18px; }
+  }
+
+  @media (max-width: 480px) {
+    .carousel-wrapper { min-height: 220px; }
+    .carousel-images { min-height: 220px; }
+    .carousel-fixed-text { font-size: 1rem; }
+    .typewriter-text { font-size: 0.88rem; }
+    .carousel-text-overlay { padding: 24px 14px 14px; }
   }
 </style>
 
 <script define:vars={{ typewriterTexts }}>
-  // 打字机文字从chisu.ts注入
   window.__yuami_typewriter_texts = typewriterTexts;
 </script>
 
 <script>
+  let carouselTimerId: ReturnType<typeof setInterval> | null = null;
   let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
   document.addEventListener('astro:page-load', () => {
-    // Typewriter effect - 从chisu.ts注入的文字
+    // ====== 轮播图 (跃动替换) ======
+    const wrapper = document.getElementById('carouselWrapper');
+    if (wrapper) {
+      const interval = parseInt(wrapper.dataset.interval || '5000');
+      const apiUrl = wrapper.dataset.apiUrl || '';
+      const imagesData = JSON.parse(wrapper.dataset.images || '[]');
+      const items = Array.from(wrapper.querySelectorAll('.carousel-img-item'));
+      let currentIndex = 0;
+
+      function showNext() {
+        if (items.length <= 1) return;
+        const prev = items[currentIndex];
+        currentIndex = (currentIndex + 1) % items.length;
+        const next = items[currentIndex];
+        prev.classList.remove('active');
+        next.classList.add('active');
+      }
+
+      // Start auto rotation
+      if (items.length > 1) {
+        if (carouselTimerId) clearInterval(carouselTimerId);
+        carouselTimerId = setInterval(showNext, interval);
+      }
+
+      // If API URL provided, dynamically fetch images
+      if (apiUrl) {
+        const imagesContainer = document.getElementById('carouselImages');
+        if (imagesContainer) {
+          let apiIndex = 0;
+          const apiInterval = setInterval(() => {
+            const url = apiUrl + (apiUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+            const newItem = document.createElement('div');
+            newItem.className = 'carousel-img-item';
+            newItem.innerHTML = `<img src="${url}" alt="" onerror="this.parentElement.remove()" />`;
+
+            // Remove old active, add new
+            const oldActive = imagesContainer.querySelector('.carousel-img-item.active');
+            if (oldActive) oldActive.classList.remove('active');
+            newItem.classList.add('active');
+
+            // Remove very old items to prevent DOM bloat
+            const allItems = imagesContainer.querySelectorAll('.carousel-img-item');
+            if (allItems.length > 5) {
+              allItems[0].remove();
+            }
+
+            imagesContainer.appendChild(newItem);
+            apiIndex++;
+          }, interval);
+        }
+      }
+    }
+
+    // ====== 打字机效果 ======
     if (typewriterTimer) clearTimeout(typewriterTimer);
     const typewriterEl = document.getElementById('typewriterText');
     if (!typewriterEl) return;
@@ -247,7 +399,6 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
       '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
       '生活不止眼前的代码，还有星辰与大海。',
       '生命绚烂，别被黑暗压垮。',
-      '记录生活中的每一份美好与感动。',
     ];
 
     let textIndex = 0;

@@ -116,8 +116,8 @@ const statusLabels: Record<string, string> = {
 
   .anime-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
 
   .anime-card {
@@ -127,7 +127,7 @@ const statusLabels: Record<string, string> = {
   }
 
   .anime-card-link {
-    display: block;
+    display: flex;
     text-decoration: none;
     color: inherit;
   }
@@ -137,7 +137,9 @@ const statusLabels: Record<string, string> = {
   }
 
   .anime-cover {
-    height: 200px;
+    width: 110px;
+    min-height: 150px;
+    flex-shrink: 0;
     overflow: hidden;
     position: relative;
   }
@@ -161,7 +163,7 @@ const statusLabels: Record<string, string> = {
     align-items: center;
     justify-content: center;
     color: var(--primary);
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     transition: all var(--transition-normal);
   }
 
@@ -171,25 +173,35 @@ const statusLabels: Record<string, string> = {
 
   .status-badge {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
+    top: 6px;
+    right: 6px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 0.65rem;
     background: var(--primary);
     color: #fff;
   }
 
   .anime-info {
-    padding: 14px;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .anime-title {
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     transition: color var(--transition-fast);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .anime-card:hover .anime-title {
@@ -199,67 +211,71 @@ const statusLabels: Record<string, string> = {
   .anime-meta {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
   }
 
   .meta-item {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
   }
 
   .meta-item i {
     color: var(--primary);
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
 
   .anime-genre {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     flex-wrap: wrap;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .genre-tag {
-    font-size: 0.7rem;
-    padding: 1px 8px;
-    border-radius: 10px;
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 8px;
     background: var(--primary-alpha);
     color: var(--primary);
   }
 
   .anime-studio {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .anime-studio i {
     color: var(--primary);
-    font-size: 0.65rem;
-    margin-right: 3px;
+    font-size: 0.6rem;
+    margin-right: 2px;
   }
 
   .anime-description {
-    font-size: 0.88rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
-    line-height: 1.5;
-    margin-bottom: 8px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .anime-progress {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .progress-bar {
     flex: 1;
-    height: 4px;
+    height: 3px;
     background: var(--border-color);
     border-radius: 2px;
     overflow: hidden;
@@ -273,7 +289,7 @@ const statusLabels: Record<string, string> = {
   }
 
   .progress-text {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     color: var(--text-muted);
     white-space: nowrap;
   }
@@ -285,8 +301,13 @@ const statusLabels: Record<string, string> = {
     .anime-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
+  @media (max-width: 860px) {
+    .anime-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
   @media (max-width: 640px) {
     .anime-grid { grid-template-columns: 1fr; }
+    .anime-cover { width: 90px; min-height: 120px; }
   }
 </style>
 

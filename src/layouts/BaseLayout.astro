@@ -84,8 +84,7 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
       body {
         font-family: {fontFamily};
       }
-      /* SPA导航时根据data属性立即隐藏已完成的加载动画和已关闭的引导页，防止闪烁 */
-      html[data-loading-done] .loading-overlay { display: none !important; }
+      /* SPA导航时根据data属性立即隐藏已关闭的引导页，防止闪烁 */
       html[data-welcome-dismissed] .welcome-page { display: none !important; }
     </style>
     <title>{fullTitle}</title>
@@ -138,14 +137,20 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         root.setProperty('--shadow-lg', '0 8px 40px rgba('+rv+','+gv+','+bv+',0.16)');
         root.setProperty('--shadow-hover', '0 8px 30px rgba('+rv+','+gv+','+bv+',0.2)');
       }
+      // 恢复用户对全局背景/樱花特效的偏好
+      var _bgPref = localStorage.getItem('yuami_bg_enabled');
+      if (_bgPref === 'false') {
+        document.documentElement.classList.add('bg-user-off');
+      }
+      var _sakuraPref = localStorage.getItem('yuami_sakura_enabled');
+      if (_sakuraPref === 'false') {
+        document.documentElement.classList.add('sakura-user-off');
+      }
     </script>
-    <!-- SPA导航时根据sessionStorage立即设置data属性，配合CSS防止引导页/加载动画闪烁 -->
+    <!-- SPA导航时根据sessionStorage立即设置data属性，配合CSS防止引导页闪烁 -->
     <script is:inline>
       if (sessionStorage.getItem('yuami_welcome_dismissed')) {
         document.documentElement.setAttribute('data-welcome-dismissed', 'true');
-      }
-      if (sessionStorage.getItem('yuami_loading_done')) {
-        document.documentElement.setAttribute('data-loading-done', 'true');
       }
     </script>
     <!-- Umami Analytics -->
@@ -441,27 +446,136 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         opacity: 0;
         z-index: 2;
       }
-      /* 遮罩层已移除，背景图片直接展示，通过卡片毛玻璃效果保证内容可读性 */
-      /* 背景启用时，内容区域需要半透明背景增强可读性 */
-      .site-background ~ .page-content .card,
-      .site-background ~ .page-content .sidebar-panel {
+      /* 背景启用时，所有内容区域半透明效果（无磨砂） */
+      /* 子页面内容区域整体背景包裹 */
+      .site-background:not(.disabled) ~ .page-content .page-main {
+        background: rgba(255, 255, 255, 0.82);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .page-main {
+        background: rgba(28, 32, 64, 0.82);
+      }
+      /* 首页(轩窗)主内容区域半透明背景 */
+      .site-background:not(.disabled) ~ .page-content .home-section .card:not(.qingjin-card) {
+        background: rgba(255, 255, 255, 0.82) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .home-section .card:not(.qingjin-card) {
+        background: rgba(28, 32, 64, 0.82) !important;
+      }
+      .site-background:not(.disabled) ~ .page-content .qingjin-card {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      .site-background:not(.disabled) ~ .page-content .home-section .project-card {
+        background: rgba(255, 255, 255, 0.82) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .home-section .project-card {
+        background: rgba(28, 32, 64, 0.82) !important;
+      }
+      /* 卡片和侧边栏面板 */
+      .site-background:not(.disabled) ~ .page-content .card:not(.qingjin-card),
+      .site-background:not(.disabled) ~ .page-content .sidebar-panel {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .card:not(.qingjin-card),
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .sidebar-panel {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 游戏卡片 */
+      .site-background:not(.disabled) ~ .page-content .game-card {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .game-card {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 搜索框 */
+      .site-background:not(.disabled) ~ .page-content .search-box {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .search-box {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 筛选标签 - 确保文字可见 */
+      .site-background:not(.disabled) ~ .page-content .filter-tab {
         background: rgba(255, 255, 255, 0.88) !important;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color);
       }
-      [data-theme="dark"] .site-background ~ .page-content .card,
-      [data-theme="dark"] .site-background ~ .page-content .sidebar-panel {
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .filter-tab {
         background: rgba(28, 32, 64, 0.88) !important;
+        color: var(--text-secondary) !important;
       }
-      /* Navbar在背景启用时更透明 */
-      .site-background ~ .navbar.glass {
-        background: rgba(255, 255, 255, 0.72);
+      .site-background:not(.disabled) ~ .page-content .filter-tab:hover,
+      .site-background:not(.disabled) ~ .page-content .filter-tab.active {
+        background: var(--primary) !important;
+        color: #fff !important;
+        border-color: var(--primary);
       }
-      [data-theme="dark"] .site-background ~ .navbar.glass {
-        background: rgba(23, 27, 51, 0.78);
+      /* 分页按钮 */
+      .site-background:not(.disabled) ~ .page-content .page-btn {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .page-btn {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 闲游感悟 */
+      .site-background:not(.disabled) ~ .page-content .reflection-section {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .reflection-section {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 评论区 */
+      .site-background:not(.disabled) ~ .page-content .twikoo-card-bg {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .twikoo-card-bg {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 返回按钮 */
+      .site-background:not(.disabled) ~ .page-content .back-btn {
+        background: rgba(255, 255, 255, 0.78) !important;
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .back-btn {
+        background: rgba(28, 32, 64, 0.78) !important;
+      }
+      /* 标签筛选 */
+      .site-background:not(.disabled) ~ .page-content .tag {
+        background: rgba(255, 255, 255, 0.78);
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content .tag {
+        background: rgba(28, 32, 64, 0.78);
+      }
+      /* Navbar半透明 */
+      .site-background:not(.disabled) ~ .navbar.glass {
+        background: rgba(255, 255, 255, 0.65);
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .navbar.glass {
+        background: rgba(23, 27, 51, 0.7);
+      }
+      /* Footer半透明 - 确保可见 */
+      .site-footer {
+        position: relative;
+        z-index: 1;
+      }
+      .site-background:not(.disabled) ~ .page-content ~ .site-footer.glass {
+        background: rgba(255, 255, 255, 0.65);
+      }
+      [data-theme="dark"] .site-background:not(.disabled) ~ .page-content ~ .site-footer.glass {
+        background: rgba(23, 27, 51, 0.7);
       }
     </style>
     )}
+
+    <!-- 用户偏好覆盖样式（始终渲染，防止首屏闪烁） -->
+    <style is:inline>
+      /* 用户关闭全局背景时隐藏背景层 */
+      html.bg-user-off .site-background { display: none !important; }
+      /* 用户关闭樱花特效时隐藏花瓣容器 */
+      html.sakura-user-off .sakura-container { display: none !important; }
+    </style>
 
     <!-- 背景轮播脚本 -->
     {bgEnabled && (
@@ -564,53 +678,52 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
 
     <!-- 加载动画 & 引导页控制脚本（使用module script确保SPA导航后正确执行） -->
     <script>
-      // === astro:after-swap: DOM交换后立即恢复data属性，防止引导页/加载动画闪烁 ===
+      // === astro:after-swap: DOM交换后立即恢复引导页data属性，防止闪烁 ===
       document.addEventListener('astro:after-swap', () => {
         if (sessionStorage.getItem('yuami_welcome_dismissed')) {
           document.documentElement.setAttribute('data-welcome-dismissed', 'true');
         }
-        if (sessionStorage.getItem('yuami_loading_done')) {
-          document.documentElement.setAttribute('data-loading-done', 'true');
+      });
+
+      // === SPA导航开始时，重置并显示加载动画 ===
+      document.addEventListener('astro:before-preparation', () => {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+          overlay.classList.remove('fade-out');
+          overlay.style.display = '';
+          overlay.style.opacity = '';
+          overlay.style.pointerEvents = '';
         }
       });
 
       document.addEventListener('astro:page-load', () => {
-        // === 加载动画控制 ===
+        // === 加载动画控制（全局：每次页面加载/导航都显示） ===
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
-          // 如果之前已经完成过加载（SPA导航），立即隐藏
-          if (sessionStorage.getItem('yuami_loading_done')) {
-            overlay.style.display = 'none';
-            // 注意：不要在这里 return，必须继续执行引导页检查逻辑
-          } else {
-            const minDuration = parseInt(overlay.dataset.minDuration || '300');
-            const startTime = Date.now();
-            let hidden = false;
+          const minDuration = parseInt(overlay.dataset.minDuration || '300');
+          const startTime = Date.now();
+          let hidden = false;
 
-            function hideOverlay() {
-              if (hidden) return;
-              hidden = true;
-              const elapsed = Date.now() - startTime;
-              const remaining = Math.max(0, minDuration - elapsed);
+          function hideOverlay() {
+            if (hidden) return;
+            hidden = true;
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, minDuration - elapsed);
+            setTimeout(() => {
+              overlay.classList.add('fade-out');
               setTimeout(() => {
-                overlay.classList.add('fade-out');
-                setTimeout(() => {
-                  overlay.style.display = 'none';
-                }, 400);
-                // 标记加载动画已完成
-                sessionStorage.setItem('yuami_loading_done', '1');
-                document.documentElement.setAttribute('data-loading-done', 'true');
-              }, remaining);
-            }
-
-            if (document.readyState === 'complete') {
-              hideOverlay();
-            } else {
-              window.addEventListener('load', hideOverlay);
-            }
-            // Safety: force hide after 1.5 seconds
-            setTimeout(hideOverlay, 1500);
+                overlay.style.display = 'none';
+              }, 400);
+            }, remaining);
           }
+
+          if (document.readyState === 'complete') {
+            hideOverlay();
+          } else {
+            window.addEventListener('load', hideOverlay);
+          }
+          // Safety: force hide after 1.5 seconds
+          setTimeout(hideOverlay, 1500);
         }
 
         // === 引导页控制 ===

@@ -98,13 +98,11 @@ export const siteConfig = {
 
   // ========== Umami 统计配置 ==========
   umami: {
-    enabled: false,
-    src: 'https://cloud.umami.is/script.js',
-    websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
     // Umami统计组件展示配置（侧边栏Umami统计面板）
     widget: {
       enabled: true,  // 是否在侧边栏显示Umami统计面板
-      apiUrl: '',     // Umami API地址，如 https://cloud.umami.is/api/websites/{websiteId}/stats
+      apiUrl: 'https://cloud.umami.is/api/website/YHtHzeC7Rf9fF4eV/stats', 
+      // Umami API地址，如 https://cloud.umami.is/api/websites/{websiteId}/stats
       // 如果不填apiUrl，则仅展示基础信息（需umami.enabled=true才有脚本注入）
     },
   },
@@ -137,16 +135,16 @@ export const siteConfig = {
   // ========== 站点公告 ==========
   siteAnnouncements: {
     enabled: true,
-    items: [
+    items: [ 
+      { date: '2026-06-05', text: '博客更新v2.0.1正式版，修复轩窗和背景图片相关问题！' },
       { date: '2026-06-03', text: '博客更新v2.0.1beta版，正式版正在完善！' },
-      { date: '2026-06-01', text: '博客更新v2.0.0正式版，修复音乐播放器相关问题！' },
-      
     ],
   },
 
   // ========== 导航栏配置 ==========
   navItems: [
-    { name: '轩窗', path: '/blog', children: [
+    { name: '轩窗', path: '/home' },
+    { name: '尺素', path: '/blog', children: [
       { name: '博文', path: '/blog' },
       { name: '旅记', path: '/travel' },
       { name: '回忆', path: '/memory' },
@@ -161,7 +159,6 @@ export const siteConfig = {
       { name: '朋友圈', path: '/friends-circle' },
       { name: '关于', path: '/about' },
     ]},
-    { name: '尺素', path: '/home' },
   ],
 
   // ========== 社交链接 ==========
@@ -195,12 +192,14 @@ export const siteConfig = {
   // 此时无论pc和移动端均自由3秒轮播
   // 背景图片会根据设备自动适配（移动端用mobile，PC端用pc）
   background: {
-    enabled: false,
+    enabled: true,
     mobile: [
       // '/bg/mobile-1.webp',
     ],
     pc: [
-       //'/public/home/pc/ht.png',
+       '/public/home/pc/1.webp',
+      // '/public/home/pc/2.webp',
+
     ],
     interval: 3000, // 轮播间隔（毫秒），默认3秒
   },
@@ -216,7 +215,7 @@ export const siteConfig = {
   loadingAnimation: {
     enabled: true,
     type: 'gif', // 'builtin' | 'gif' | 'online'
-    src: '/public/home/fufu.gif',         // gif类型: '/home/loading.gif' | online类型: CSS URL
+    src: '/home/glby.gif',         // gif类型: '/home/loading.gif' | online类型: CSS URL
     minDuration: 300,
   },
 
@@ -233,7 +232,40 @@ export const siteConfig = {
     enabled: true,
     backgroundImage: 'https://i.postimg.cc/TPqcm4zm/hu-tao55.jpg',  // ★ 更换引导页背景图片：填写路径如 '/home/welcome-bg.webp'
     avatar: '',           // 为空则使用全局avatar
-    title: 'Welcome to Yuami',
-    subtitle: '欢迎来到Yuami',
+    title: '欢迎来到Yuami',
+    subtitle: 'Welcome to Yuami',
   },
+
+  // ========== 轩窗(首页)轮播图配置 ==========
+  // carouselFixedText: 轮播图上方的固定文字（第一行）
+  // carouselImages: 轮播图片路径数组
+  //   支持本地路径（如 '/home/blog/1.webp'）或在线图片URL
+  //   填入目录路径（如 '/home/blog'）时，自动扫描该目录下的图片
+  //   填入随机图片API地址时，每次轮播自动获取新图片
+  // carouselInterval: 轮播间隔（毫秒），默认5秒
+  // carouselApiUrl: 自定义图片API地址，优先级高于carouselImages
+  xuanchuang: {
+    carouselFixedText: '为世界所有美好而战',
+    carouselImages: [
+      '/public/home/lunbo/ht.webp',
+      '/public/home/lunbo/alxy.webp',
+      '/public/home/lunbo/qy.webp',
+      '/public/home/lunbo/ysg.webp',
+      '/public/home/lunbo/xh.webp',
+    ],
+    carouselInterval: 5000,
+    carouselApiUrl: 
+    '', 
+    //https://tmini.net/api/bing-wallpaper
+    // 如 '' ，留空则使用carouselImages,
+  },
+
+  // ========== 轩窗(首页)打字机文本配置 ==========
+  // typewriterTexts: 打字机轮播文本数组（轮播图下方第二行文字）
+  typewriterTexts: [
+    '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
+    '生活不止眼前的代码，还有星辰与大海。',
+    '生命绚烂，别被黑暗压垮。',
+    '记录生活中的每一份美好与感动。',
+  ],
 };

@@ -1,8 +1,8 @@
 // 尺素页面独立配置 - 可独立编辑
-// 将尺素(首页)相关的内容和项目展示从config.ts分离至此
-// 便于独立管理和维护
+// 项目展示数据(轩窗-悟我)从此文件读取
+// 打字机文字已移至config.ts的typewriterTexts配置项
 
-// ========== 项目展示 ==========
+// ========== 项目展示（轩窗-悟我） ==========
 export const projects = [
   { name: '雨祁小窝',
     desc: '基于Astro-Mizuki的现代化个人博客',
@@ -33,14 +33,6 @@ export const projects = [
     desc: 'HTML+CSS+JS 制作的自学练习',
     preview: 'https://qitinyu.github.io/hutao-J/',
     github: 'https://github.com/qitinyu/hutao-J' },
-];
-
-// ========== 青衿打字机文字 ==========
-export const typewriterTexts = [
-  '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
-  '生活不止眼前的代码，还有星辰与大海。',
-  '生命绚烂，别被黑暗压垮。',
-  '记录生活中的每一份美好与感动。',
 ];
 
 // ========== 悟我(关于我)内容 ==========

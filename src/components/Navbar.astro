@@ -2,6 +2,8 @@
 import { siteConfig } from '../../config';
 const currentPath = Astro.url.pathname;
 const colorPickerEnabled = siteConfig.themeColorPicker?.enabled ?? false;
+const bgToggleAvailable = siteConfig.background?.enabled ?? false;
+const sakuraToggleAvailable = siteConfig.sakura?.enabled ?? false;
 const logoType = siteConfig.logo?.type || 'both';
 const logoText = siteConfig.logo?.text || siteConfig.title || 'Yuami';
 const logoImage = siteConfig.logo?.image || '';
@@ -10,7 +12,7 @@ const logoImage = siteConfig.logo?.image || '';
 <nav class="navbar glass" id="navbar">
   <div class="navbar-inner">
     <!-- Logo -->
-    <a href="/blog" class="navbar-logo" title={logoText}>
+    <a href="/home" class="navbar-logo" title={logoText}>
       {(logoType === 'image' || logoType === 'both') && logoImage && (
         <img src={logoImage} alt={logoText} class="logo-img" />
       )}
@@ -53,6 +55,7 @@ const logoImage = siteConfig.logo?.image || '';
             <i class="fa-solid fa-palette"></i>
           </button>
           <div class="color-picker-panel" id="colorPickerPanel">
+            <div class="picker-section-label">色轮选择</div>
             <div class="color-bar" id="colorBar">
               <div class="color-bar-gradient"></div>
               <div class="color-bar-thumb" id="colorBarThumb"></div>
@@ -67,6 +70,32 @@ const logoImage = siteConfig.logo?.image || '';
               <button class="color-preset" data-color="#F576D4" style="background:#F576D4;" title="桃红"></button>
               <button class="color-preset" data-color="#A0F576" style="background:#A0F576;" title="青柠"></button>
             </div>
+            {bgToggleAvailable && (
+              <>
+                <hr class="picker-divider" />
+                <div class="picker-section-label">全局背景</div>
+                <div class="picker-toggle-row">
+                  <span class="picker-toggle-text">选择开启全局背景</span>
+                  <label class="picker-toggle">
+                    <input type="checkbox" id="bgToggle" class="toggle-input" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </>
+            )}
+            {sakuraToggleAvailable && (
+              <>
+                <hr class="picker-divider" />
+                <div class="picker-section-label">樱花特效</div>
+                <div class="picker-toggle-row">
+                  <span class="picker-toggle-text">选择开启樱花特效</span>
+                  <label class="picker-toggle">
+                    <input type="checkbox" id="sakuraToggle" class="toggle-input" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -211,8 +240,6 @@ const logoImage = siteConfig.logo?.image || '';
     min-width: 110px;
     padding: 4px;
     background: var(--bg-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--bg-glass-border);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-md);
@@ -294,10 +321,8 @@ const logoImage = siteConfig.logo?.image || '';
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    width: 220px;
+    width: 240px;
     background: var(--bg-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--bg-glass-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
@@ -307,6 +332,8 @@ const logoImage = siteConfig.logo?.image || '';
     transform: translateY(-6px);
     transition: all 0.25s ease;
     z-index: 1001;
+    max-height: 80vh;
+    overflow-y: auto;
   }
 
   .color-picker-panel.active {
@@ -370,6 +397,82 @@ const logoImage = siteConfig.logo?.image || '';
   .color-preset.active {
     border-color: var(--text-primary);
     transform: scale(1.15);
+  }
+
+  /* 色轮面板分区标签 */
+  .picker-section-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* 分割线 */
+  .picker-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 12px 0;
+  }
+
+  /* 开关行 */
+  .picker-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .picker-toggle-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  /* 滑动开关 */
+  .picker-toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .toggle-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--text-muted);
+    border-radius: 20px;
+    transition: 0.3s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 2px;
+    bottom: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+
+  .toggle-input:checked + .toggle-slider {
+    background: var(--primary);
+  }
+
+  .toggle-input:checked + .toggle-slider::before {
+    transform: translateX(16px);
   }
 
   /* 汉堡按钮 */
@@ -580,7 +683,7 @@ const logoImage = siteConfig.logo?.image || '';
     }
     .color-picker-panel {
       right: -60px;
-      width: 200px;
+      width: 220px;
     }
   }
 </style>
@@ -873,6 +976,58 @@ const logoImage = siteConfig.logo?.image || '';
 
       document.addEventListener('mouseup', () => { isDragging = false; }, { signal: colorSignal });
       document.addEventListener('touchend', () => { isDragging = false; }, { signal: colorSignal });
+    }
+
+    // ===== 全局背景开关 =====
+    const bgToggle = document.getElementById('bgToggle') as HTMLInputElement | null;
+    const siteBackground = document.getElementById('siteBackground');
+    if (bgToggle && siteBackground) {
+      const bgPref = localStorage.getItem('yuami_bg_enabled');
+      const isBgOn = bgPref !== 'false'; // 默认开启
+      bgToggle.checked = isBgOn;
+      if (!isBgOn) {
+        siteBackground.classList.add('disabled');
+        document.documentElement.classList.add('bg-user-off');
+      }
+
+      bgToggle.addEventListener('change', () => {
+        if (bgToggle.checked) {
+          siteBackground.classList.remove('disabled');
+          document.documentElement.classList.remove('bg-user-off');
+          localStorage.setItem('yuami_bg_enabled', 'true');
+        } else {
+          siteBackground.classList.add('disabled');
+          document.documentElement.classList.add('bg-user-off');
+          localStorage.setItem('yuami_bg_enabled', 'false');
+        }
+      });
+    }
+
+    // ===== 樱花特效开关 =====
+    const sakuraToggle = document.getElementById('sakuraToggle') as HTMLInputElement | null;
+    const sakuraContainer = document.getElementById('sakuraContainer');
+    if (sakuraToggle && sakuraContainer) {
+      const sakuraPref = localStorage.getItem('yuami_sakura_enabled');
+      const isSakuraOn = sakuraPref !== 'false'; // 默认开启
+      sakuraToggle.checked = isSakuraOn;
+      if (!isSakuraOn) {
+        sakuraContainer.style.display = 'none';
+        document.documentElement.classList.add('sakura-user-off');
+      }
+
+      sakuraToggle.addEventListener('change', () => {
+        if (sakuraToggle.checked) {
+          sakuraContainer.style.display = '';
+          document.documentElement.classList.remove('sakura-user-off');
+          localStorage.setItem('yuami_sakura_enabled', 'true');
+          // 重新触发樱花创建
+          window.dispatchEvent(new Event('resize'));
+        } else {
+          sakuraContainer.style.display = 'none';
+          document.documentElement.classList.add('sakura-user-off');
+          localStorage.setItem('yuami_sakura_enabled', 'false');
+        }
+      });
     }
   }
 

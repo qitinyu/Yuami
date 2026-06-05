@@ -75,3 +75,45 @@ export function scanHuiyiImages(): Map<string, AlbumImages> {
 
   return result;
 }
+
+/**
+ * 扫描指定目录下的所有图片文件
+ * 用于轩窗(首页)轮播图等场景
+ * @param dirPath 相对于 public/ 的路径，如 'home/blog'
+ * @returns 图片URL数组（以 / 开头的web路径）
+ */
+export function scanDirectoryImages(dirPath: string): string[] {
+  const fullDir = path.resolve('public', dirPath);
+
+  if (!fs.existsSync(fullDir)) {
+    console.log(`[image-scanner] public/${dirPath}/ 目录不存在，跳过图片扫描`);
+    return [];
+  }
+
+  try {
+    const files = fs.readdirSync(fullDir, { withFileTypes: true });
+    const images: string[] = [];
+
+    for (const entry of files) {
+      if (entry.isDirectory()) continue;
+      const ext = entry.name.split('.').pop()?.toLowerCase() || '';
+      if (IMAGE_EXTENSIONS.has(ext)) {
+        // 确保路径以 / 开头
+        const webPath = `/${dirPath}/${entry.name}`.replace(/\/+/g, '/');
+        images.push(webPath);
+      }
+    }
+
+    images.sort((a, b) => {
+      const nameA = a.split('/').pop() || '';
+      const nameB = b.split('/').pop() || '';
+      return nameA.localeCompare(nameB, undefined, { numeric: true });
+    });
+
+    console.log(`[image-scanner] 扫描 public/${dirPath}/，发现 ${images.length} 张图片`);
+    return images;
+  } catch (err) {
+    console.warn(`[image-scanner] 扫描 public/${dirPath}/ 出错:`, err);
+    return [];
+  }
+}

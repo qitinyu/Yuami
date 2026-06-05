@@ -127,8 +127,8 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   /* ====== 相册卡片 ====== */
   .album-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
 
   .album-card {
@@ -148,7 +148,7 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   }
 
   .album-cover {
-    height: 180px;
+    height: 140px;
     overflow: hidden;
   }
 
@@ -327,7 +327,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     z-index: 10000;
     display: none;
     background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(8px);
   }
 
   .lightbox.active {
@@ -432,6 +431,10 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     .page-layout { flex-direction: column; }
     .album-grid { grid-template-columns: repeat(2, 1fr); }
     .photo-grid-view { column-count: 3; }
+  }
+
+  @media (max-width: 860px) {
+    .album-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {

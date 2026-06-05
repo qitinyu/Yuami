@@ -1,0 +1,560 @@
+---
+import { siteConfig } from '../../config';
+import { getCollection } from 'astro:content';
+import { formatDateShort } from '../utils/dateFormat';
+
+interface Props {
+  totalPosts?: number;
+  totalWords?: number;
+  lastEdit?: string;
+}
+
+const {
+  totalPosts: propTotalPosts,
+  totalWords: propTotalWords,
+  lastEdit: propLastEdit,
+} = Astro.props;
+
+// 如果未通过props传入统计数据，则自动计算
+let totalPosts = propTotalPosts;
+let totalWords = propTotalWords;
+let lastEdit = propLastEdit;
+
+if (totalPosts === undefined || totalWords === undefined || lastEdit === undefined) {
+  const allPots = await getCollection('pots');
+  const allDiary = await getCollection('diary');
+  if (totalPosts === undefined) totalPosts = allPots.length + allDiary.length;
+  if (totalWords === undefined) {
+    totalWords = 0;
+    allPots.forEach(p => { totalWords += (p.body || '').replace(/\s/g, '').length; });
+    allDiary.forEach(d => { totalWords += (d.body || '').replace(/\s/g, '').length; });
+  }
+  if (lastEdit === undefined) {
+    const allDates = [
+      ...allPots.map(p => p.data.published || p.data.date || ''),
+      ...allDiary.map(d => d.data.date || ''),
+    ].filter(Boolean).sort().reverse();
+    lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
+  }
+}
+
+if (lastEdit) {
+  lastEdit = formatDateShort(lastEdit);
+}
+
+const isStatsEnabled = siteConfig.siteStats?.enabled !== false;
+const isAnnouncementEnabled = siteConfig.siteAnnouncements?.enabled !== false;
+const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnnouncements || [];
+
+// Umami 占位配置
+const umamiWidgetEnabled = siteConfig.umami?.widget?.enabled !== false;
+const umamiApiUrl = siteConfig.umami?.widget?.apiUrl || '';
+const hasUmamiApi = siteConfig.umami?.enabled && !!umamiApiUrl;
+---
+
+<aside class="left-sidebar">
+  <!-- 个人信息 + Umami占位 -->
+  <div class="sidebar-panel">
+    <div class="panel-header">
+      <i class="fa-solid fa-user"></i>
+      <span>个人信息</span>
+    </div>
+    <div class="panel-body">
+      <div class="sidebar-avatar-wrap">
+        <img src={siteConfig.avatar || '/home/avatar.webp'} alt={siteConfig.author || 'Yuami'} class="sidebar-avatar" />
+      </div>
+      <h2 class="sidebar-name">{siteConfig.author || 'Yuami'}</h2>
+      <p class="sidebar-motto">{siteConfig.subtitle}</p>
+      <div class="sidebar-social">
+        {siteConfig.socialLinks.map((link) => (
+          <a href={link.url} target="_blank" rel="noopener" title={link.name} class="social-icon">
+            <i class={link.icon}></i>
+          </a>
+        ))}
+      </div>
+
+      <!-- Umami统计占位区域（社交链接下方） -->
+      {umamiWidgetEnabled && (
+        <div class="umami-placeholder-section">
+          <div class="umami-divider"></div>
+          <div class="umami-placeholder-header">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Umami统计</span>
+          </div>
+          {hasUmamiApi ? (
+            <div class="umami-stats" data-api-url={umamiApiUrl}>
+              <div class="umami-stat-main">
+                <span class="umami-stat-label">总浏览量</span>
+                <span class="umami-stat-number" id="umamiPageviewsL">—</span>
+              </div>
+              <div class="umami-stat-row">
+                <div class="umami-stat-half">
+                  <span class="umami-stat-label-sm">访问数</span>
+                  <span class="umami-stat-value" id="umamiVisitsL">—</span>
+                </div>
+                <div class="umami-stat-divider"></div>
+                <div class="umami-stat-half">
+                  <span class="umami-stat-label-sm">游客数</span>
+                  <span class="umami-stat-value" id="umamiVisitorsL">—</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div class="umami-stats-placeholder">
+              <div class="umami-stat-main">
+                <span class="umami-stat-label">总浏览量</span>
+                <span class="umami-stat-number">—</span>
+              </div>
+              <div class="umami-stat-row">
+                <div class="umami-stat-half">
+                  <span class="umami-stat-label-sm">访问数</span>
+                  <span class="umami-stat-value">—</span>
+                </div>
+                <div class="umami-stat-divider"></div>
+                <div class="umami-stat-half">
+                  <span class="umami-stat-label-sm">游客数</span>
+                  <span class="umami-stat-value">—</span>
+                </div>
+              </div>
+              <p class="umami-note">请配置Umami API</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <!-- 站点公告 -->
+  {isAnnouncementEnabled && (
+    <div class="sidebar-panel">
+      <div class="panel-header">
+        <i class="fa-solid fa-bullhorn"></i>
+        <span>站点公告</span>
+      </div>
+      <div class="panel-body">
+        <div class="notice-list">
+          {announcements.map((item: { date: string; text: string }) => (
+            <div class="notice-item">
+              <span class="notice-date">{formatDateShort(item.date)}</span>
+              <p class="notice-text">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- 站点统计 -->
+  {isStatsEnabled && (
+    <div class="sidebar-panel">
+      <div class="panel-header">
+        <i class="fa-solid fa-chart-bar"></i>
+        <span>站点统计</span>
+      </div>
+      <div class="panel-body">
+        <div class="stat-list"
+          data-start-date={siteConfig.siteStats?.startDate || '2026-01-01'}
+          data-total-posts={totalPosts}
+          data-total-words={totalWords}
+          data-last-edit={lastEdit}
+        >
+          <div class="stat-row">
+            <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 总文章数</span>
+            <span class="stat-value" id="leftStatPosts">--</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label"><i class="fa-solid fa-font"></i> 总字数</span>
+            <span class="stat-value" id="leftStatWords">--</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
+            <span class="stat-value" id="leftStatDays">--</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
+            <span class="stat-value" id="leftStatLastEdit">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</aside>
+
+<style>
+  .left-sidebar {
+    width: var(--sidebar-width);
+    min-width: 260px;
+    flex-shrink: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 16px);
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    order: -1;
+  }
+
+  .sidebar-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    width: 100%;
+    transition: all var(--transition-normal);
+  }
+
+  .sidebar-panel:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--primary-alpha);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .panel-header i {
+    font-size: 0.88rem;
+  }
+
+  .panel-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Avatar */
+  .sidebar-avatar-wrap {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary-alpha-30);
+    box-shadow: 0 4px 15px rgba(125, 152, 245, 0.2);
+    transition: all var(--transition-normal);
+    margin-bottom: 10px;
+  }
+
+  .sidebar-avatar-wrap:hover {
+    transform: scale(1.05);
+    border-color: var(--primary);
+  }
+
+  .sidebar-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sidebar-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2px;
+  }
+
+  .sidebar-motto {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-social {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .social-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-alpha);
+    color: var(--primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .social-icon:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(125, 152, 245, 0.3);
+  }
+
+  /* Umami占位区域（在个人信息面板内） */
+  .umami-placeholder-section {
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .umami-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border-color);
+    margin-bottom: 12px;
+  }
+
+  .umami-placeholder-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .umami-placeholder-header i {
+    font-size: 0.82rem;
+  }
+
+  .umami-stats,
+  .umami-stats-placeholder {
+    width: 100%;
+  }
+
+  .umami-stat-main {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .umami-stat-label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .umami-stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+
+  .umami-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .umami-stat-half {
+    flex: 1;
+    text-align: center;
+  }
+
+  .umami-stat-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border-color);
+    flex-shrink: 0;
+  }
+
+  .umami-stat-label-sm {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .umami-stat-value {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .umami-note {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    opacity: 0.7;
+  }
+
+  .notice-list {
+    width: 100%;
+  }
+
+  .notice-item {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .notice-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .notice-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .notice-text {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .stat-list {
+    width: 100%;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .stat-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .stat-label {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-label i {
+    color: var(--primary);
+    font-size: 0.82rem;
+  }
+
+  .stat-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  @media (max-width: 1024px) {
+    .left-sidebar {
+      position: static;
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      order: 1;
+    }
+    .sidebar-panel {
+      flex: 1;
+      min-width: 260px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .left-sidebar {
+      flex-direction: column;
+    }
+    .sidebar-panel {
+      min-width: auto;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    // Site stats
+    const statList = document.querySelector('.left-sidebar .stat-list[data-start-date]') as HTMLElement;
+    if (statList) {
+      const startDate = statList.dataset.startDate || '2026-01-01';
+      const totalPosts = parseInt(statList.dataset.totalPosts || '0');
+      const totalWords = parseInt(statList.dataset.totalWords || '0');
+      const lastEdit = statList.dataset.lastEdit || '';
+
+      const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+
+      const statPosts = document.getElementById('leftStatPosts');
+      const statWords = document.getElementById('leftStatWords');
+      const statDays = document.getElementById('leftStatDays');
+      const statLastEdit = document.getElementById('leftStatLastEdit');
+
+      if (statDays) statDays.textContent = days + ' 天';
+      if (statPosts) statPosts.textContent = totalPosts + ' 篇';
+      if (statWords) {
+        if (totalWords >= 10000) {
+          statWords.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
+        } else {
+          statWords.textContent = totalWords + ' 字';
+        }
+      }
+      if (statLastEdit) {
+        const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
+        statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
+      }
+    }
+
+    // Umami stats (if API configured)
+    const umamiStats = document.querySelector('.left-sidebar .umami-stats[data-api-url]') as HTMLElement;
+    if (umamiStats) {
+      const apiUrl = umamiStats.dataset.apiUrl;
+      if (apiUrl) {
+        const pageviewsEl = document.getElementById('umamiPageviewsL');
+        const visitsEl = document.getElementById('umamiVisitsL');
+        const visitorsEl = document.getElementById('umamiVisitorsL');
+
+        const now = new Date();
+        const endAt = now.getTime();
+        const startAt = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+
+        const url = new URL(apiUrl);
+        url.searchParams.set('startAt', startAt.toString());
+        url.searchParams.set('endAt', endAt.toString());
+
+        fetch(url.toString())
+          .then(res => {
+            if (!res.ok) throw new Error('API error');
+            return res.json();
+          })
+          .then(data => {
+            if (pageviewsEl) pageviewsEl.textContent = formatNumber(data.pageviews?.value || 0);
+            if (visitsEl) visitsEl.textContent = formatNumber(data.visits?.value || 0);
+            if (visitorsEl) visitorsEl.textContent = formatNumber(data.visitors?.value || 0);
+          })
+          .catch(() => {
+            if (pageviewsEl) pageviewsEl.textContent = '—';
+            if (visitsEl) visitsEl.textContent = '—';
+            if (visitorsEl) visitorsEl.textContent = '—';
+          });
+      }
+    }
+  });
+
+  function formatNumber(num: number): string {
+    if (num >= 10000) {
+      return (num / 10000).toFixed(1) + '万';
+    }
+    return num.toLocaleString();
+  }
+</script>
