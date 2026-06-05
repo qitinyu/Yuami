@@ -194,10 +194,10 @@ export const siteConfig = {
   background: {
     enabled: true,
     mobile: [
-      // '/bg/mobile-1.webp',
+       '/home/mobile/ht.webp',
     ],
     pc: [
-       '/public/home/pc/1.webp',
+       '/home/pc/1.webp',
       // '/public/home/pc/2.webp',
 
     ],
@@ -247,11 +247,11 @@ export const siteConfig = {
   xuanchuang: {
     carouselFixedText: '为世界所有美好而战',
     carouselImages: [
-      '/public/home/lunbo/ht.webp',
-      '/public/home/lunbo/alxy.webp',
-      '/public/home/lunbo/qy.webp',
-      '/public/home/lunbo/ysg.webp',
-      '/public/home/lunbo/xh.webp',
+      '/home/lunbo/ht.webp',
+      '/home/lunbo/alxy.webp',
+      '/home/lunbo/qy.webp',
+      '/home/lunbo/ysg.webp',
+      '/home/lunbo/xh.webp',
     ],
     carouselInterval: 5000,
     carouselApiUrl: 
