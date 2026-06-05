@@ -194,10 +194,10 @@ export const siteConfig = {
   background: {
     enabled: true,
     mobile: [
-      // '/bg/mobile-1.webp',
+       '/home/mobile/ht.webp',
     ],
     pc: [
-       '/public/home/pc/1.webp',
+       '/home/pc/1.webp',
       // '/public/home/pc/2.webp',
 
     ],
