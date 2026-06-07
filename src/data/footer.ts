@@ -12,7 +12,7 @@ export const footerConfig = {
   powered: {
     framework: 'Astro',
     theme: 'Yuami',
-    version: '2.0.1',
+    version: '2.0.2',
   },
   // 备案信息（可选，留空则不显示）
   icp: '',

@@ -50,7 +50,9 @@ const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnno
 // Umami 占位配置
 const umamiWidgetEnabled = siteConfig.umami?.widget?.enabled !== false;
 const umamiApiUrl = siteConfig.umami?.widget?.apiUrl || '';
-const hasUmamiApi = siteConfig.umami?.enabled && !!umamiApiUrl;
+const umamiShareToken = siteConfig.umami?.widget?.shareToken || '';
+const umamiWebsiteId = siteConfig.umami?.websiteId || '';
+const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareToken);
 ---
 
 <aside class="sidebar-widget">
@@ -83,7 +85,7 @@ const hasUmamiApi = siteConfig.umami?.enabled && !!umamiApiUrl;
             <span>Umami统计</span>
           </div>
           {hasUmamiApi ? (
-            <div class="umami-stats" data-api-url={umamiApiUrl}>
+            <div class="umami-stats" data-api-url={umamiApiUrl} data-share-token={umamiShareToken} data-website-id={umamiWebsiteId}>
               <div class="umami-stat-main">
                 <span class="umami-stat-label">总浏览量</span>
                 <span class="umami-stat-number" id="umamiPageviews">—</span>
@@ -518,8 +520,11 @@ const hasUmamiApi = siteConfig.umami?.enabled && !!umamiApiUrl;
     // Umami stats (if API configured)
     const umamiStats = document.querySelector('.sidebar-widget .umami-stats[data-api-url]') as HTMLElement;
     if (umamiStats) {
-      const apiUrl = umamiStats.dataset.apiUrl;
-      if (apiUrl) {
+      const apiUrl = umamiStats.dataset.apiUrl || '';
+      const shareToken = umamiStats.dataset.shareToken || '';
+      const websiteId = umamiStats.dataset.websiteId || '';
+
+      if (apiUrl || shareToken) {
         const pageviewsEl = document.getElementById('umamiPageviews');
         const visitsEl = document.getElementById('umamiVisits');
         const visitorsEl = document.getElementById('umamiVisitors');
@@ -528,21 +533,49 @@ const hasUmamiApi = siteConfig.umami?.enabled && !!umamiApiUrl;
         const endAt = now.getTime();
         const startAt = now.getTime() - 30 * 24 * 60 * 60 * 1000;
 
-        const url = new URL(apiUrl);
-        url.searchParams.set('startAt', startAt.toString());
-        url.searchParams.set('endAt', endAt.toString());
+        // 确定请求方式和URL
+        let fetchUrl: string;
+        let fetchOptions: RequestInit = {};
 
-        fetch(url.toString())
+        if (apiUrl) {
+          // 手动指定了完整 API 地址（自托管 Umami）
+          const url = new URL(apiUrl);
+          url.searchParams.set('startAt', startAt.toString());
+          url.searchParams.set('endAt', endAt.toString());
+          fetchUrl = url.toString();
+        } else if (shareToken) {
+          // Umami Cloud: 使用 gateway API（POST 方式）
+          fetchUrl = 'https://gateway.umami.is/api/share/' + shareToken + '/stats';
+          fetchOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              websiteId: websiteId,
+              startAt: startAt,
+              endAt: endAt,
+            }),
+          };
+        } else {
+          return;
+        }
+
+        fetch(fetchUrl, fetchOptions)
           .then(res => {
             if (!res.ok) throw new Error('API error');
             return res.json();
           })
           .then(data => {
-            if (pageviewsEl) pageviewsEl.textContent = formatUmamiNumber(data.pageviews?.value || 0);
-            if (visitsEl) visitsEl.textContent = formatUmamiNumber(data.visits?.value || 0);
-            if (visitorsEl) visitorsEl.textContent = formatUmamiNumber(data.visitors?.value || 0);
+            // Umami Cloud 返回格式: { pageviews: { value: N }, visits: { value: N }, visitors: { value: N } }
+            // 也可能直接是: { pageviews: N, visits: N, visitors: N }
+            const pv = data.pageviews?.value ?? data.pageviews ?? 0;
+            const vis = data.visits?.value ?? data.visits ?? 0;
+            const uniq = data.visitors?.value ?? data.visitors ?? 0;
+            if (pageviewsEl) pageviewsEl.textContent = formatUmamiNumber(pv);
+            if (visitsEl) visitsEl.textContent = formatUmamiNumber(vis);
+            if (visitorsEl) visitorsEl.textContent = formatUmamiNumber(uniq);
           })
-          .catch(() => {
+          .catch((err) => {
+            console.warn('Umami stats fetch failed:', err);
             if (pageviewsEl) pageviewsEl.textContent = '—';
             if (visitsEl) visitsEl.textContent = '—';
             if (visitorsEl) visitorsEl.textContent = '—';

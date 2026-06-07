@@ -98,12 +98,18 @@ export const siteConfig = {
 
   // ========== Umami 统计配置 ==========
   umami: {
+    enabled: true,  // 必须为true，否则widget无法获取数据
+    // Umami跟踪脚本配置（嵌入到页面<head>中收集数据）
+    src: 'https://cloud.umami.is/script.js',
+    websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
     // Umami统计组件展示配置（侧边栏Umami统计面板）
     widget: {
       enabled: true,  // 是否在侧边栏显示Umami统计面板
-      apiUrl: 'https://cloud.umami.is/api/website/YHtHzeC7Rf9fF4eV/stats', 
-      // Umami API地址，如 https://cloud.umami.is/api/websites/{websiteId}/stats
-      // 如果不填apiUrl，则仅展示基础信息（需umami.enabled=true才有脚本注入）
+      // Umami Cloud 共享API配置
+      // shareToken: 从 Umami 后台 → 设置 → 共享链接 中获取的 token
+      // apiUrl 会自动拼装，不需要手动填写
+      shareToken: 'YHtHzeC7Rf9fF4eV',
+      apiUrl: '',  // 留空则自动拼装，也可手动填写完整API地址
     },
   },
 
@@ -135,8 +141,8 @@ export const siteConfig = {
   // ========== 站点公告 ==========
   siteAnnouncements: {
     enabled: true,
-    items: [ 
-      { date: '2026-06-05', text: '博客更新v2.0.1正式版，修复轩窗和背景图片相关问题！' },
+    items: [
+      { date: '2026-06-07', text: '博客更新v2.0.2正式版，添加一篇文章！' },
       { date: '2026-06-03', text: '博客更新v2.0.1beta版，正式版正在完善！' },
     ],
   },
@@ -194,12 +200,10 @@ export const siteConfig = {
   background: {
     enabled: true,
     mobile: [
-       '/home/mobile/ht.webp',
+       '/public/home/mobile/ht.webp',
     ],
     pc: [
-       '/home/pc/1.webp',
-      // '/public/home/pc/2.webp',
-
+       '/public/home/pc/ht.webp',
     ],
     interval: 3000, // 轮播间隔（毫秒），默认3秒
   },
@@ -216,6 +220,7 @@ export const siteConfig = {
     enabled: true,
     type: 'gif', // 'builtin' | 'gif' | 'online'
     src: '/home/alxy.gif',         // gif类型: '/home/loading.gif' | online类型: CSS URL
+    minDuration: 300,
   },
 
   // ========== 引导页配置 ==========
@@ -246,17 +251,10 @@ export const siteConfig = {
   xuanchuang: {
     carouselFixedText: '为世界所有美好而战',
     carouselImages: [
-      '/home/lunbo/ht.webp',
-      '/home/lunbo/alxy.webp',
-      '/home/lunbo/qy.webp',
-      '/home/lunbo/ysg.webp',
-      '/home/lunbo/xh.webp',
+      '/home/blog',
     ],
     carouselInterval: 5000,
-    carouselApiUrl: 
-    '', 
-    //https://tmini.net/api/bing-wallpaper
-    // 如 '' ，留空则使用carouselImages,
+    carouselApiUrl: '',  // 如 'https://api.example.com/random' ，留空则使用carouselImages
   },
 
   // ========== 轩窗(首页)打字机文本配置 ==========
