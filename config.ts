@@ -215,7 +215,7 @@ export const siteConfig = {
   loadingAnimation: {
     enabled: true,
     type: 'gif', // 'builtin' | 'gif' | 'online'
-    src: '/home/al.gif',         // gif类型: '/home/loading.gif' | online类型: CSS URL
+    src: '/public/home/glby.gif',         // gif类型: '/home/loading.gif' | online类型: CSS URL
     minDuration: 300,
   },
 
