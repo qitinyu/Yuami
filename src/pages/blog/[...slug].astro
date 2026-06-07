@@ -162,7 +162,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     </aside>
 
     <!-- Right Sidebar: TOC (Table of Contents) -->
-    <aside class="article-toc-sidebar" id="articleTocSidebar">
+    <aside class="article-toc-sidebar" id="articleTocSidebar" style={isEncrypted ? 'display:none;' : ''}>
       <div class="toc-panel" id="tocPanel">
         <div class="toc-header">
           <i class="fa-solid fa-list"></i><span>目录</span>
@@ -1141,8 +1141,13 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       updateActiveHeading();
     }
 
-    // 初始构建 TOC
-    buildTOC();
+    // 检查是否为加密文章
+    const isEncryptedArticle = !!document.querySelector('.encryptor-wrapper[data-password]');
+
+    // 如果是加密文章，初始不构建 TOC（等内容解锁后再构建）
+    if (!isEncryptedArticle) {
+      buildTOC();
+    }
 
     // 监听加密内容解锁后重新构建 TOC
     const encryptorContent = document.getElementById('encryptorContent');
@@ -1150,6 +1155,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       const observer = new MutationObserver(() => {
         // 加密内容显示后重新构建
         if (encryptorContent.style.display !== 'none') {
+          // 显示TOC侧边栏
+          const tocSidebar = document.getElementById('articleTocSidebar');
+          if (tocSidebar) tocSidebar.style.display = '';
           setTimeout(buildTOC, 100);
           observer.disconnect(); // 只需重建一次
         }

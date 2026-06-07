@@ -96,20 +96,21 @@ export const siteConfig = {
     },
   },
 
-  // ========== Umami 统计配置 ==========
+  // ========== 站点访问统计配置 ==========
+  // 使用不蒜子（Busuanzi）统计 - 无需配置API，开箱即用
+  busuanzi: {
+    enabled: true,  // true: 启用不蒜子统计, false: 关闭
+  },
+
+  // 以下为旧版Umami配置（已弃用，保留仅供参考）
   umami: {
-    enabled: true,  // 必须为true，否则widget无法获取数据
-    // Umami跟踪脚本配置（嵌入到页面<head>中收集数据）
-    src: 'https://cloud.umami.is/script.js',
-    websiteId: '8fc5914d-67a8-4f9b-937d-a9c58df46d4a',
-    // Umami统计组件展示配置（侧边栏Umami统计面板）
+    enabled: false,
+    src: '',
+    websiteId: '',
     widget: {
-      enabled: true,  // 是否在侧边栏显示Umami统计面板
-      // Umami Cloud 共享API配置
-      // shareToken: 从 Umami 后台 → 设置 → 共享链接 中获取的 token
-      // apiUrl 会自动拼装，不需要手动填写
-      shareToken: 'YHtHzeC7Rf9fF4eV',
-      apiUrl: '',  // 留空则自动拼装，也可手动填写完整API地址
+      enabled: false,
+      shareToken: '',
+      apiUrl: '',
     },
   },
 
@@ -251,7 +252,11 @@ export const siteConfig = {
   xuanchuang: {
     carouselFixedText: '为世界所有美好而战',
     carouselImages: [
-      '/home/blog',
+      '/home/lunbo/ht.webp',
+      '/home/lunbo/alxy.webp',
+      '/home/lunbo/qy.webp',
+      '/home/lunbo/ysg.webp',
+      '/home/lunbo/xh.webp',
     ],
     carouselInterval: 5000,
     carouselApiUrl: '',  // 如 'https://api.example.com/random' ，留空则使用carouselImages

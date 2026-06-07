@@ -47,12 +47,11 @@ const isStatsEnabled = siteConfig.siteStats?.enabled !== false;
 const isAnnouncementEnabled = siteConfig.siteAnnouncements?.enabled !== false;
 const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnnouncements || [];
 
-// Umami 占位配置
+// 不蒜子统计配置
+const busuanziEnabled = siteConfig.busuanzi?.enabled !== false;
+// Umami 占位配置（兼容旧版）
 const umamiWidgetEnabled = siteConfig.umami?.widget?.enabled !== false;
-const umamiApiUrl = siteConfig.umami?.widget?.apiUrl || '';
-const umamiShareToken = siteConfig.umami?.widget?.shareToken || '';
-const umamiWebsiteId = siteConfig.umami?.websiteId || '';
-const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareToken);
+const showStats = busuanziEnabled || umamiWidgetEnabled;
 ---
 
 <aside class="sidebar-widget">
@@ -76,50 +75,50 @@ const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareT
         ))}
       </div>
 
-      <!-- Umami统计占位区域（社交链接下方） -->
-      {umamiWidgetEnabled && (
-        <div class="umami-placeholder-section">
-          <div class="umami-divider"></div>
-          <div class="umami-placeholder-header">
+      <!-- 访问统计区域（社交链接下方） -->
+      {showStats && (
+        <div class="stats-placeholder-section">
+          <div class="stats-divider"></div>
+          <div class="stats-placeholder-header">
             <i class="fa-solid fa-chart-line"></i>
-            <span>Umami统计</span>
+            <span>访问统计</span>
           </div>
-          {hasUmamiApi ? (
-            <div class="umami-stats" data-api-url={umamiApiUrl} data-share-token={umamiShareToken} data-website-id={umamiWebsiteId}>
-              <div class="umami-stat-main">
-                <span class="umami-stat-label">总浏览量</span>
-                <span class="umami-stat-number" id="umamiPageviews">—</span>
+          {busuanziEnabled ? (
+            <div class="busuanzi-stats">
+              <div class="busuanzi-stat-main">
+                <span class="busuanzi-stat-label">总访问量</span>
+                <span class="busuanzi-stat-number" id="busuanzi_value_site_pv">—</span>
               </div>
-              <div class="umami-stat-row">
-                <div class="umami-stat-half">
-                  <span class="umami-stat-label-sm">访问数</span>
-                  <span class="umami-stat-value" id="umamiVisits">—</span>
+              <div class="busuanzi-stat-row">
+                <div class="busuanzi-stat-half">
+                  <span class="busuanzi-stat-label-sm">访客数</span>
+                  <span class="busuanzi-stat-value" id="busuanzi_value_site_uv">—</span>
                 </div>
-                <div class="umami-stat-divider"></div>
-                <div class="umami-stat-half">
-                  <span class="umami-stat-label-sm">游客数</span>
-                  <span class="umami-stat-value" id="umamiVisitors">—</span>
+                <div class="busuanzi-stat-divider"></div>
+                <div class="busuanzi-stat-half">
+                  <span class="busuanzi-stat-label-sm">本文阅读</span>
+                  <span class="busuanzi-stat-value" id="busuanzi_value_page_pv">—</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div class="umami-stats-placeholder">
-              <div class="umami-stat-main">
-                <span class="umami-stat-label">总浏览量</span>
-                <span class="umami-stat-number">—</span>
+            <div class="busuanzi-stats-placeholder">
+              <div class="busuanzi-stat-main">
+                <span class="busuanzi-stat-label">总访问量</span>
+                <span class="busuanzi-stat-number">—</span>
               </div>
-              <div class="umami-stat-row">
-                <div class="umami-stat-half">
-                  <span class="umami-stat-label-sm">访问数</span>
-                  <span class="umami-stat-value">—</span>
+              <div class="busuanzi-stat-row">
+                <div class="busuanzi-stat-half">
+                  <span class="busuanzi-stat-label-sm">访客数</span>
+                  <span class="busuanzi-stat-value">—</span>
                 </div>
-                <div class="umami-stat-divider"></div>
-                <div class="umami-stat-half">
-                  <span class="umami-stat-label-sm">游客数</span>
-                  <span class="umami-stat-value">—</span>
+                <div class="busuanzi-stat-divider"></div>
+                <div class="busuanzi-stat-half">
+                  <span class="busuanzi-stat-label-sm">本文阅读</span>
+                  <span class="busuanzi-stat-value">—</span>
                 </div>
               </div>
-              <p class="umami-note">请配置Umami API</p>
+              <p class="busuanzi-note">请启用统计功能</p>
             </div>
           )}
         </div>
@@ -302,20 +301,20 @@ const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareT
     box-shadow: 0 4px 12px rgba(125, 152, 245, 0.3);
   }
 
-  /* Umami占位区域（在个人信息面板内） */
-  .umami-placeholder-section {
+  /* 访问统计区域（在个人信息面板内） */
+  .stats-placeholder-section {
     width: 100%;
     margin-top: 14px;
   }
 
-  .umami-divider {
+  .stats-divider {
     width: 100%;
     height: 1px;
     background: var(--border-color);
     margin-bottom: 12px;
   }
 
-  .umami-placeholder-header {
+  .stats-placeholder-header {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -326,28 +325,28 @@ const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareT
     color: var(--primary);
   }
 
-  .umami-placeholder-header i {
+  .stats-placeholder-header i {
     font-size: 0.82rem;
   }
 
-  .umami-stats,
-  .umami-stats-placeholder {
+  .busuanzi-stats,
+  .busuanzi-stats-placeholder {
     width: 100%;
   }
 
-  .umami-stat-main {
+  .busuanzi-stat-main {
     text-align: center;
     margin-bottom: 10px;
   }
 
-  .umami-stat-label {
+  .busuanzi-stat-label {
     display: block;
     font-size: 0.78rem;
     color: var(--text-muted);
     margin-bottom: 4px;
   }
 
-  .umami-stat-number {
+  .busuanzi-stat-number {
     display: block;
     font-size: 1.5rem;
     font-weight: 700;
@@ -355,7 +354,7 @@ const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareT
     line-height: 1.2;
   }
 
-  .umami-stat-row {
+  .busuanzi-stat-row {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -364,33 +363,33 @@ const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareT
     border-top: 1px dashed var(--border-color);
   }
 
-  .umami-stat-half {
+  .busuanzi-stat-half {
     flex: 1;
     text-align: center;
   }
 
-  .umami-stat-divider {
+  .busuanzi-stat-divider {
     width: 1px;
     height: 28px;
     background: var(--border-color);
     flex-shrink: 0;
   }
 
-  .umami-stat-label-sm {
+  .busuanzi-stat-label-sm {
     display: block;
     font-size: 0.72rem;
     color: var(--text-muted);
     margin-bottom: 2px;
   }
 
-  .umami-stat-value {
+  .busuanzi-stat-value {
     display: block;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--primary);
   }
 
-  .umami-note {
+  .busuanzi-note {
     text-align: center;
     font-size: 0.72rem;
     color: var(--text-muted);
@@ -517,77 +516,7 @@ const hasUmamiApi = siteConfig.umami?.enabled && (!!umamiApiUrl || !!umamiShareT
       }
     }
 
-    // Umami stats (if API configured)
-    const umamiStats = document.querySelector('.sidebar-widget .umami-stats[data-api-url]') as HTMLElement;
-    if (umamiStats) {
-      const apiUrl = umamiStats.dataset.apiUrl || '';
-      const shareToken = umamiStats.dataset.shareToken || '';
-      const websiteId = umamiStats.dataset.websiteId || '';
-
-      if (apiUrl || shareToken) {
-        const pageviewsEl = document.getElementById('umamiPageviews');
-        const visitsEl = document.getElementById('umamiVisits');
-        const visitorsEl = document.getElementById('umamiVisitors');
-
-        const now = new Date();
-        const endAt = now.getTime();
-        const startAt = now.getTime() - 30 * 24 * 60 * 60 * 1000;
-
-        // 确定请求方式和URL
-        let fetchUrl: string;
-        let fetchOptions: RequestInit = {};
-
-        if (apiUrl) {
-          // 手动指定了完整 API 地址（自托管 Umami）
-          const url = new URL(apiUrl);
-          url.searchParams.set('startAt', startAt.toString());
-          url.searchParams.set('endAt', endAt.toString());
-          fetchUrl = url.toString();
-        } else if (shareToken) {
-          // Umami Cloud: 使用 gateway API（POST 方式）
-          fetchUrl = 'https://gateway.umami.is/api/share/' + shareToken + '/stats';
-          fetchOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              websiteId: websiteId,
-              startAt: startAt,
-              endAt: endAt,
-            }),
-          };
-        } else {
-          return;
-        }
-
-        fetch(fetchUrl, fetchOptions)
-          .then(res => {
-            if (!res.ok) throw new Error('API error');
-            return res.json();
-          })
-          .then(data => {
-            // Umami Cloud 返回格式: { pageviews: { value: N }, visits: { value: N }, visitors: { value: N } }
-            // 也可能直接是: { pageviews: N, visits: N, visitors: N }
-            const pv = data.pageviews?.value ?? data.pageviews ?? 0;
-            const vis = data.visits?.value ?? data.visits ?? 0;
-            const uniq = data.visitors?.value ?? data.visitors ?? 0;
-            if (pageviewsEl) pageviewsEl.textContent = formatUmamiNumber(pv);
-            if (visitsEl) visitsEl.textContent = formatUmamiNumber(vis);
-            if (visitorsEl) visitorsEl.textContent = formatUmamiNumber(uniq);
-          })
-          .catch((err) => {
-            console.warn('Umami stats fetch failed:', err);
-            if (pageviewsEl) pageviewsEl.textContent = '—';
-            if (visitsEl) visitsEl.textContent = '—';
-            if (visitorsEl) visitorsEl.textContent = '—';
-          });
-      }
-    }
+    // 不蒜子统计由 busuanzi.pure.mini.js 自动填充
+    // 无需手动 fetch API，脚本加载后会自动替换 id 为 busuanzi_value_* 的元素内容
   });
-
-  function formatUmamiNumber(num: number): string {
-    if (num >= 10000) {
-      return (num / 10000).toFixed(1) + '万';
-    }
-    return num.toLocaleString();
-  }
 </script>
