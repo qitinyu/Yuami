@@ -27,6 +27,7 @@ const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 
 
 // 是否启用各组件
 const umamiEnabled = siteConfig.umami?.enabled !== false && siteConfig.umami?.src && siteConfig.umami?.websiteId;
+const busuanziEnabled = siteConfig.busuanzi?.enabled !== false;
 const musicEnabled = siteConfig.music?.enabled !== false;
 const sakuraEnabled = siteConfig.sakura?.enabled !== false;
 
@@ -153,9 +154,13 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         document.documentElement.setAttribute('data-welcome-dismissed', 'true');
       }
     </script>
-    <!-- Umami Analytics -->
+    <!-- Umami Analytics (legacy, disabled by default) -->
     {umamiEnabled && (
       <script async src={siteConfig.umami.src} data-website-id={siteConfig.umami.websiteId}></script>
+    )}
+    <!-- 不蒜子统计 -->
+    {busuanziEnabled && (
+      <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     )}
   </head>
   <body>
