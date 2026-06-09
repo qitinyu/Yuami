@@ -1,18 +1,10 @@
 import { defineConfig } from 'astro/config';
-import mdx from '@astrojs/mdx';
-import sitemap from '@astrojs/sitemap';
-import cloudflare from '@astrojs/cloudflare';
+import remarkToc from './src/utils/remark-toc';
 import remarkCallout from './src/utils/remark-callout';
 
+// https://astro.build/config
 export default defineConfig({
-  site: 'https://8872388.xyz',
-  output: 'static',
-  adapter: cloudflare(),
-  integrations: [mdx(), sitemap()],
   markdown: {
-    remarkPlugins: [remarkCallout],
-    shikiConfig: {
-      theme: 'one-dark-pro',
-    },
+    remarkPlugins: [remarkToc, remarkCallout],
   },
 });

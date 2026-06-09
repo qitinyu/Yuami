@@ -1,8 +1,372 @@
-// 纯静态模式下使用 meta refresh + JS 双重跳转
-<html>
+---
+import { siteConfig } from '../../config';
+
+const welcomeConfig = siteConfig.welcomePage;
+const welcomeEnabled = welcomeConfig?.enabled !== false;
+
+if (!welcomeEnabled) {
+  // 引导页未启用，直接重定向到 /home
+  return Astro.redirect('/home');
+}
+
+const welcomeBg = welcomeConfig?.backgroundImage || '';
+const welcomeAvatar = welcomeConfig?.avatar || siteConfig.avatar || '/home/avatar.webp';
+const welcomeTitle = welcomeConfig?.title || 'Welcome';
+const welcomeSubtitle = welcomeConfig?.subtitle || '';
+---
+<!doctype html>
+<html lang="zh-CN">
   <head>
-    <meta http-equiv="refresh" content="0;url=/home" />
-    <script>window.location.replace('/home');</script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={siteConfig.description} />
+    <meta name="theme-color" content="#7D98F5" />
+    <link rel="icon" href={siteConfig.icon || '/home/icon.ico'} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style is:inline>
+      @font-face {
+        font-family: '朱雀仿宋';
+        src: url('/font/zqfs.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+      :root {
+        --primary: #7D98F5;
+        --primary-light: #9DB3F7;
+        --primary-dark: #5A75D4;
+        --primary-alpha: rgba(125, 152, 245, 0.15);
+        --primary-alpha-30: rgba(125, 152, 245, 0.3);
+        --border-color: rgba(125, 152, 245, 0.15);
+        font-family: '朱雀仿宋', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: '朱雀仿宋', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      /* ===== 主内容层（/home 页面） ===== */
+      .main-content-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        opacity: 0;
+        transform: scale(0.96);
+        transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s,
+                    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+        pointer-events: none;
+      }
+      .main-content-layer.revealed {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
+      }
+      /* 主内容出现的子元素逐级动画 */
+      .main-content-layer.revealed .reveal-item {
+        animation: revealItem 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .main-content-layer.revealed .reveal-item:nth-child(1) { animation-delay: 0.3s; }
+      .main-content-layer.revealed .reveal-item:nth-child(2) { animation-delay: 0.4s; }
+      .main-content-layer.revealed .reveal-item:nth-child(3) { animation-delay: 0.5s; }
+      .main-content-layer.revealed .reveal-item:nth-child(4) { animation-delay: 0.6s; }
+      .main-content-layer.revealed .reveal-item:nth-child(5) { animation-delay: 0.7s; }
+      @keyframes revealItem {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ===== 引导页 ===== */
+      .welcome-standalone {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1),
+                    opacity 0.4s ease 0.3s;
+        overflow: hidden;
+      }
+      .welcome-standalone.slide-up {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+
+      /* 引导页隐藏时，内容层的退场组合动画 */
+      .welcome-standalone.hiding .welcome-content-standalone {
+        animation: contentShrink 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+      }
+      @keyframes contentShrink {
+        0% { transform: scale(1); opacity: 1; }
+        60% { transform: scale(0.9); opacity: 0.6; }
+        100% { transform: scale(0.7); opacity: 0; }
+      }
+
+      .welcome-bg-standalone {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        z-index: 0;
+        transition: opacity 0.6s ease;
+      }
+      .welcome-standalone.hiding .welcome-bg-standalone {
+        opacity: 0.3;
+      }
+      [data-theme="dark"] .welcome-bg-standalone {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      }
+
+      .welcome-content-standalone {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        color: #fff;
+      }
+
+      .welcome-avatar-wrap-standalone {
+        position: relative;
+        width: 130px;
+        height: 130px;
+        margin: 0 auto 24px;
+      }
+      .welcome-avatar-border-standalone {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        width: 138px;
+        height: 138px;
+        border-radius: 50%;
+        overflow: hidden;
+        z-index: 1;
+      }
+      .welcome-avatar-border-standalone::before {
+        content: '';
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(transparent, transparent, transparent, transparent, #e0f0e9, #cca4e3, #e0c3fc, #f173ac);
+        top: -50%;
+        left: -50%;
+        animation: welcomeRotate 3s linear infinite;
+        z-index: 2;
+      }
+      .welcome-avatar-border-standalone::after {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 50%;
+        z-index: 2;
+      }
+      @keyframes welcomeRotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .welcome-avatar-standalone {
+        position: relative;
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.6);
+        z-index: 3;
+      }
+      .welcome-avatar-standalone:hover {
+        transform: scale(1.1);
+        transition: transform 0.3s ease;
+      }
+      .welcome-title-standalone {
+        font-size: 2em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+      .welcome-subtitle-standalone {
+        font-size: 1.5em;
+        font-weight: 600;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      /* ===== 箭头触发区域 - 整块底部区域可点击 ===== */
+      .welcome-arrow-area {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 120px;
+        z-index: 10;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+      .welcome-arrow-area:hover .welcome-arrow-hint {
+        opacity: 1;
+      }
+      .welcome-arrow-area:hover .welcome-arrow-icon {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .welcome-arrow-area:active .welcome-arrow-icon {
+        transform: translateX(-50%) translateY(2px) scale(0.9);
+      }
+      .welcome-arrow-hint {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 2px;
+        opacity: 0.5;
+        transition: opacity 0.3s;
+      }
+      .welcome-arrow-icon {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%) translateY(0);
+        color: #fff;
+        font-size: 1.8rem;
+        opacity: 0.8;
+        transition: opacity 0.3s, transform 0.2s;
+        animation: bounce 1.5s infinite;
+      }
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+        40% { transform: translateX(-50%) translateY(-15px); }
+        60% { transform: translateX(-50%) translateY(-8px); }
+      }
+    </style>
+    <title>{siteConfig.title}</title>
+    <!-- 防止主题闪烁 -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+
+      // 恢复记忆的主题色
+      const savedColor = localStorage.getItem('yuami_theme_color');
+      if (savedColor) {
+        function hslToHex(h, s, l) {
+          s /= 100; l /= 100;
+          const a = s * Math.min(l, 1 - l);
+          const f = (n) => {
+            const k = (n + h / 30) % 12;
+            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+            return Math.round(255 * color).toString(16).padStart(2, '0');
+          };
+          return '#' + f(0) + f(8) + f(4);
+        }
+        function lighten(hex, amt) {
+          hex = hex.replace('#', '');
+          const r = parseInt(hex.substring(0,2),16)/255, g = parseInt(hex.substring(2,4),16)/255, b = parseInt(hex.substring(4,6),16)/255;
+          const max = Math.max(r,g,b), min = Math.min(r,g,b);
+          let h=0,s=0; const l=(max+min)/2;
+          if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=((g-b)/d+(g<b?6:0))*60;break;case g:h=((b-r)/d+2)*60;break;case b:h=((r-g)/d+4)*60;break;}}
+          return hslToHex(Math.round(h), Math.max(Math.round(s*100)-5,30), Math.min(Math.round(l*100)+amt,85));
+        }
+        function darken(hex, amt) {
+          hex = hex.replace('#', '');
+          const r = parseInt(hex.substring(0,2),16)/255, g = parseInt(hex.substring(2,4),16)/255, b = parseInt(hex.substring(4,6),16)/255;
+          const max = Math.max(r,g,b), min = Math.min(r,g,b);
+          let h=0,s=0; const l=(max+min)/2;
+          if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=((g-b)/d+(g<b?6:0))*60;break;case g:h=((b-r)/d+2)*60;break;case b:h=((r-g)/d+4)*60;break;}}
+          return hslToHex(Math.round(h), Math.min(Math.round(s*100)+5,100), Math.max(Math.round(l*100)-amt,20));
+        }
+        const hex = savedColor.replace('#','');
+        const rv = parseInt(hex.substring(0,2),16), gv = parseInt(hex.substring(2,4),16), bv = parseInt(hex.substring(4,6),16);
+        const root = document.documentElement.style;
+        root.setProperty('--primary', savedColor);
+        root.setProperty('--primary-light', lighten(savedColor, 15));
+        root.setProperty('--primary-dark', darken(savedColor, 15));
+        root.setProperty('--primary-alpha', 'rgba('+rv+','+gv+','+bv+',0.15)');
+        root.setProperty('--primary-alpha-30', 'rgba('+rv+','+gv+','+bv+',0.3)');
+        root.setProperty('--border-color', 'rgba('+rv+','+gv+','+bv+',0.15)');
+      }
+
+      // 首次访问检查 - 如果已经看过引导页则直接跳转
+      if (sessionStorage.getItem('yuami_welcome_dismissed')) {
+        window.location.replace('/home');
+      }
+    </script>
   </head>
-  <body></body>
+  <body>
+    <!-- 主内容占位层 - 引导页隐藏后通过 iframe 加载 /home -->
+    <div class="main-content-layer" id="mainContentLayer">
+      <iframe src="/home" style="width:100%;height:100%;border:none;"></iframe>
+    </div>
+
+    <!-- 引导页 - 直接全屏展示 -->
+    <div class="welcome-standalone" id="welcomeStandalone">
+      <div class="welcome-bg-standalone" style={welcomeBg ? `background-image: url(${welcomeBg}); background-size: cover; background-position: center;` : ''}></div>
+      <div class="welcome-content-standalone">
+        <div class="welcome-avatar-wrap-standalone">
+          <div class="welcome-avatar-border-standalone"></div>
+          <img src={welcomeAvatar} alt="Avatar" class="welcome-avatar-standalone" />
+        </div>
+        <h1 class="welcome-title-standalone">{welcomeTitle}</h1>
+        <p class="welcome-subtitle-standalone">{welcomeSubtitle}</p>
+      </div>
+      <!-- 整块底部区域可点击触发隐藏 -->
+      <div class="welcome-arrow-area" id="welcomeArrowArea">
+        <span class="welcome-arrow-hint">点击进入</span>
+        <div class="welcome-arrow-icon">
+          <i class="fa-solid fa-chevron-up"></i>
+        </div>
+      </div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function() {
+        var welcomePage = document.getElementById('welcomeStandalone');
+        var arrowArea = document.getElementById('welcomeArrowArea');
+        var mainLayer = document.getElementById('mainContentLayer');
+
+        if (arrowArea && welcomePage) {
+          arrowArea.addEventListener('click', function() {
+            if (welcomePage.classList.contains('hiding')) return;
+
+            // 第一阶段：内容收缩 + 背景淡出
+            welcomePage.classList.add('hiding');
+
+            // 第二阶段：引导页向上滑出 + 主内容层渐入
+            setTimeout(function() {
+              welcomePage.classList.add('slide-up');
+              if (mainLayer) {
+                mainLayer.classList.add('revealed');
+              }
+            }, 200);
+
+            // 记录已看过引导页
+            sessionStorage.setItem('yuami_welcome_dismissed', '1');
+
+            // 动画完成后切换到 /home 页面
+            setTimeout(function() {
+              window.location.href = '/home';
+            }, 1200);
+          });
+        }
+      });
+    </script>
+  </body>
 </html>

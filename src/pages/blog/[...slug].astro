@@ -316,28 +316,25 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   .toc-nav .toc-h1-link.active {
     color: #fff;
-    background: var(--primary);
+    background: color-mix(in srgb, var(--primary) 75%, black);
     font-weight: 700;
   }
 
-  .toc-nav .toc-h1-link .toc-arrow {
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    transition: transform var(--transition-fast);
+  .toc-nav .toc-h1-link .toc-dot {
+    font-size: 1.9rem;
+    color: var(--primary);
     flex-shrink: 0;
+    font-weight: 900;
+    line-height: 1;
   }
 
-  .toc-nav .toc-h1-link.active .toc-arrow {
+  .toc-nav .toc-h1-link.active .toc-dot {
     color: #fff;
   }
 
-  .toc-nav .toc-h1-link.expanded .toc-arrow {
-    transform: rotate(90deg);
-  }
-
-  /* ## (h2) - 缩进 2em */
+  /* ## (h2) - 缩进 */
   .toc-nav .toc-h2-list {
-    padding-left: 2em;
+    padding-left: 3em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -372,28 +369,25 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   .toc-nav .toc-h2-link.active {
     color: #fff;
-    background: var(--primary);
+    background: color-mix(in srgb, var(--primary) 75%, black);
     font-weight: 600;
   }
 
-  .toc-nav .toc-h2-link .toc-arrow {
-    font-size: 0.55rem;
-    color: var(--text-muted);
-    transition: transform var(--transition-fast);
+  .toc-nav .toc-h2-link .toc-dot {
+    font-size: 1.7rem;
+    color: var(--primary);
     flex-shrink: 0;
+    font-weight: 900;
+    line-height: 1;
   }
 
-  .toc-nav .toc-h2-link.active .toc-arrow {
+  .toc-nav .toc-h2-link.active .toc-dot {
     color: #fff;
   }
 
-  .toc-nav .toc-h2-link.expanded .toc-arrow {
-    transform: rotate(90deg);
-  }
-
-  /* ### (h3) - 缩进 4em，每个独占一行 */
+  /* ### (h3) - 缩进 */
   .toc-nav .toc-h3-list {
-    padding-left: 2em;
+    padding-left: 3em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -410,7 +404,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .toc-nav .toc-h3-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     padding: 4px 10px;
     border-radius: 4px;
     font-size: 0.82rem;
@@ -431,13 +427,25 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   .toc-nav .toc-h3-link.active {
     color: #fff;
-    background: var(--primary);
+    background: color-mix(in srgb, var(--primary) 75%, black);
     font-weight: 600;
+  }
+
+  .toc-nav .toc-h3-link .toc-dot {
+    font-size: 1.5rem;
+    color: var(--primary);
+    flex-shrink: 0;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .toc-nav .toc-h3-link.active .toc-dot {
+    color: #fff;
   }
 
   /* #### (h4) - 最深层缩进 */
   .toc-nav .toc-h4-list {
-    padding-left: 2em;
+    padding-left: 3em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -453,7 +461,9 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .toc-nav .toc-h4-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 3px;
     padding: 3px 8px;
     border-radius: 3px;
     font-size: 0.78rem;
@@ -475,9 +485,116 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   .toc-nav .toc-h4-link.active {
     color: #fff;
-    background: var(--primary);
+    background: color-mix(in srgb, var(--primary) 75%, black);
     font-weight: 600;
     opacity: 1;
+  }
+
+  .toc-nav .toc-h4-link .toc-dot {
+    font-size: 1.4rem;
+    color: var(--primary);
+    flex-shrink: 0;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .toc-nav .toc-h4-link.active .toc-dot {
+    color: #fff;
+  }
+
+  /* ====== [TOC] 文章内目录样式 ====== */
+  .article-toc-inline {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    margin: 1.5em 0;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .article-toc-inline-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .article-toc-inline-title::before {
+    content: '\f0cb';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.9rem;
+  }
+
+  .article-toc-inline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .article-toc-inline-item {
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .article-toc-inline-link {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    font-size: 0.9rem;
+  }
+
+  .article-toc-inline-h1 .article-toc-inline-link {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+
+  .article-toc-inline-h2 .article-toc-inline-link {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+  }
+
+  .article-toc-inline-h3 .article-toc-inline-link {
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+
+  .article-toc-inline-h4 .article-toc-inline-link {
+    font-weight: 400;
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    opacity: 0.85;
+  }
+
+  .article-toc-inline-link:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .article-toc-inline-dot {
+    color: var(--primary);
+    font-weight: 900;
+    flex-shrink: 0;
+    font-size: 1.4em;
+  }
+
+  .article-toc-inline-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* --- Article Header & Content --- */
@@ -882,7 +999,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         const hasChildren = h1.children.length > 0;
         tocHtml += `<div class="toc-h1">`;
         tocHtml += `<a href="#${h1.id}" class="toc-h1-link" data-id="${h1.id}">`;
-        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-dot">·</span>`;
         tocHtml += `<span class="toc-text">${h1.text}</span></a>`;
 
         if (hasChildren) {
@@ -908,7 +1025,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         }
         tocHtml += `<div class="toc-h1">`;
         tocHtml += `<a href="#${h2.id}" class="toc-h1-link" data-id="${h2.id}">`;
-        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-dot">·</span>`;
         tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
 
         if (h2HasChildren) {
@@ -934,7 +1051,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         }
         tocHtml += `<div class="toc-h2-item">`;
         tocHtml += `<a href="#${h2.id}" class="toc-h2-link" data-id="${h2.id}">`;
-        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-dot">·</span>`;
         tocHtml += `<span class="toc-text">${h2.text}</span></a>`;
 
         if (h2HasChildren) {
@@ -952,7 +1069,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         if (!h3.text) return;
         tocHtml += `<div class="toc-h1">`;
         tocHtml += `<a href="#${h3.id}" class="toc-h1-link" data-id="${h3.id}">`;
-        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-dot">·</span>`;
         tocHtml += `<span class="toc-text">${h3.text}</span></a>`;
 
         if (h3HasChildren) {
@@ -977,7 +1094,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
         }
         tocHtml += `<div class="toc-h3-item">`;
         tocHtml += `<a href="#${h3.id}" class="toc-h3-link" data-id="${h3.id}">`;
-        tocHtml += `<span class="toc-arrow"><i class="fa-solid fa-chevron-right"></i></span>`;
+        tocHtml += `<span class="toc-dot">·</span>`;
         tocHtml += `<span class="toc-text">${h3.text}</span></a>`;
 
         if (h3HasChildren) {
@@ -992,7 +1109,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
       function renderH4(h4: TocH4, i: number, j: number, k: number, l: number) {
         tocHtml += `<div class="toc-h4-item">`;
-        tocHtml += `<a href="#${h4.id}" class="toc-h4-link" data-id="${h4.id}">${h4.text}</a>`;
+        tocHtml += `<a href="#${h4.id}" class="toc-h4-link" data-id="${h4.id}"><span class="toc-dot">·</span>${h4.text}</a>`;
         tocHtml += `</div>`;
       }
 
@@ -1226,5 +1343,25 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     }
 
     processSpoilers();
+
+    // ====== [TOC] 文章内目录平滑滚动 ======
+    const inlineTocLinks = articleContent?.querySelectorAll('.article-toc-inline-link');
+    inlineTocLinks?.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = (link as HTMLAnchorElement).getAttribute('href');
+        if (!href) return;
+        const targetId = href.replace('#', '');
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          // 自动展开包含该标题的 <details> 元素
+          const detailsEl = targetEl.closest('details');
+          if (detailsEl && !detailsEl.open) {
+            detailsEl.open = true;
+          }
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
   });
 </script>

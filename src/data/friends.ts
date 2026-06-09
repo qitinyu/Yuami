@@ -118,7 +118,7 @@ export const friendsList = [
   {
     id: 14,
     name: "杪夏山不语",
-    avatar: "https://blog.mxsby.top/_astro/avatar.DodcwRNI_Z1iLucw.webp",
+    avatar: "https://blog.mxsby.top/_astro/Echo.J3vEEqiv_Z20z8hn.webp",
     url: "https://blog.mxsby.top/",
     desc: "苔花如米小，也学牡丹开",
     rss: 'https://blog.mxsby.top/rss.xml',

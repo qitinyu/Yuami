@@ -158,9 +158,54 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
     {umamiEnabled && (
       <script async src={siteConfig.umami.src} data-website-id={siteConfig.umami.websiteId}></script>
     )}
-    <!-- 不蒜子统计 -->
+    <!-- 不蒜子统计 - 使用多CDN备源 -->
     {busuanziEnabled && (
-      <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+      <script is:inline>
+        // 不蒜子多源加载：优先 ibruce.info，失败则用 lf6-cdn-tos
+        (function() {
+          var bsLoaded = false;
+          var bsTimeout;
+          function onBusuanziLoad() {
+            bsLoaded = true;
+            clearTimeout(bsTimeout);
+          }
+          // 加载主源
+          var s1 = document.createElement('script');
+          s1.async = true;
+          s1.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+          s1.onload = onBusuanziLoad;
+          s1.onerror = function() {
+            // 主源失败，尝试备用源
+            if (!bsLoaded) {
+              var s2 = document.createElement('script');
+              s2.async = true;
+              s2.src = '//lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/busuanzi/2.3/busuanzi.pure.mini.js';
+              s2.onload = onBusuanziLoad;
+              s2.onerror = function() {
+                // 两个源都失败，显示提示
+                setBusuanziFallback();
+              };
+              document.head.appendChild(s2);
+            }
+          };
+          document.head.appendChild(s1);
+          // 超时处理：5秒未加载成功则显示fallback
+          bsTimeout = setTimeout(function() {
+            if (!bsLoaded) setBusuanziFallback();
+          }, 5000);
+          // fallback: 显示站点统计数字代替
+          function setBusuanziFallback() {
+            var els = document.querySelectorAll('#busuanzi_value_site_pv, #busuanzi_value_site_uv, #busuanzi_value_page_pv');
+            els.forEach(function(el) {
+              if (el.textContent === '—' || el.textContent.trim() === '') {
+                el.textContent = 'N/A';
+                el.style.fontSize = '0.85rem';
+                el.style.opacity = '0.5';
+              }
+            });
+          }
+        })();
+      </script>
     )}
   </head>
   <body>
@@ -256,7 +301,8 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         <p class="welcome-subtitle">{welcomeSubtitle}</p>
       </div>
       <div class="welcome-arrow" id="welcomeArrow">
-        <i class="fa-solid fa-chevron-up"></i>
+        <i class="fa-solid fa-chevron-up arrow-icon"></i>
+        <span class="arrow-hint">点击进入</span>
       </div>
     </div>
     )}
@@ -358,30 +404,44 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         font-weight: 600;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
       }
+      /* 点击区域：底部大区域，方便点击 */
       .welcome-arrow {
         position: absolute;
-        bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        z-index: 2;
         color: #fff;
-        font-size: 1.8rem;
         cursor: pointer;
-        animation: bounce 1.5s infinite;
-        opacity: 0.8;
         transition: opacity 0.3s;
       }
-      .welcome-arrow:hover {
+      .welcome-arrow .arrow-icon {
+        font-size: 1.8rem;
+        animation: bounce 1.5s infinite;
+        opacity: 0.8;
+      }
+      .welcome-arrow:hover .arrow-icon {
         opacity: 1;
       }
+      .welcome-arrow .arrow-hint {
+        font-size: 0.85rem;
+        opacity: 0.5;
+        letter-spacing: 2px;
+      }
       @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
-        40% { transform: translateX(-50%) translateY(-15px); }
-        60% { transform: translateX(-50%) translateY(-8px); }
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-15px); }
+        60% { transform: translateY(-8px); }
       }
     </style>
 
-    <!-- 卡片入场动画 -->
+    <!-- 卡片入场动画 - 初始隐藏，引导页关闭后触发 -->
     <style is:inline>
       @keyframes cardEntrance {
         from {
@@ -393,9 +453,16 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
           transform: translateY(0);
         }
       }
+      /* 引导页存在时，卡片不播放动画 */
       .page-content .card,
       .page-content .sidebar-panel {
+        opacity: 0;
+      }
+      /* 引导页关闭后，触发动画 */
+      .page-content.cards-animated .card,
+      .page-content.cards-animated .sidebar-panel {
         animation: cardEntrance 0.5s ease both;
+        opacity: 1;
       }
     </style>
 
@@ -739,6 +806,9 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
             welcomePage.style.display = 'none';
             // 同步恢复data属性，确保CSS规则生效
             document.documentElement.setAttribute('data-welcome-dismissed', 'true');
+            // 引导页已关闭，直接显示卡片（无动画）
+            const pageContent = document.querySelector('.page-content');
+            if (pageContent) pageContent.classList.add('cards-animated');
           } else {
             const welcomeArrow = document.getElementById('welcomeArrow');
             if (welcomeArrow) {
@@ -746,16 +816,15 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
                 welcomePage.classList.add('slide-up');
                 sessionStorage.setItem('yuami_welcome_dismissed', '1');
                 document.documentElement.setAttribute('data-welcome-dismissed', 'true');
-                // 给博客内容添加入场动画
-                document.querySelectorAll('.page-content .card, .page-content .sidebar-panel').forEach((el, i) => {
-                  (el as HTMLElement).style.opacity = '0';
-                  (el as HTMLElement).style.transform = 'translateY(20px)';
-                  (el as HTMLElement).style.transition = `opacity 0.5s ease ${i * 0.08}s, transform 0.5s ease ${i * 0.08}s`;
-                  setTimeout(() => {
-                    (el as HTMLElement).style.opacity = '1';
-                    (el as HTMLElement).style.transform = 'translateY(0)';
-                  }, 800);
-                });
+                // 引导页关闭后，添加动画类触发轩窗组成动画
+                const pageContent = document.querySelector('.page-content');
+                if (pageContent) {
+                  pageContent.classList.add('cards-animated');
+                  // 为每个卡片设置错开延迟
+                  pageContent.querySelectorAll('.card, .sidebar-panel').forEach((el, i) => {
+                    (el as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+                  });
+                }
                 setTimeout(() => {
                   welcomePage.style.display = 'none';
                 }, 900);

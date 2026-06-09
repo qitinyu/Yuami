@@ -142,9 +142,9 @@ export const siteConfig = {
   // ========== 站点公告 ==========
   siteAnnouncements: {
     enabled: true,
-    items: [
+    items: [ 
+      { date: '2026-06-09', text: '博客更新v2.0.3版，重点修复toc目录样式和支持更多md语法！' },
       { date: '2026-06-07', text: '博客更新v2.0.2正式版，添加一篇文章！' },
-      { date: '2026-06-03', text: '博客更新v2.0.1beta版，正式版正在完善！' },
     ],
   },
 

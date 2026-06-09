@@ -517,7 +517,7 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
   justify-content: center;
   font-size: 1rem;
   font-weight: 500;
-  border: none;
+  border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-secondary);
   cursor: pointer;
@@ -534,12 +534,13 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
 }
 
 .page-btn.active {
-  background: var(--primary);
-  color: #fff;
-  border: none;
+  background: var(--primary) !important;
+  color: #fff !important;
+  border: 1px solid var(--primary) !important;
   box-shadow: 0 3px 12px rgba(125, 152, 245, 0.35);
   transform: translateY(-1px);
   font-weight: 600;
+  pointer-events: none;
 }
 
 .page-btn.disabled {
@@ -667,6 +668,103 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
 .prose blockquote.callout-failure  { --callout-color: var(--callout-failure); }
 .prose blockquote.callout-fail     { --callout-color: var(--callout-failure); }
 .prose blockquote.callout-missing  { --callout-color: var(--callout-failure); }
+
+/* ====== [TOC] 文章内目录样式 (prose内) ====== */
+.prose .article-toc-inline {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 1.5em 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.prose .article-toc-inline-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prose .article-toc-inline-title::before {
+  content: '\f0cb';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.prose .article-toc-inline-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.prose .article-toc-inline-item {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.prose .article-toc-inline-link {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  font-size: 0.9rem;
+  border-bottom: none;
+}
+
+.prose .article-toc-inline-link:hover {
+  color: var(--primary);
+  background: var(--primary-alpha);
+  border-bottom: none;
+}
+
+.prose .article-toc-inline-h1 .article-toc-inline-link {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.prose .article-toc-inline-h2 .article-toc-inline-link {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+
+.prose .article-toc-inline-h3 .article-toc-inline-link {
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.prose .article-toc-inline-h4 .article-toc-inline-link {
+  font-weight: 400;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.prose .article-toc-inline-dot {
+  color: var(--primary);
+  font-weight: 900;
+  flex-shrink: 0;
+  font-size: 1.4em;
+}
+
+.prose .article-toc-inline-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ====== :spoiler[text] 隐藏文字样式 ====== */
 .spoiler-text {
