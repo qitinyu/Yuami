@@ -54,7 +54,15 @@ if (!carouselApiUrl) {
 ---
 
 <BaseLayout title="轩窗">
-  <div class="page-layout">
+  <div class="page-layout" id="homePageLayout">
+    <!-- 入场动画检测：同步执行避免闪烁 -->
+    <script is:inline>
+      (function() {
+        if (sessionStorage.getItem('yuami_play_entrance') === '1') {
+          document.getElementById('homePageLayout').classList.add('home-entrance', 'animate-in');
+        }
+      })();
+    </script>
     <!-- Left: Sidebar Widgets -->
     <SidebarWidget
       totalPosts={totalPosts}
@@ -122,7 +130,22 @@ if (!carouselApiUrl) {
   </div>
 </BaseLayout>
 
-<style>
+<style is:inline>
+  /* ====== 轩窗版块组合弹出动画 ====== */
+  @keyframes componentPopIn {
+    0% {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    60% {
+      transform: translateY(-4px) scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
   .page-layout {
     max-width: var(--max-width);
     margin: 0 auto;
@@ -130,6 +153,28 @@ if (!carouselApiUrl) {
     gap: 20px;
     padding: 28px 24px;
     min-height: calc(100vh - var(--nav-height) - 80px);
+  }
+
+  /* 入场动画：各区块初始隐藏 */
+  .home-entrance .home-section,
+  .home-entrance .article-sidebar {
+    opacity: 0;
+  }
+  .home-entrance.animate-in .home-section,
+  .home-entrance.animate-in .article-sidebar {
+    animation: componentPopIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .home-entrance.animate-in .article-sidebar {
+    animation-delay: 0.05s;
+  }
+  .home-entrance.animate-in .home-section:nth-child(1) {
+    animation-delay: 0.15s;
+  }
+  .home-entrance.animate-in .home-section:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+  .home-entrance.animate-in .home-section:nth-child(3) {
+    animation-delay: 0.45s;
   }
 
   /* --- Main Content --- */
@@ -337,6 +382,9 @@ if (!carouselApiUrl) {
   let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
   document.addEventListener('astro:page-load', () => {
+    // ====== 入场动画清理 ======
+    sessionStorage.removeItem('yuami_play_entrance');
+
     // ====== 轮播图 (跃动替换) ======
     const wrapper = document.getElementById('carouselWrapper');
     if (wrapper) {

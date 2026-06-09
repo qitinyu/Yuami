@@ -24,7 +24,7 @@ const { password } = Astro.props;
         <i class="fa-solid fa-key"></i> 解锁
       </button>
     </div>
-    <p class="lock-error" id="encryptorError">密码错误，请重试</p>
+    <p class="lock-error" id="encryptorError"></p>
   </div>
   <div class="encryptor-content" id="encryptorContent" style="display:none;">
     <slot />
@@ -172,11 +172,9 @@ const { password } = Astro.props;
         content.style.display = 'block';
         sessionStorage.setItem(pageKey, 'true');
       } else {
-        error.classList.add('show');
+        // 密码错误不提示，仅清空输入框
         input.value = '';
-        setTimeout(() => {
-          error.classList.remove('show');
-        }, 3000);
+        input.focus();
       }
     }
 

@@ -178,7 +178,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   </div>
 </BaseLayout>
 
-<style>
+<style is:inline>
   .article-layout {
     max-width: var(--max-width);
     margin: 0 auto;
@@ -212,7 +212,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   /* --- Right Sidebar: TOC --- */
   .article-toc-sidebar {
-    width: 240px;
+    width: 280px;
     flex-shrink: 0;
     position: sticky;
     top: calc(var(--nav-height) + 16px);
@@ -274,7 +274,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .toc-body {
-    padding: 8px 0;
+    padding: 12px 4px;
     transition: all var(--transition-fast);
     overflow: hidden;
   }
@@ -292,14 +292,14 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   /* # (h1) - 顶格，不缩进 */
   .toc-nav .toc-h1 {
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
 
   .toc-nav .toc-h1-link {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 8px 12px;
     border-radius: 6px;
     font-size: 0.9rem;
     font-weight: 700;
@@ -334,7 +334,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   /* ## (h2) - 缩进 */
   .toc-nav .toc-h2-list {
-    padding-left: 3em;
+    padding-left: 1.8em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -345,14 +345,14 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .toc-nav .toc-h2-item {
-    margin-bottom: 1px;
+    margin-bottom: 2px;
   }
 
   .toc-nav .toc-h2-link {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px;
+    padding: 7px 10px;
     border-radius: 5px;
     font-size: 0.86rem;
     font-weight: 600;
@@ -387,7 +387,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   /* ### (h3) - 缩进 */
   .toc-nav .toc-h3-list {
-    padding-left: 3em;
+    padding-left: 1.8em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -400,14 +400,14 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   /* 每个 h3 链接独占一行，分行显示 */
   .toc-nav .toc-h3-item {
     display: block;
-    margin-bottom: 1px;
+    margin-bottom: 2px;
   }
 
   .toc-nav .toc-h3-link {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 10px;
+    padding: 6px 10px;
     border-radius: 4px;
     font-size: 0.82rem;
     color: var(--text-muted);
@@ -415,9 +415,8 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     transition: all var(--transition-fast);
     text-decoration: none;
     line-height: 1.5;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .toc-nav .toc-h3-link:hover {
@@ -445,7 +444,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   /* #### (h4) - 最深层缩进 */
   .toc-nav .toc-h4-list {
-    padding-left: 3em;
+    padding-left: 1.8em;
     overflow: hidden;
     max-height: 0;
     transition: max-height 0.35s ease;
@@ -457,14 +456,14 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   .toc-nav .toc-h4-item {
     display: block;
-    margin-bottom: 1px;
+    margin-bottom: 2px;
   }
 
   .toc-nav .toc-h4-link {
     display: flex;
     align-items: center;
     gap: 3px;
-    padding: 3px 8px;
+    padding: 5px 8px;
     border-radius: 3px;
     font-size: 0.78rem;
     color: var(--text-muted);
@@ -472,9 +471,8 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     transition: all var(--transition-fast);
     text-decoration: none;
     line-height: 1.4;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
     opacity: 0.85;
   }
 
@@ -500,6 +498,12 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 
   .toc-nav .toc-h4-link.active .toc-dot {
     color: #fff;
+  }
+
+  /* TOC 文字自动换行 */
+  .toc-nav .toc-text {
+    overflow: hidden;
+    word-break: break-word;
   }
 
   /* ====== [TOC] 文章内目录样式 ====== */
