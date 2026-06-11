@@ -543,7 +543,20 @@ a, button, [role="button"], .tag, .filter-tab, .nav-link, .dropdown-link,
   border: 1px solid var(--primary) !important;
   box-shadow: 0 3px 12px rgba(125, 152, 245, 0.35);
   transform: translateY(-1px);
-  font-weight: 600;
+  font-weight: 700;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  position: relative;
+  z-index: 1;
+}
+
+/* 当主题色过浅时保证数字可见 */
+.page-btn.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(0,0,0,0.1);
   pointer-events: none;
 }
 
