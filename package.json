@@ -1,7 +1,7 @@
 {
   "name": "yuqi-blog",
   "type": "module",
-  "version": "2.0.0-beta2",
+  "version": "2.0.4.3",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
     "build": "astro build",

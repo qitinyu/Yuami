@@ -1,0 +1,291 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SidebarWidget from '../../components/SidebarWidget.astro';
+import { siteConfig } from '../../../config';
+
+const openListUrl = siteConfig.liuli?.openListUrl || '';
+const isConfigured = openListUrl.length > 0;
+---
+
+<BaseLayout title="采云 - 开放共享">
+  <div class="page-layout">
+    <div class="page-main">
+      <div class="openlist-container">
+        <!-- 页面头部 -->
+        <div class="ol-header card">
+          <div class="ol-header-icon">
+            <i class="fa-solid fa-cloud"></i>
+          </div>
+          <h1 class="ol-title">采云</h1>
+          <p class="ol-subtitle">开放共享，云端拾趣</p>
+        </div>
+
+        {isConfigured ? (
+          <!-- Open List iframe 嵌入 -->
+          <div class="ol-iframe-wrap card">
+            <div class="ol-toolbar">
+              <div class="ol-toolbar-left">
+                <i class="fa-solid fa-link"></i>
+                <span class="ol-url-text" id="olUrlDisplay">{openListUrl}</span>
+              </div>
+              <div class="ol-toolbar-right">
+                <button class="ol-refresh-btn" id="olRefreshBtn" title="刷新">
+                  <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <a href={openListUrl} target="_blank" rel="noopener" class="ol-open-btn" title="在新标签页打开">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+              </div>
+            </div>
+            <div class="ol-iframe-container">
+              <iframe
+                src={openListUrl}
+                class="ol-iframe"
+                id="olIframe"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-downloads"
+                loading="lazy"
+                title="开放共享列表"
+              ></iframe>
+            </div>
+          </div>
+        ) : (
+          <!-- 未配置提示 -->
+          <div class="ol-not-configured card">
+            <div class="ol-nc-icon">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h3 class="ol-nc-title">尚未配置共享链接</h3>
+            <p class="ol-nc-desc">请在 config.ts 中的 liuli.openListUrl 填入你的 Open List 共享链接地址。</p>
+            <div class="ol-nc-code">
+              <code>config.ts → liuli → openListUrl: 'https://your-openlist-url'</code>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <SidebarWidget />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-layout {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    gap: 20px;
+    padding: 28px 24px;
+  }
+
+  .page-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .openlist-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ====== 头部 ====== */
+  .ol-header {
+    text-align: center;
+    padding: 32px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ol-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--primary-alpha), transparent);
+    pointer-events: none;
+  }
+
+  .ol-header-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.5rem;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(125, 152, 245, 0.35);
+    position: relative;
+    z-index: 1;
+  }
+
+  .ol-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .ol-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ====== iframe 嵌入区 ====== */
+  .ol-iframe-wrap {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .ol-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: var(--primary-alpha);
+    border-bottom: 1px solid var(--border-color);
+    gap: 8px;
+  }
+
+  .ol-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ol-toolbar-left i {
+    color: var(--primary);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .ol-url-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ol-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .ol-refresh-btn,
+  .ol-open-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    background: var(--bg-card);
+    text-decoration: none;
+    font-size: 0.85rem;
+  }
+
+  .ol-refresh-btn:hover,
+  .ol-open-btn:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .ol-iframe-container {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    min-height: 400px;
+  }
+
+  .ol-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* ====== 未配置提示 ====== */
+  .ol-not-configured {
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .ol-nc-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--primary-alpha);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 2rem;
+    color: var(--primary);
+  }
+
+  .ol-nc-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .ol-nc-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .ol-nc-code {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    font-size: 0.82rem;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+  }
+
+  @media (max-width: 1024px) {
+    .page-layout { flex-direction: column; }
+  }
+
+  @media (max-width: 640px) {
+    .ol-header {
+      padding: 24px 16px;
+    }
+    .ol-iframe-container {
+      height: 60vh;
+      min-height: 300px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const refreshBtn = document.getElementById('olRefreshBtn');
+    const iframe = document.getElementById('olIframe') as HTMLIFrameElement | null;
+
+    refreshBtn?.addEventListener('click', () => {
+      if (iframe) {
+        iframe.src = iframe.src;
+      }
+    });
+  });
+</script>

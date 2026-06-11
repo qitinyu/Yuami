@@ -2,44 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SidebarWidget from '../../components/SidebarWidget.astro';
 import { albumList } from '../../data/memory';
-import { scanHuiyiImages } from '../../utils/image-scanner';
+import { buildAlbums } from '../../utils/image-scanner';
 
-// 构建时扫描图片目录
-const scannedAlbums = scanHuiyiImages();
+// 使用新的 buildAlbums 函数构建相册数据（支持本地+URL混合）
+const allAlbums = buildAlbums(albumList);
 
-// 合并 memory.ts 中的元数据和自动扫描的图片数据
-const allAlbums = albumList.map(album => {
-  const scanned = scannedAlbums.get(album.id);
-  if (scanned) {
-    return {
-      ...album,
-      images: scanned.images,
-      cover: scanned.cover || album.cover,
-      count: scanned.count,
-    };
-  }
-  return {
-    ...album,
-    images: [],
-    count: 0,
-  };
-}).filter(album => album.count > 0 || album.images.length > 0);
-
-// 发现 memory.ts 中未定义的目录，也自动加入
-for (const [id, data] of scannedAlbums) {
-  if (!albumList.find(a => a.id === id)) {
-    allAlbums.push({
-      id,
-      title: id,
-      desc: '',
-      cover: data.cover,
-      count: data.count,
-      images: data.images,
-    });
-  }
-}
-
-// 将图片数据序列化为 JSON 供前端使用
+// 将图片数据序列化为 JSON 供前端使用（包含加密信息）
 const albumsJson = JSON.stringify(allAlbums.map(a => ({
   id: a.id,
   title: a.title,
@@ -47,6 +15,8 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   images: a.images,
   cover: a.cover,
   count: a.count || a.images.length,
+  encrypted: a.encrypted,
+  password: a.password,
 })));
 ---
 
@@ -57,18 +27,35 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       <div id="albumListView">
         <div class="album-grid" id="albumGrid">
           {allAlbums.map((album, index) => (
-            <article class="album-card card" data-album-id={album.id} data-index={index} style={`animation-delay: ${(index % 6) * 0.08}s`}>
+            <article
+              class={`album-card card ${album.encrypted ? 'album-encrypted' : ''}`}
+              data-album-id={album.id}
+              data-index={index}
+              data-encrypted={album.encrypted ? 'true' : 'false'}
+              style={`animation-delay: ${(index % 6) * 0.08}s`}
+            >
               <div class="album-cover">
                 <img src={album.cover} alt={album.title} class="album-cover-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
                 <div class="album-cover-placeholder" style="display:none;">
                   <i class="fa-solid fa-images"></i>
                   <span class="album-count">{album.count || album.images.length} 张</span>
                 </div>
+                {album.encrypted && (
+                  <div class="album-lock-badge">
+                    <i class="fa-solid fa-lock"></i>
+                  </div>
+                )}
               </div>
               <div class="album-info">
-                <h3 class="album-title">{album.title}</h3>
+                <h3 class="album-title">
+                  {album.title}
+                  {album.encrypted && <i class="fa-solid fa-lock album-title-lock"></i>}
+                </h3>
                 <p class="album-desc">{album.desc}</p>
-                <span class="album-badge">{album.count || album.images.length} 张照片</span>
+                <span class="album-badge">
+                  {album.count || album.images.length} 张照片
+                  {album.encrypted && ' · 加密'}
+                </span>
               </div>
             </article>
           ))}
@@ -76,6 +63,25 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
 
         <!-- 相册分页 -->
         <div class="pagination" id="albumPagination"></div>
+      </div>
+
+      <!-- 加密相册密码输入弹窗 -->
+      <div class="album-unlock-overlay" id="albumUnlockOverlay">
+        <div class="album-unlock-card card">
+          <div class="unlock-icon">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h3 class="unlock-title">此相册已加密</h3>
+          <p class="unlock-desc">输入密码查看相册内容</p>
+          <div class="unlock-input-wrap">
+            <input type="password" class="unlock-input" id="albumUnlockInput" placeholder="输入密码..." autocomplete="off" />
+            <button class="unlock-btn" id="albumUnlockBtn">
+              <i class="fa-solid fa-key"></i> 解锁
+            </button>
+          </div>
+          <p class="unlock-error" id="albumUnlockError"></p>
+          <button class="unlock-cancel" id="albumUnlockCancel">取消</button>
+        </div>
       </div>
 
       <!-- 图片网格视图 -->
@@ -148,8 +154,9 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   }
 
   .album-cover {
-    height: 140px;
+    height: 120px;
     overflow: hidden;
+    position: relative;
   }
 
   .album-cover-img {
@@ -192,6 +199,31 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     transform: scale(1.05);
   }
 
+  /* 加密相册角标 */
+  .album-lock-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.7rem;
+    z-index: 2;
+  }
+
+  .album-title-lock {
+    font-size: 0.75rem;
+    color: var(--primary);
+    margin-left: 4px;
+    opacity: 0.7;
+  }
+
   .album-info {
     padding: 14px;
   }
@@ -201,6 +233,9 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
   }
 
   .album-desc {
@@ -216,6 +251,135 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     background: var(--primary-alpha);
     padding: 2px 10px;
     border-radius: 12px;
+  }
+
+  /* ====== 加密解锁弹窗 ====== */
+  .album-unlock-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .album-unlock-overlay.active {
+    display: flex;
+  }
+
+  .album-unlock-card {
+    width: 100%;
+    max-width: 380px;
+    padding: 32px 24px;
+    text-align: center;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  .unlock-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 1.3rem;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(125, 152, 245, 0.35);
+  }
+
+  .unlock-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .unlock-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .unlock-input-wrap {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .unlock-input {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    outline: none;
+    transition: all var(--transition-fast);
+  }
+
+  .unlock-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-alpha);
+  }
+
+  .unlock-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.92rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .unlock-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .unlock-error {
+    display: none;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 12px;
+  }
+
+  .unlock-error.show {
+    display: block;
+    animation: shakeError 0.4s ease;
+  }
+
+  @keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .unlock-cancel {
+    margin-top: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+  }
+
+  .unlock-cancel:hover {
+    color: var(--text-primary);
   }
 
   /* ====== 图片网格视图 ====== */
@@ -267,7 +431,7 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     border: 1px solid var(--border-color);
   }
 
-  /* ====== 瀑布流布局 - 图片自适应实际尺寸 ====== */
+  /* ====== 瀑布流布局 ====== */
   .photo-grid-view {
     column-count: 4;
     column-gap: 12px;
@@ -425,8 +589,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     z-index: 1;
   }
 
-  /* 分页样式已移至 global.css */
-
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }
     .album-grid { grid-template-columns: repeat(2, 1fr); }
@@ -440,6 +602,12 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
   @media (max-width: 640px) {
     .album-grid { grid-template-columns: 1fr; }
     .photo-grid-view { column-count: 2; }
+    .unlock-input-wrap {
+      flex-direction: column;
+    }
+    .unlock-btn {
+      justify-content: center;
+    }
   }
 </style>
 
@@ -459,7 +627,7 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     memoryAbortController = new AbortController();
     const memorySignal = memoryAbortController.signal;
 
-    const ALBUMS_PER_PAGE = 6;
+    const ALBUMS_PER_PAGE = 9;
     const PHOTOS_PER_PAGE = 24;
 
     const albumCards = Array.from(document.querySelectorAll('.album-card'));
@@ -480,11 +648,19 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
     const lightboxImg = document.getElementById('lightboxImg') as HTMLImageElement;
     const lightboxCounter = document.getElementById('lightboxCounter');
 
+    // 加密解锁弹窗元素
+    const unlockOverlay = document.getElementById('albumUnlockOverlay');
+    const unlockInput = document.getElementById('albumUnlockInput') as HTMLInputElement;
+    const unlockBtn = document.getElementById('albumUnlockBtn');
+    const unlockError = document.getElementById('albumUnlockError');
+    const unlockCancel = document.getElementById('albumUnlockCancel');
+
     let albumPage = 1;
     let photoPage = 1;
     let currentAlbumImages: string[] = [];
     let currentAlbumTitle = '';
     let lightboxIndex = 0;
+    let pendingAlbumId: string | null = null;
 
     // ====== 通用分页渲染 ======
     function renderPagination(el: HTMLElement | null, totalPages: number, currentPage: number, onPageChange: (page: number) => void) {
@@ -493,10 +669,8 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       el.classList.remove('hidden');
 
       let html = '';
-      // 上一页
       html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
 
-      // 页码
       const maxVisible = 5;
       let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
       let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -506,9 +680,7 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
 
       if (startPage > 1) {
         html += `<button class="page-btn" data-page="1">1</button>`;
-        if (startPage > 2) {
-          html += `<span class="page-ellipsis">...</span>`;
-        }
+        if (startPage > 2) html += `<span class="page-ellipsis">...</span>`;
       }
 
       for (let i = startPage; i <= endPage; i++) {
@@ -516,17 +688,13 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       }
 
       if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          html += `<span class="page-ellipsis">...</span>`;
-        }
+        if (endPage < totalPages - 1) html += `<span class="page-ellipsis">...</span>`;
         html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
       }
 
-      // 下一页
       html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
       el.innerHTML = html;
 
-      // 绑定事件
       el.querySelectorAll('.page-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const b = btn as HTMLElement;
@@ -581,12 +749,28 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       });
     }
 
-    // ====== 打开相册 ======
+    // ====== 打开相册（含加密检测） ======
     function openAlbum(albumId: string) {
-      const albums: Array<{id: string; title: string; images: string[]; count: number}> = (window as any).__yuamiAlbums || [];
+      const albums: Array<{id: string; title: string; images: string[]; count: number; encrypted: boolean; password: string}> = (window as any).__yuamiAlbums || [];
       const album = albums.find(a => a.id === albumId);
       if (!album || !album.images || album.images.length === 0) return;
 
+      // 检查加密
+      if (album.encrypted && album.password) {
+        const unlockKey = 'yuami_album_unlocked_' + albumId;
+        if (sessionStorage.getItem(unlockKey) !== 'true') {
+          // 需要密码，显示解锁弹窗
+          pendingAlbumId = albumId;
+          showUnlockDialog();
+          return;
+        }
+      }
+
+      // 已解锁或无加密，直接打开
+      doOpenAlbum(album);
+    }
+
+    function doOpenAlbum(album: {id: string; title: string; images: string[]; count: number}) {
       currentAlbumImages = album.images;
       currentAlbumTitle = album.title;
       photoPage = 1;
@@ -594,7 +778,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       if (photoViewTitle) photoViewTitle.textContent = album.title;
       if (photoViewCount) photoViewCount.textContent = `${album.images.length} 张`;
 
-      // 渲染图片网格
       if (photoGridContainer) {
         photoGridContainer.innerHTML = '';
         album.images.forEach((src, index) => {
@@ -607,13 +790,55 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
         });
       }
 
-      // 切换视图
       if (albumListView) albumListView.style.display = 'none';
       if (photoGridView) photoGridView.style.display = 'block';
 
       applyPhotoPage();
       document.querySelector('.page-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    // ====== 加密解锁弹窗 ======
+    function showUnlockDialog() {
+      if (unlockOverlay) unlockOverlay.classList.add('active');
+      if (unlockInput) { unlockInput.value = ''; unlockInput.focus(); }
+      if (unlockError) unlockError.classList.remove('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hideUnlockDialog() {
+      if (unlockOverlay) unlockOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+      pendingAlbumId = null;
+    }
+
+    function tryUnlock() {
+      if (!pendingAlbumId || !unlockInput) return;
+      const entered = unlockInput.value.trim();
+      const albums: Array<{id: string; title: string; images: string[]; count: number; encrypted: boolean; password: string}> = (window as any).__yuamiAlbums || [];
+      const album = albums.find(a => a.id === pendingAlbumId);
+
+      if (album && entered === album.password) {
+        sessionStorage.setItem('yuami_album_unlocked_' + pendingAlbumId, 'true');
+        hideUnlockDialog();
+        doOpenAlbum(album);
+      } else {
+        if (unlockError) {
+          unlockError.textContent = '密码错误，请重试';
+          unlockError.classList.add('show');
+        }
+        unlockInput.value = '';
+        unlockInput.focus();
+      }
+    }
+
+    unlockBtn?.addEventListener('click', tryUnlock);
+    unlockInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryUnlock();
+    });
+    unlockCancel?.addEventListener('click', hideUnlockDialog);
+    unlockOverlay?.addEventListener('click', (e) => {
+      if (e.target === unlockOverlay) hideUnlockDialog();
+    });
 
     // ====== 返回相册列表 ======
     backBtn?.addEventListener('click', () => {
@@ -640,12 +865,8 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       lightboxImg.src = currentAlbumImages[lightboxIndex] || '';
       if (lightboxCounter) lightboxCounter.textContent = `${lightboxIndex + 1} / ${currentAlbumImages.length}`;
 
-      if (lightboxPrev) {
-        lightboxPrev.classList.toggle('disabled', lightboxIndex === 0);
-      }
-      if (lightboxNext) {
-        lightboxNext.classList.toggle('disabled', lightboxIndex === currentAlbumImages.length - 1);
-      }
+      if (lightboxPrev) lightboxPrev.classList.toggle('disabled', lightboxIndex === 0);
+      if (lightboxNext) lightboxNext.classList.toggle('disabled', lightboxIndex === currentAlbumImages.length - 1);
     }
 
     lightboxOverlay?.addEventListener('click', closeLightbox);
@@ -657,7 +878,6 @@ const albumsJson = JSON.stringify(allAlbums.map(a => ({
       if (lightboxIndex < currentAlbumImages.length - 1) { lightboxIndex++; updateLightbox(); }
     });
 
-    // 键盘导航
     document.addEventListener('keydown', (e) => {
       if (!lightbox?.classList.contains('active')) return;
       if (e.key === 'Escape') closeLightbox();
