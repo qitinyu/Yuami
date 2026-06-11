@@ -190,7 +190,7 @@ export const siteConfig = {
     // 采云 - Open List 共享链接
     // 填入你的 Open List 地址，如 'https://alist.example.com'
     // 留空则显示未配置提示
-    openListUrl: '',
+    openListUrl: 'https://open.yqamma.eu.cc',
   },
 
   // ========== 社交链接 ==========
