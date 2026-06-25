@@ -94,14 +94,12 @@ const musicEnabled = siteConfig.music?.enabled !== false;
     cursor: pointer;
     font-size: 0.92rem;
     transition: all var(--transition-fast);
-    box-shadow: var(--shadow-sm);
   }
 
   .float-btn:hover {
     color: var(--primary);
     background: var(--primary-alpha);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
   }
 
   .music-panel {
@@ -113,7 +111,6 @@ const musicEnabled = siteConfig.music?.enabled !== false;
     background: var(--bg-glass);
     border: 1px solid var(--bg-glass-border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
     opacity: 0;
     visibility: hidden;
     transform: translateX(10px);
@@ -288,7 +285,6 @@ const musicEnabled = siteConfig.music?.enabled !== false;
 
   .music-play-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 15px rgba(125, 152, 245, 0.4);
   }
 
   .music-mode-btn.active {

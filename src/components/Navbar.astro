@@ -1,5 +1,6 @@
 ---
 import { siteConfig } from '../../config';
+import { getCollection } from 'astro:content';
 const currentPath = Astro.url.pathname;
 const colorPickerEnabled = siteConfig.themeColorPicker?.enabled ?? false;
 const bgToggleAvailable = siteConfig.background?.enabled ?? false;
@@ -7,6 +8,26 @@ const sakuraToggleAvailable = siteConfig.sakura?.enabled ?? false;
 const logoType = siteConfig.logo?.type || 'both';
 const logoText = siteConfig.logo?.text || siteConfig.title || 'Yuami';
 const logoImage = siteConfig.logo?.image || '';
+
+// 构建搜索索引（博文 + 旅记）
+const allPots = await getCollection('pots');
+const allDiary = await getCollection('diary');
+const searchIndex = [
+  ...allPots.map(p => ({
+    title: p.data.title,
+    type: '博文',
+    url: `/blog/${p.slug}`,
+    tags: (p.data.tags || []).join(' '),
+    desc: p.data.description || p.data.excerpt || '',
+  })),
+  ...allDiary.map(d => ({
+    title: d.data.title,
+    type: '旅记',
+    url: `/travel/${d.slug}`,
+    tags: (d.data.tags || []).join(' '),
+    desc: d.data.excerpt || '',
+  })),
+];
 ---
 
 <nav class="navbar glass" id="navbar">
@@ -47,8 +68,28 @@ const logoImage = siteConfig.logo?.image || '';
       ))}
     </ul>
 
-    <!-- Right: Color Picker + Theme Toggle + Mobile Menu -->
+    <!-- Right: Search + Color Picker + Theme Toggle + Mobile Menu -->
     <div class="navbar-actions">
+      <!-- 全局搜索按钮 -->
+      <div class="nav-search-wrapper">
+        <button class="nav-search-btn" id="navSearchBtn" title="搜索" aria-label="搜索博客内容">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+        <div class="nav-search-panel" id="navSearchPanel">
+          <div class="nav-search-input-wrap">
+            <i class="fa-solid fa-magnifying-glass nav-search-input-icon"></i>
+            <input type="text" id="navSearchInput" class="nav-search-input" placeholder="输入关键字搜索整个博客..." />
+            <button class="nav-search-close" id="navSearchClose" aria-label="关闭">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="nav-search-results" id="navSearchResults"></div>
+          <div class="nav-search-hint" id="navSearchHint">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>输入关键字后，将跳转到博文或旅记页面进行筛选</span>
+          </div>
+        </div>
+      </div>
       {colorPickerEnabled && (
         <div class="color-picker-wrapper">
           <button class="color-picker-btn" id="colorPickerBtn" title="切换主题色" aria-label="切换主题色">
@@ -139,6 +180,11 @@ const logoImage = siteConfig.logo?.image || '';
   </ul>
 </div>
 
+<!-- 注入搜索索引 -->
+<script define:vars={{ searchIndex }}>
+  window.__yuami_search_index = searchIndex;
+</script>
+
 <style>
   .navbar {
     position: fixed;
@@ -147,7 +193,7 @@ const logoImage = siteConfig.logo?.image || '';
     right: 0;
     height: var(--nav-height);
     z-index: 1000;
-    transition: transform 0.35s ease, box-shadow var(--transition-normal);
+    transition: transform 0.35s ease;
   }
 
   /* Nav自动隐藏/展开 */
@@ -242,7 +288,6 @@ const logoImage = siteConfig.logo?.image || '';
     background: var(--bg-glass);
     border: 1px solid var(--bg-glass-border);
     border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-md);
     opacity: 0;
     visibility: hidden;
     transition: all var(--transition-fast);
@@ -274,6 +319,178 @@ const logoImage = siteConfig.logo?.image || '';
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  /* 全局搜索 */
+  .nav-search-wrapper {
+    position: relative;
+  }
+
+  .nav-search-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 1rem;
+  }
+
+  .nav-search-btn:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .nav-search-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    background: var(--bg-glass);
+    border: 1px solid var(--bg-glass-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: all 0.25s ease;
+    z-index: 1001;
+  }
+
+  .nav-search-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .nav-search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-search-input-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  .nav-search-input {
+    width: 100%;
+    padding: 10px 36px 10px 34px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-family: inherit;
+    outline: none;
+    transition: all var(--transition-fast);
+  }
+
+  .nav-search-input:focus {
+    border-color: var(--primary);
+  }
+
+  .nav-search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .nav-search-close {
+    position: absolute;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    transition: all var(--transition-fast);
+  }
+
+  .nav-search-close:hover {
+    color: var(--primary);
+    background: var(--primary-alpha);
+  }
+
+  .nav-search-results {
+    margin-top: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .nav-search-result-item {
+    display: block;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    margin-bottom: 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  .nav-search-result-item:hover {
+    background: var(--primary-alpha);
+    border-color: var(--primary);
+  }
+
+  .nav-search-result-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .nav-search-result-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-search-result-type {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--primary-alpha);
+    color: var(--primary);
+    font-size: 0.7rem;
+  }
+
+  .nav-search-hint {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: var(--primary-alpha);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-search-hint i {
+    color: var(--primary);
+    font-size: 0.78rem;
+  }
+
+  .nav-search-empty {
+    text-align: center;
+    padding: 24px 12px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
   }
 
   .theme-toggle {
@@ -325,7 +542,6 @@ const logoImage = siteConfig.logo?.image || '';
     background: var(--bg-glass);
     border: 1px solid var(--bg-glass-border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
     padding: 16px;
     opacity: 0;
     visibility: hidden;
@@ -368,7 +584,6 @@ const logoImage = siteConfig.logo?.image || '';
     height: 14px;
     border-radius: 50%;
     border: 2px solid #fff;
-    box-shadow: 0 0 4px rgba(0,0,0,0.4);
     transform: translate(-50%, -50%);
     pointer-events: none;
     transition: left 0.1s ease;
@@ -540,7 +755,6 @@ const logoImage = siteConfig.logo?.image || '';
     border-radius: 0 0 0 var(--radius-md);
     border-left: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
-    box-shadow: var(--shadow-lg);
     z-index: 1002;
     opacity: 0;
     visibility: hidden;
@@ -684,6 +898,10 @@ const logoImage = siteConfig.logo?.image || '';
     .color-picker-panel {
       right: -60px;
       width: 220px;
+    }
+    .nav-search-panel {
+      right: -80px;
+      width: 300px;
     }
   }
 </style>
@@ -1029,6 +1247,84 @@ const logoImage = siteConfig.logo?.image || '';
         }
       });
     }
+
+    // ===== 全局搜索 =====
+    const navSearchBtn = document.getElementById('navSearchBtn');
+    const navSearchPanel = document.getElementById('navSearchPanel');
+    const navSearchInput = document.getElementById('navSearchInput') as HTMLInputElement | null;
+    const navSearchClose = document.getElementById('navSearchClose');
+    const navSearchResults = document.getElementById('navSearchResults');
+    const navSearchHint = document.getElementById('navSearchHint');
+
+    navSearchBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navSearchPanel?.classList.toggle('active');
+      if (navSearchPanel?.classList.contains('active')) {
+        setTimeout(() => navSearchInput?.focus(), 100);
+      }
+    });
+
+    navSearchClose?.addEventListener('click', () => {
+      navSearchPanel?.classList.remove('active');
+      if (navSearchInput) navSearchInput.value = '';
+      if (navSearchResults) navSearchResults.innerHTML = '';
+      if (navSearchHint) navSearchHint.style.display = '';
+    });
+
+    // 点击外部关闭
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.nav-search-wrapper')) {
+        navSearchPanel?.classList.remove('active');
+      }
+    }, { signal: navSignal });
+
+    // 搜索输入
+    navSearchInput?.addEventListener('input', (e) => {
+      const query = (e.target as HTMLInputElement).value.trim().toLowerCase();
+      if (navSearchHint) navSearchHint.style.display = query ? 'none' : '';
+      if (!navSearchResults) return;
+      if (!query) {
+        navSearchResults.innerHTML = '';
+        return;
+      }
+
+      const index = (window as any).__yuami_search_index || [];
+      const matches = index.filter((item: { title: string; tags: string; desc: string; type: string; url: string }) => {
+        const titleMatch = item.title.toLowerCase().includes(query);
+        const tagMatch = item.tags.toLowerCase().includes(query);
+        const descMatch = item.desc.toLowerCase().includes(query);
+        return titleMatch || tagMatch || descMatch;
+      }).slice(0, 10);
+
+      if (matches.length === 0) {
+        navSearchResults.innerHTML = '<div class="nav-search-empty">未找到相关内容</div>';
+        return;
+      }
+
+      navSearchResults.innerHTML = matches.map((item: { url: string; title: string; type: string; desc: string }) => `
+        <a href="${item.url}" class="nav-search-result-item">
+          <div class="nav-search-result-title">${item.title}</div>
+          <div class="nav-search-result-meta">
+            <span class="nav-search-result-type">${item.type}</span>
+            <span>${item.desc.substring(0, 40)}${item.desc.length > 40 ? '...' : ''}</span>
+          </div>
+        </a>
+      `).join('');
+    });
+
+    // 回车跳转到博文页面并触发全局搜索
+    navSearchInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const query = (e.target as HTMLInputElement).value.trim();
+        if (!query) return;
+        // 保存查询到全局变量，跳转到博文页面
+        (window as any).__yuami_global_search = query;
+        navSearchPanel?.classList.remove('active');
+        // 跳转到博文页面
+        window.location.href = '/blog';
+      }
+    });
   }
 
   // 初始化 + View Transitions 导航后重新初始化

@@ -54,6 +54,7 @@ const diary = defineCollection({
     tags: z.array(z.string()),
     excerpt: z.string().optional(),
     cover: z.string().optional(),
+    mood: z.string().optional(),
   }),
 });
 
