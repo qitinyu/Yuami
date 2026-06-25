@@ -243,7 +243,7 @@ export const siteConfig = {
   // subtitle: 引导页副标题
   welcomePage: {
     enabled: true,
-    backgroundImage: 'https://i.postimg.cc/TPqcm4zm/hu-tao55.jpg',  // ★ 更换引导页背景图片：填写路径如 '/home/welcome-bg.webp'
+    backgroundImage: 'https://i.postimg.cc/HsR3jsjS/home.webp',  // ★ 更换引导页背景图片：填写路径如 '/home/welcome-bg.webp'
     avatar: '',           // 为空则使用全局avatar
     title: '欢迎来到Yuami',
     subtitle: 'Welcome to Yuami',
@@ -254,7 +254,7 @@ export const siteConfig = {
   //   填入你的 OpenList 公开分享链接（如 'https://your-openlist.example.com/share/abc'）
   //   留空时采云页会显示"未配置共享链接"的占位提示
   liuli: {
-    openListUrl: '',  // ★ 在此填入你的 OpenList 共享链接
+    openListUrl: 'http://open.yqamma.eu.cc',  // ★ 在此填入你的 OpenList 共享链接
   },
 
   // ========== 轩窗(首页)轮播图配置 ==========
