@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SidebarWidget from '../../components/SidebarWidget.astro';
 import { friendsList } from '../../data/friends';
 import { fetchAllFriendArticles } from '../../utils/rss-parser';
 
@@ -11,11 +10,12 @@ const hasArticles = friendsArticles.length > 0;
 ---
 
 <BaseLayout title="朋友圈">
-  <div class="page-layout">
+  <div class="page-layout page-layout-centered">
     <div class="page-main">
-      <div class="circle-header">
-        <h2 class="circle-title"><i class="fa-solid fa-rss"></i> 朋友圈</h2>
-        <p class="circle-desc">来自友链朋友们的最新文章动态，每次构建时更新。</p>
+      <!-- 页面题头 -->
+      <div class="page-header">
+        <h1 class="page-title">朋友圈</h1>
+        <p class="page-subtitle">来自友链朋友们的最新文章动态</p>
       </div>
 
       {hasArticles ? (
@@ -52,46 +52,55 @@ const hasArticles = friendsArticles.length > 0;
         <span>想加入朋友圈？请前往 <a href="/friends">友链</a> 页面申请。</span>
       </div>
     </div>
-
-    <SidebarWidget />
   </div>
 </BaseLayout>
 
 <style>
-  .page-layout {
+  .page-layout-centered {
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
     gap: 20px;
     padding: 28px 24px;
+    justify-content: center;
   }
 
   .page-main {
     flex: 1;
     min-width: 0;
+    max-width: 1100px;
   }
 
-  .circle-header {
+  /* 页面题头 */
+  .page-header {
     margin-bottom: 24px;
   }
 
-  .circle-title {
-    font-size: 1.4rem;
+  .page-title {
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    position: relative;
+    padding-left: 14px;
   }
 
-  .circle-title i {
-    color: var(--primary);
+  .page-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    background: var(--primary);
   }
 
-  .circle-desc {
+  .page-subtitle {
     font-size: 0.92rem;
     color: var(--text-muted);
+    padding-left: 14px;
   }
 
   .articles-list {
@@ -230,6 +239,6 @@ const hasArticles = friendsArticles.length > 0;
   }
 
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column; }
+    .page-layout-centered { flex-direction: column; }
   }
 </style>

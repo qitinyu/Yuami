@@ -1,11 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LeftSidebar from '../../components/LeftSidebar.astro';
 import Twikoo from '../../components/Twikoo.astro';
 import Encryptor from '../../components/Encryptor.astro';
 import { getCollection } from 'astro:content';
 import { siteConfig } from '../../../config';
-import { formatDate, formatDateShort } from '../../utils/dateFormat';
+import { formatDate } from '../../utils/dateFormat';
 
 export async function getStaticPaths() {
   const pots = await getCollection('pots');
@@ -45,21 +44,9 @@ const isPinned = post.data.pinned === true;
 
 // 随机推荐2篇文章（排除当前文章）
 const allPots = await getCollection('pots');
-const allDiary = await getCollection('diary');
 const otherPots = allPots.filter(p => p.slug !== post.slug);
 const shuffled = otherPots.sort(() => Math.random() - 0.5);
 const recommendPosts = shuffled.slice(0, 2);
-
-// 构建时计算站点统计（传给 SidebarWidget，使用完整日期字符串）
-const totalPostsStat = allPots.length + allDiary.length;
-let totalWordsStat = 0;
-allPots.forEach(p => { totalWordsStat += (p.body || '').replace(/\s/g, '').length; });
-allDiary.forEach(d => { totalWordsStat += (d.body || '').replace(/\s/g, '').length; });
-const allDates = [
-  ...allPots.map(p => p.data.published || p.data.date || ''),
-  ...allDiary.map(d => d.data.date || ''),
-].filter(Boolean).sort().reverse();
-const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
 ---
 
 <BaseLayout title={title}>
@@ -152,15 +139,6 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
       )}
     </article>
 
-    <!-- Left Sidebar: 3 Plugins (DOM second, CSS order: -1 on desktop to move left; mobile: natural order after article) -->
-    <aside class="article-sidebar">
-      <LeftSidebar
-        totalPosts={totalPostsStat}
-        totalWords={totalWordsStat}
-        lastEdit={lastEditStat}
-      />
-    </aside>
-
     <!-- Right Sidebar: TOC (Table of Contents) -->
     <aside class="article-toc-sidebar" id="articleTocSidebar" style={isEncrypted ? 'display:none;' : ''}>
       <div class="toc-panel" id="tocPanel">
@@ -195,19 +173,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     padding: 32px 36px;
-    box-shadow: var(--shadow-sm);
-    /* On desktop, center between two sidebars */
     order: 1;
-  }
-
-  /* --- Left Sidebar (3 plugins, DOM second, CSS order moves it left on desktop) --- */
-  .article-sidebar {
-    width: var(--sidebar-width);
-    flex-shrink: 0;
-    order: 0; /* Desktop: left of article */
-    position: sticky;
-    top: calc(var(--nav-height) + 16px);
-    height: fit-content;
   }
 
   /* --- Right Sidebar: TOC --- */
@@ -226,14 +192,12 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     background: var(--bg-card);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
     overflow: hidden;
     width: 100%;
     transition: all var(--transition-normal);
   }
 
   .toc-panel:hover {
-    box-shadow: var(--shadow-hover);
   }
 
   .toc-header {
@@ -513,7 +477,6 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     border-radius: var(--radius-md);
     padding: 16px 20px;
     margin: 1.5em 0;
-    box-shadow: var(--shadow-sm);
   }
 
   .article-toc-inline-title {
@@ -694,7 +657,7 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
   }
 
   .recommend-card { padding: 16px; cursor: pointer; transition: all var(--transition-fast); }
-  .recommend-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+  .recommend-card:hover { transform: translateY(-2px);  }
   .recommend-body h4 { font-size: 0.98rem; color: var(--text-primary); margin-bottom: 4px; transition: color var(--transition-fast); }
   .recommend-card:hover .recommend-body h4 { color: var(--primary); }
   .recommend-body p { font-size: 0.85rem; color: var(--text-muted); }
@@ -738,7 +701,6 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     padding: 8px 20px;
     border-radius: var(--radius-sm);
     font-size: 0.88rem;
-    box-shadow: 0 4px 12px rgba(125, 152, 245, 0.4);
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s ease;
@@ -757,28 +719,13 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     }
   }
 
-  /* --- Tablet/Mobile (≤1024px) - 单列布局，文章在上，插件在下 --- */
+  /* --- Tablet/Mobile (≤1024px) - 单列布局 --- */
   @media (max-width: 1024px) {
     .article-layout {
       flex-direction: column;
     }
     .article-main {
       order: 0; /* 文章在前 */
-    }
-    .article-sidebar {
-      order: 1; /* 插件在后 */
-      position: static;
-      width: 100%;
-    }
-    .article-sidebar :global(.left-sidebar) {
-      position: static;
-      width: 100%;
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-    .article-sidebar :global(.sidebar-panel) {
-      flex: 1;
-      min-width: 260px;
     }
   }
 
@@ -792,12 +739,6 @@ const lastEditStat = allDates[0] ? formatDateShort(allDates[0]) : '';
     }
     .article-title {
       font-size: 1.4rem;
-    }
-    .article-sidebar :global(.left-sidebar) {
-      flex-direction: column;
-    }
-    .article-sidebar :global(.sidebar-panel) {
-      min-width: auto;
     }
     .recommend-grid {
       grid-template-columns: 1fr;

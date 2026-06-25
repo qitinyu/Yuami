@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SidebarWidget from '../../components/SidebarWidget.astro';
 
 // 关于页面内容 - 通过单独的 md 文件控制
 // 读取 markdown 内容并渲染
@@ -37,27 +36,65 @@ target="_blank">Mizuki</a>的灵感让这个博客成为可能.</p></li>
 ---
 
 <BaseLayout title="关于">
-  <div class="page-layout">
+  <div class="page-layout page-layout-centered">
     <div class="page-main">
+      <!-- 页面题头 -->
+      <div class="page-header">
+        <h1 class="page-title">关于</h1>
+        <p class="page-subtitle">认识这个博客背后的我</p>
+      </div>
+
       <div class="about-content card prose" set:html={aboutContent} />
     </div>
-
-    <SidebarWidget />
   </div>
 </BaseLayout>
 
 <style>
-  .page-layout {
+  .page-layout-centered {
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
     gap: 20px;
     padding: 28px 24px;
+    justify-content: center;
   }
 
   .page-main {
     flex: 1;
     min-width: 0;
+    max-width: 1100px;
+  }
+
+  /* 页面题头 */
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .page-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .page-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    padding-left: 14px;
   }
 
   .about-content {
@@ -65,6 +102,6 @@ target="_blank">Mizuki</a>的灵感让这个博客成为可能.</p></li>
   }
 
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column; }
+    .page-layout-centered { flex-direction: column; }
   }
 </style>

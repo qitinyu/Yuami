@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SidebarWidget from '../../components/SidebarWidget.astro';
 import Twikoo from '../../components/Twikoo.astro';
 import { lesList } from '../../data/les';
 
@@ -8,8 +7,14 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
 ---
 
 <BaseLayout title="LES">
-  <div class="page-layout">
+  <div class="page-layout page-layout-centered">
     <div class="page-main">
+      <!-- 页面题头 -->
+      <div class="page-header">
+        <h1 class="page-title">LES</h1>
+        <p class="page-subtitle">聆听过的声音，珍藏过的故事</p>
+      </div>
+
       <div class="type-filter" id="typeFilter">
         {types.map(t => (
           <span class={`filter-tab ${t === '全部' ? 'active' : ''}`} data-type={t} style="cursor: pointer;">{t}</span>
@@ -49,23 +54,55 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
       <!-- Twikoo Comments -->
       <Twikoo />
     </div>
-
-    <SidebarWidget />
   </div>
 </BaseLayout>
 
 <style>
-  .page-layout {
+  .page-layout-centered {
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
     gap: 20px;
     padding: 28px 24px;
+    justify-content: center;
   }
 
   .page-main {
     flex: 1;
     min-width: 0;
+    max-width: 1100px;
+  }
+
+  /* 页面题头 */
+  .page-header {
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .page-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .page-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    padding-left: 14px;
   }
 
   .type-filter {
@@ -220,7 +257,7 @@ const types = ['全部', '一完结', '连载中', '全完结' ];
   /* 分页样式已移至 global.css */
 
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column; }
+    .page-layout-centered { flex-direction: column; }
     .les-grid { grid-template-columns: repeat(2, 1fr); }
   }
 

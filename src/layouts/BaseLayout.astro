@@ -20,10 +20,10 @@ const fullTitle = title === siteConfig.title ? title : `${title} - ${siteConfig.
 const fontFamily = siteConfig.font?.fontFamily || "'朱雀仿宋', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif";
 const fontSize = siteConfig.font?.fontSize || '16px';
 const fontFile = siteConfig.font?.fontFile || '/font/zqfs.woff2';
-const shadowSm = siteConfig.shadow?.sm || '0 2px 8px rgba(125, 152, 245, 0.08)';
-const shadowMd = siteConfig.shadow?.md || '0 4px 20px rgba(125, 152, 245, 0.12)';
-const shadowLg = siteConfig.shadow?.lg || '0 8px 40px rgba(125, 152, 245, 0.16)';
-const shadowHover = siteConfig.shadow?.hover || '0 8px 30px rgba(125, 152, 245, 0.2)';
+const shadowSm = siteConfig.shadow?.sm || 'none';
+const shadowMd = siteConfig.shadow?.md || 'none';
+const shadowLg = siteConfig.shadow?.lg || 'none';
+const shadowHover = siteConfig.shadow?.hover || 'none';
 
 // 是否启用各组件
 const umamiEnabled = siteConfig.umami?.enabled !== false && siteConfig.umami?.src && siteConfig.umami?.websiteId;
@@ -52,6 +52,11 @@ const welcomeBg = welcomeConfig?.backgroundImage || '';
 const welcomeAvatar = welcomeConfig?.avatar || siteConfig.avatar || '/home/avatar.webp';
 const welcomeTitle = welcomeConfig?.title || 'Welcome';
 const welcomeSubtitle = welcomeConfig?.subtitle || '';
+
+// 引导页打字机文本（从轩窗配置移过来）
+const welcomeTypewriterTexts = siteConfig.typewriterTexts || [
+  '生命绚烂，别被黑暗压垮。',
+];
 ---
 
 <!doctype html>
@@ -90,7 +95,7 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
     </style>
     <title>{fullTitle}</title>
     <ViewTransitions />
-    <!-- Prevent flash of wrong theme -->
+    <!-- 防止主题闪烁 -->
     <script is:inline>
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', theme);
@@ -133,10 +138,10 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         root.setProperty('--primary-alpha', 'rgba('+rv+','+gv+','+bv+',0.15)');
         root.setProperty('--primary-alpha-30', 'rgba('+rv+','+gv+','+bv+',0.3)');
         root.setProperty('--border-color', 'rgba('+rv+','+gv+','+bv+',0.15)');
-        root.setProperty('--shadow-sm', '0 2px 8px rgba('+rv+','+gv+','+bv+',0.08)');
-        root.setProperty('--shadow-md', '0 4px 20px rgba('+rv+','+gv+','+bv+',0.12)');
-        root.setProperty('--shadow-lg', '0 8px 40px rgba('+rv+','+gv+','+bv+',0.16)');
-        root.setProperty('--shadow-hover', '0 8px 30px rgba('+rv+','+gv+','+bv+',0.2)');
+        root.setProperty('--shadow-sm', 'none');
+        root.setProperty('--shadow-md', 'none');
+        root.setProperty('--shadow-lg', 'none');
+        root.setProperty('--shadow-hover', 'none');
       }
       // 恢复用户对全局背景/樱花特效的偏好
       var _bgPref = localStorage.getItem('yuami_bg_enabled');
@@ -153,6 +158,10 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
       if (sessionStorage.getItem('yuami_welcome_dismissed')) {
         document.documentElement.setAttribute('data-welcome-dismissed', 'true');
       }
+    </script>
+    <!-- 注入引导页打字机文本 -->
+    <script define:vars={{ welcomeTypewriterTexts }}>
+      window.__yuami_welcome_typewriter_texts = welcomeTypewriterTexts;
     </script>
     <!-- Umami Analytics (legacy, disabled by default) -->
     {umamiEnabled && (
@@ -297,12 +306,16 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
           <div class="welcome-avatar-border"></div>
           <img src={welcomeAvatar} alt="Avatar" class="welcome-avatar" />
         </div>
-        <h1 class="welcome-title">{welcomeTitle}</h1>
-        <p class="welcome-subtitle">{welcomeSubtitle}</p>
+        <div class="welcome-typewriter-row">
+          <span class="welcome-typewriter-text" id="welcomeTypewriterText"></span>
+          <span class="welcome-typewriter-cursor">|</span>
+        </div>
       </div>
-      <div class="welcome-arrow" id="welcomeArrow">
-        <i class="fa-solid fa-chevron-up arrow-icon"></i>
-        <span class="arrow-hint">点击进入</span>
+      <div class="welcome-scroll-hint">
+        <span class="welcome-scroll-hint-text">向上滚动进入</span>
+        <div class="welcome-scroll-hint-icon">
+          <i class="fa-solid fa-chevron-up"></i>
+        </div>
       </div>
     </div>
     )}
@@ -318,11 +331,14 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
         overflow: hidden;
+        transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.7s ease;
+        will-change: transform, opacity;
       }
-      .welcome-page.slide-up {
+      .welcome-page.dismissed {
         transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
       }
       .welcome-bg {
         position: absolute;
@@ -394,50 +410,61 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
         transform: scale(1.1);
         transition: transform 0.3s ease;
       }
-      .welcome-title {
-        font-size: 2em;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      /* 打字机区域 */
+      .welcome-typewriter-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        min-height: 2.4em;
+        max-width: 720px;
+        margin: 28px auto 0;
+        flex-wrap: wrap;
       }
-      .welcome-subtitle {
-        font-size: 1.5em;
-        font-weight: 600;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      .welcome-typewriter-text {
+        font-size: 2rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        line-height: 1.7;
       }
-      /* 点击区域：底部大区域，方便点击 */
-      .welcome-arrow {
+      .welcome-typewriter-cursor {
+        font-size: 2rem;
+        color: rgba(255, 255, 255, 0.95);
+        animation: welcomeBlink 1s step-end infinite;
+        font-weight: 700;
+        margin-left: 2px;
+      }
+      @keyframes welcomeBlink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      /* 滚动提示 */
+      .welcome-scroll-hint {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 120px;
+        bottom: 36px;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
         gap: 6px;
         z-index: 2;
         color: #fff;
-        cursor: pointer;
+        opacity: 0.7;
         transition: opacity 0.3s;
+        pointer-events: none;
       }
-      .welcome-arrow .arrow-icon {
-        font-size: 1.8rem;
-        animation: bounce 1.5s infinite;
-        opacity: 0.8;
-      }
-      .welcome-arrow:hover .arrow-icon {
-        opacity: 1;
-      }
-      .welcome-arrow .arrow-hint {
+      .welcome-scroll-hint-text {
         font-size: 0.85rem;
-        opacity: 0.5;
         letter-spacing: 2px;
       }
-      @keyframes bounce {
+      .welcome-scroll-hint-icon {
+        font-size: 1.6rem;
+        animation: welcomeBounce 1.8s infinite;
+      }
+      @keyframes welcomeBounce {
         0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-15px); }
-        60% { transform: translateY(-8px); }
+        40% { transform: translateY(-12px); }
+        60% { transform: translateY(-6px); }
       }
     </style>
 
@@ -538,7 +565,6 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
       .site-background:not(.disabled) ~ .page-content .qingjin-card {
         background: transparent !important;
         border: none !important;
-        box-shadow: none !important;
       }
       .site-background:not(.disabled) ~ .page-content .home-section .project-card {
         background: rgba(255, 255, 255, 0.82) !important;
@@ -794,8 +820,8 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
           } else {
             window.addEventListener('load', hideOverlay);
           }
-          // Safety: force hide after 1.5 seconds
-          setTimeout(hideOverlay, 1500);
+          // Safety: force hide after 3 seconds (用户要求3秒)
+          setTimeout(hideOverlay, 3000);
         }
 
         // === 引导页控制 ===
@@ -810,25 +836,113 @@ const welcomeSubtitle = welcomeConfig?.subtitle || '';
             const pageContent = document.querySelector('.page-content');
             if (pageContent) pageContent.classList.add('cards-animated');
           } else {
-            const welcomeArrow = document.getElementById('welcomeArrow');
-            if (welcomeArrow) {
-              welcomeArrow.addEventListener('click', function dismissWelcome() {
-                welcomePage.classList.add('slide-up');
-                sessionStorage.setItem('yuami_welcome_dismissed', '1');
-                document.documentElement.setAttribute('data-welcome-dismissed', 'true');
-                // 引导页关闭后，添加动画类触发轩窗组成动画
-                const pageContent = document.querySelector('.page-content');
-                if (pageContent) {
-                  pageContent.classList.add('cards-animated');
-                  // 为每个卡片设置错开延迟
-                  pageContent.querySelectorAll('.card, .sidebar-panel').forEach((el, i) => {
-                    (el as HTMLElement).style.animationDelay = `${i * 0.08}s`;
-                  });
+            // 滚轮检测到即直接上滑
+            let isDismissed = false;
+
+            function finishDismiss() {
+              if (isDismissed) return;
+              isDismissed = true;
+              welcomePage.classList.add('dismissed');
+              sessionStorage.setItem('yuami_welcome_dismissed', '1');
+              document.documentElement.setAttribute('data-welcome-dismissed', 'true');
+              const pageContent = document.querySelector('.page-content');
+              if (pageContent) {
+                pageContent.classList.add('cards-animated');
+                pageContent.querySelectorAll('.card, .sidebar-panel').forEach((el, i) => {
+                  (el as HTMLElement).style.animationDelay = `${i * 0.08}s`;
+                });
+              }
+              setTimeout(() => {
+                welcomePage.style.display = 'none';
+              }, 800);
+              cleanup();
+            }
+
+            function cleanup() {
+              window.removeEventListener('wheel', onWheel);
+              window.removeEventListener('touchstart', onTouchStart);
+              window.removeEventListener('touchend', onTouchEnd);
+              window.removeEventListener('keydown', onKey);
+            }
+
+            function onWheel(e: WheelEvent) {
+              if (isDismissed) return;
+              e.preventDefault();
+              finishDismiss();
+            }
+
+            let touchStartY = 0;
+            function onTouchStart(e: TouchEvent) {
+              touchStartY = e.touches[0].clientY;
+            }
+            function onTouchEnd(e: TouchEvent) {
+              if (isDismissed) return;
+              const diff = touchStartY - e.changedTouches[0].clientY;
+              if (Math.abs(diff) > 30) {
+                finishDismiss();
+              }
+            }
+            function onKey(e: KeyboardEvent) {
+              if (isDismissed) return;
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                finishDismiss();
+              }
+            }
+
+            window.addEventListener('wheel', onWheel, { passive: false });
+            window.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchend', onTouchEnd, { passive: true });
+            window.addEventListener('keydown', onKey);
+
+            // 启动打字机效果（支持api:前缀动态获取）
+            const typewriterEl = document.getElementById('welcomeTypewriterText');
+            var rawTexts = (window as any).__yuami_welcome_typewriter_texts || [
+              '生命绚烂，别被黑暗压垮。',
+            ];
+            if (typewriterEl) {
+              var texts = rawTexts.slice();
+              texts.forEach(function(item, idx) {
+                if (typeof item === 'string' && item.indexOf('api:') === 0) {
+                  var url = item.substring(4);
+                  fetch(url, { cache: 'no-cache' }).then(function(res) {
+                    if (!res.ok) return;
+                    return res.text();
+                  }).then(function(txt) {
+                    if (!txt) return;
+                    txt = txt.trim();
+                    try {
+                      var json = JSON.parse(txt);
+                      txt = json.hitokoto || json.content || json.text || json.msg || json.data || txt;
+                    } catch(e) {}
+                    if (txt) texts[idx] = txt;
+                  }).catch(function() {});
                 }
-                setTimeout(() => {
-                  welcomePage.style.display = 'none';
-                }, 900);
               });
+              var textIndex = 0;
+              let charIndex = 0;
+              let isDeleting = false;
+              function typewrite() {
+                const currentText = texts[textIndex];
+                if (isDeleting) {
+                  typewriterEl.textContent = currentText.substring(0, charIndex - 1);
+                  charIndex--;
+                } else {
+                  typewriterEl.textContent = currentText.substring(0, charIndex + 1);
+                  charIndex++;
+                }
+                let delay = isDeleting ? 40 : 80;
+                if (!isDeleting && charIndex === currentText.length) {
+                  delay = 2500;
+                  isDeleting = true;
+                } else if (isDeleting && charIndex === 0) {
+                  isDeleting = false;
+                  textIndex = (textIndex + 1) % texts.length;
+                  delay = 500;
+                }
+                setTimeout(typewrite, delay);
+              }
+              typewrite();
             }
           }
         }

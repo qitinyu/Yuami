@@ -10,7 +10,7 @@ export const carouselImages = [
 ];
 
 // 闲游感悟
-export const reflectionText = '如果有一天，你踏过覆灭的星辰，你就能望见我眼中的世界';
+export const reflectionText = '我们不会孤军奋战,我们还要携手向前!';
 
 // 游戏列表
 export const gameList = [

@@ -2,7 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../../config';
 import { projects } from '../data/chisu';
-import SidebarWidget from '../components/SidebarWidget.astro';
 import { getCollection } from 'astro:content';
 import { formatDateShort } from '../utils/dateFormat';
 import { scanDirectoryImages } from '../utils/image-scanner';
@@ -21,40 +20,44 @@ const lastEdit = allDates[0] ? formatDateShort(allDates[0]) : '';
 
 // 轩窗配置
 const xcConfig = siteConfig.xuanchuang || {};
-const fixedText = xcConfig.carouselFixedText || '为世界所有美好而战';
 const carouselInterval = xcConfig.carouselInterval || 5000;
 const carouselApiUrl = xcConfig.carouselApiUrl || '';
-const typewriterTexts = siteConfig.typewriterTexts || [
-  '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
-  '生活不止眼前的代码，还有星辰与大海。',
-  '生命绚烂，别被黑暗压垮。',
-];
 
 // 扫描轮播图目录，收集所有图片
 let carouselImages: string[] = [];
 if (!carouselApiUrl) {
   const rawImages = xcConfig.carouselImages || [];
   for (const imgPath of rawImages) {
-    // 判断是否为目录路径（无扩展名或以/结尾）
     const ext = imgPath.split('.').pop()?.toLowerCase() || '';
     const imageExts = ['webp', 'jpg', 'jpeg', 'png', 'gif', 'avif', 'svg', 'bmp'];
     if (imageExts.includes(ext)) {
-      // 直接图片URL
       carouselImages.push(imgPath);
     } else {
-      // 可能是目录路径，去掉开头的 / 后扫描
       const dirPath = imgPath.replace(/^\//, '');
       const scanned = scanDirectoryImages(dirPath);
       carouselImages.push(...scanned);
     }
   }
-  // 去重
   carouselImages = [...new Set(carouselImages)];
 }
+
+// 站点公告与统计配置
+const isStatsEnabled = siteConfig.siteStats?.enabled !== false;
+const isAnnouncementEnabled = siteConfig.siteAnnouncements?.enabled !== false;
+const announcements = siteConfig.siteAnnouncements?.items || siteConfig.siteAnnouncements || [];
+const busuanziEnabled = siteConfig.busuanzi?.enabled !== false;
+const siteStartDate = siteConfig.siteStats?.startDate || '2026-01-01';
+
+// 社交链接
+const socialLinks = siteConfig.socialLinks || [];
+
+// 头像
+const avatar = siteConfig.avatar || '/home/avatar.webp';
+const authorName = siteConfig.author || 'Yuami';
 ---
 
 <BaseLayout title="轩窗">
-  <div class="page-layout" id="homePageLayout">
+  <div class="page-layout page-layout-centered" id="homePageLayout">
     <!-- 入场动画检测：同步执行避免闪烁 -->
     <script is:inline>
       (function() {
@@ -63,16 +66,10 @@ if (!carouselApiUrl) {
         }
       })();
     </script>
-    <!-- Left: Sidebar Widgets -->
-    <SidebarWidget
-      totalPosts={totalPosts}
-      totalWords={totalWords}
-      lastEdit={lastEdit}
-    />
 
-    <!-- Right: Main Content -->
+    <!-- Main Content -->
     <div class="page-main">
-      <!-- 青衿: Carousel + Typewriter -->
+      <!-- 青衿: Carousel (重新设计) -->
       <section class="home-section">
         <h2 class="section-title">青衿</h2>
         <div class="qingjin-card card">
@@ -93,18 +90,118 @@ if (!carouselApiUrl) {
                 </div>
               )}
             </div>
-            <div class="carousel-text-overlay">
-              <div class="carousel-fixed-text" id="carouselFixedText">{fixedText}</div>
-              <div class="carousel-typewriter-row">
-                <span class="typewriter-text" id="typewriterText"></span>
-                <span class="typewriter-cursor">|</span>
+            <!-- 文字浮层 -->
+            <div class="carousel-overlay-info">
+              <div class="carousel-avatar-wrap">
+                <img src={avatar} alt={authorName} class="carousel-avatar" />
+              </div>
+              <div class="carousel-author-info">
+                <h3 class="carousel-author-name">{authorName}</h3>
+                <p class="carousel-author-signature">生命绚烂,别被黑暗压垮.</p>
+                <div class="carousel-social-icons">
+                  {socialLinks.map(link => (
+                    <a href={link.url} target="_blank" rel="noopener" title={link.name} class="carousel-social-icon">
+                      <i class={link.icon}></i>
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 悟我: Projects (原项目展示) -->
+      <!-- 微言: 三卡片(站点公告/站点统计/访问统计) -->
+      <section class="home-section">
+        <h2 class="section-title">微言</h2>
+        <div class="weiyan-grid">
+          <!-- 站点公告 -->
+          {isAnnouncementEnabled && (
+            <div class="weiyan-card card">
+              <div class="weiyan-header">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span>站点公告</span>
+              </div>
+              <div class="weiyan-body">
+                <div class="notice-list">
+                  {announcements.map((item: { date: string; text: string }) => (
+                    <div class="notice-item">
+                      <span class="notice-date">{formatDateShort(item.date)}</span>
+                      <p class="notice-text">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <!-- 站点统计 -->
+          {isStatsEnabled && (
+            <div class="weiyan-card card">
+              <div class="weiyan-header">
+                <i class="fa-solid fa-chart-bar"></i>
+                <span>站点统计</span>
+              </div>
+              <div class="weiyan-body">
+                <div class="stat-list"
+                  data-start-date={siteStartDate}
+                  data-total-posts={totalPosts}
+                  data-total-words={totalWords}
+                  data-last-edit={lastEdit}
+                >
+                  <div class="stat-row">
+                    <span class="stat-label"><i class="fa-solid fa-file-lines"></i> 总文章数</span>
+                    <span class="stat-value" id="sidebarStatPosts">--</span>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label"><i class="fa-solid fa-font"></i> 总字数</span>
+                    <span class="stat-value" id="sidebarStatWords">--</span>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label"><i class="fa-solid fa-clock"></i> 运行时长</span>
+                    <span class="stat-value" id="sidebarStatDays">--</span>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label"><i class="fa-solid fa-pen-to-square"></i> 最后编辑</span>
+                    <span class="stat-value" id="sidebarStatLastEdit">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <!-- 访问统计 -->
+          {busuanziEnabled && (
+            <div class="weiyan-card card">
+              <div class="weiyan-header">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>访问统计</span>
+              </div>
+              <div class="weiyan-body">
+                <div class="busuanzi-stats">
+                  <div class="busuanzi-stat-main">
+                    <span class="busuanzi-stat-label">总访问量</span>
+                    <span class="busuanzi-stat-number" id="busuanzi_value_site_pv">—</span>
+                  </div>
+                  <div class="busuanzi-stat-row">
+                    <div class="busuanzi-stat-half">
+                      <span class="busuanzi-stat-label-sm">访客数</span>
+                      <span class="busuanzi-stat-value" id="busuanzi_value_site_uv">—</span>
+                    </div>
+                    <div class="busuanzi-stat-divider"></div>
+                    <div class="busuanzi-stat-half">
+                      <span class="busuanzi-stat-label-sm">本文阅读</span>
+                      <span class="busuanzi-stat-value" id="busuanzi_value_page_pv">—</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <!-- 悟我: Projects (3列布局) -->
       <section class="home-section">
         <h2 class="section-title">悟我</h2>
         <div class="projects-grid">
@@ -146,13 +243,14 @@ if (!carouselApiUrl) {
     }
   }
 
-  .page-layout {
+  .page-layout-centered {
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
     gap: 20px;
     padding: 28px 24px;
     min-height: calc(100vh - var(--nav-height) - 80px);
+    justify-content: center;
   }
 
   /* 入场动画：各区块初始隐藏 */
@@ -163,9 +261,6 @@ if (!carouselApiUrl) {
   .home-entrance.animate-in .home-section,
   .home-entrance.animate-in .article-sidebar {
     animation: componentPopIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .home-entrance.animate-in .article-sidebar {
-    animation-delay: 0.05s;
   }
   .home-entrance.animate-in .home-section:nth-child(1) {
     animation-delay: 0.15s;
@@ -181,6 +276,7 @@ if (!carouselApiUrl) {
   .page-main {
     flex: 1;
     min-width: 0;
+    max-width: 1200px;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -191,7 +287,28 @@ if (!carouselApiUrl) {
     flex-direction: column;
   }
 
-  /* ====== 青衿: Carousel + Typewriter ====== */
+  .section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  /* ====== 青衿: Carousel 重新设计 ====== */
   .qingjin-card {
     padding: 0;
     overflow: hidden;
@@ -201,7 +318,7 @@ if (!carouselApiUrl) {
   .carousel-wrapper {
     position: relative;
     width: 100%;
-    min-height: 340px;
+    min-height: 380px;
     overflow: hidden;
     border-radius: var(--radius-md);
   }
@@ -210,7 +327,7 @@ if (!carouselApiUrl) {
     position: relative;
     width: 100%;
     height: 100%;
-    min-height: 340px;
+    min-height: 380px;
   }
 
   .carousel-img-item {
@@ -252,59 +369,248 @@ if (!carouselApiUrl) {
     font-size: 2.5rem;
   }
 
-  /* Text overlay on carousel */
-  .carousel-text-overlay {
+  /* 固定文字浮层已移除 */
+
+  /* 头像+作者信息浮层（左下角） */
+  .carousel-overlay-info {
     position: absolute;
     bottom: 0;
     left: 0;
-    right: 0;
     z-index: 10;
-    padding: 40px 28px 28px;
-    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
-    color: #fff;
-    pointer-events: none;
+    padding: 24px 28px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    color: var(--primary);
   }
 
-  .carousel-fixed-text {
-    font-size: 1.35rem;
+  .carousel-avatar-wrap {
+    flex-shrink: 0;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .carousel-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .carousel-author-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .carousel-author-name {
+    font-size: 1.4rem;
     font-weight: 700;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+
+  .carousel-author-signature {
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: var(--primary);
+    opacity: 0.85;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .carousel-social-icons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .carousel-social-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .carousel-social-icon:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  /* ====== 微言: 三卡片 ====== */
+  .weiyan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .weiyan-card {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .weiyan-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--primary-alpha);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .weiyan-header i {
+    font-size: 0.88rem;
+  }
+
+  .weiyan-body {
+    padding: 14px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 站点公告 */
+  .notice-list {
+    width: 100%;
+  }
+
+  .notice-item {
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .notice-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .notice-date {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .notice-text {
+    font-size: 0.82rem;
+    color: var(--text-primary);
     line-height: 1.5;
   }
 
-  .carousel-typewriter-row {
+  /* 站点统计 */
+  .stat-list {
+    width: 100%;
+  }
+
+  .stat-row {
     display: flex;
-    align-items: baseline;
-    min-height: 1.8em;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-color);
   }
 
-  .typewriter-text {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.92);
-    line-height: 1.6;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  .stat-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
-  .typewriter-cursor {
-    font-size: 1.1rem;
-    color: var(--primary-light);
-    animation: blink 1s step-end infinite;
-    font-weight: 300;
-    margin-left: 2px;
+  .stat-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+  .stat-label i {
+    color: var(--primary);
+    font-size: 0.78rem;
   }
 
-  /* ====== 悟我: Projects ====== */
+  .stat-value {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  /* 访问统计 */
+  .busuanzi-stats {
+    width: 100%;
+  }
+
+  .busuanzi-stat-main {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .busuanzi-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .busuanzi-stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+
+  .busuanzi-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .busuanzi-stat-half {
+    flex: 1;
+    text-align: center;
+  }
+
+  .busuanzi-stat-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border-color);
+    flex-shrink: 0;
+  }
+
+  .busuanzi-stat-label-sm {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .busuanzi-stat-value {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  /* ====== 悟我: Projects 3列布局 ====== */
   .projects-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
 
@@ -327,6 +633,7 @@ if (!carouselApiUrl) {
     font-size: 0.88rem;
     color: var(--text-muted);
     margin-bottom: 12px;
+    line-height: 1.6;
   }
 
   .project-card-footer {
@@ -351,35 +658,30 @@ if (!carouselApiUrl) {
 
   /* ====== Mobile ====== */
   @media (max-width: 1024px) {
-    .page-layout { flex-direction: column; }
+    .page-layout-centered { flex-direction: column; }
+    .weiyan-grid { grid-template-columns: 1fr; }
+    .projects-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 768px) {
+    .page-layout-centered { padding: 20px 14px; gap: 16px; }
+    .carousel-wrapper { min-height: 280px; }
+    .carousel-images { min-height: 280px; }
+    .carousel-overlay-info { padding: 16px 18px; gap: 12px; }
+    .carousel-avatar-wrap { width: 80px; height: 80px; }
+    .carousel-author-name { font-size: 1.15rem; }
+    .carousel-social-icon { width: 28px; height: 28px; font-size: 0.78rem; }
     .projects-grid { grid-template-columns: 1fr; }
-    .page-layout { padding: 20px 14px; gap: 16px; }
-    .carousel-wrapper { min-height: 260px; }
-    .carousel-images { min-height: 260px; }
-    .carousel-fixed-text { font-size: 1.1rem; }
-    .typewriter-text { font-size: 0.95rem; }
-    .carousel-text-overlay { padding: 30px 18px 18px; }
   }
 
   @media (max-width: 480px) {
-    .carousel-wrapper { min-height: 220px; }
-    .carousel-images { min-height: 220px; }
-    .carousel-fixed-text { font-size: 1rem; }
-    .typewriter-text { font-size: 0.88rem; }
-    .carousel-text-overlay { padding: 24px 14px 14px; }
+    .carousel-wrapper { min-height: 240px; }
+    .carousel-images { min-height: 240px; }
   }
 </style>
 
-<script define:vars={{ typewriterTexts }}>
-  window.__yuami_typewriter_texts = typewriterTexts;
-</script>
-
 <script>
   let carouselTimerId: ReturnType<typeof setInterval> | null = null;
-  let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
   document.addEventListener('astro:page-load', () => {
     // ====== 入场动画清理 ======
@@ -420,12 +722,10 @@ if (!carouselApiUrl) {
             newItem.className = 'carousel-img-item';
             newItem.innerHTML = `<img src="${url}" alt="" onerror="this.parentElement.remove()" />`;
 
-            // Remove old active, add new
             const oldActive = imagesContainer.querySelector('.carousel-img-item.active');
             if (oldActive) oldActive.classList.remove('active');
             newItem.classList.add('active');
 
-            // Remove very old items to prevent DOM bloat
             const allItems = imagesContainer.querySelectorAll('.carousel-img-item');
             if (allItems.length > 5) {
               allItems[0].remove();
@@ -438,41 +738,34 @@ if (!carouselApiUrl) {
       }
     }
 
-    // ====== 打字机效果 ======
-    if (typewriterTimer) clearTimeout(typewriterTimer);
-    const typewriterEl = document.getElementById('typewriterText');
-    if (!typewriterEl) return;
+    // ====== 站点统计填充 ======
+    const statList = document.querySelector('.weiyan-card .stat-list[data-start-date]') as HTMLElement;
+    if (statList) {
+      const startDate = statList.dataset.startDate || '2026-01-01';
+      const totalPosts = parseInt(statList.dataset.totalPosts || '0');
+      const totalWords = parseInt(statList.dataset.totalWords || '0');
+      const lastEdit = statList.dataset.lastEdit || '';
 
-    const texts = window.__yuami_typewriter_texts || [
-      '这个世界五彩斑斓，而我依旧想要一个安静简约的地方存放躁动的心灵。',
-      '生活不止眼前的代码，还有星辰与大海。',
-      '生命绚烂，别被黑暗压垮。',
-    ];
+      const days = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
 
-    let textIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
+      const statPosts = document.getElementById('sidebarStatPosts');
+      const statWords = document.getElementById('sidebarStatWords');
+      const statDays = document.getElementById('sidebarStatDays');
+      const statLastEdit = document.getElementById('sidebarStatLastEdit');
 
-    function typewrite() {
-      const currentText = texts[textIndex];
-      if (isDeleting) {
-        typewriterEl.textContent = currentText.substring(0, charIndex - 1);
-        charIndex--;
-      } else {
-        typewriterEl.textContent = currentText.substring(0, charIndex + 1);
-        charIndex++;
+      if (statDays) statDays.textContent = days + ' 天';
+      if (statPosts) statPosts.textContent = totalPosts + ' 篇';
+      if (statWords) {
+        if (totalWords >= 10000) {
+          statWords.textContent = '约 ' + (totalWords / 10000).toFixed(1) + ' 万字';
+        } else {
+          statWords.textContent = totalWords + ' 字';
+        }
       }
-      let delay = isDeleting ? 40 : 80;
-      if (!isDeleting && charIndex === currentText.length) {
-        delay = 2500;
-        isDeleting = true;
-      } else if (isDeleting && charIndex === 0) {
-        isDeleting = false;
-        textIndex = (textIndex + 1) % texts.length;
-        delay = 500;
+      if (statLastEdit) {
+        const dateMatch = lastEdit.match(/\d{4}[-/]\d{2}[-/]\d{2}/);
+        statLastEdit.textContent = dateMatch ? dateMatch[0] : lastEdit.substring(0, 10);
       }
-      typewriterTimer = setTimeout(typewrite, delay);
     }
-    typewrite();
   });
 </script>
