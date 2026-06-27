@@ -1,13 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Twikoo from '../../components/Twikoo.astro';
 import { siteConfig } from '../../../config';
 
-const twikooEnvId = siteConfig.comment?.twikoo?.envId || '';
-const twikooLang = siteConfig.comment?.twikoo?.lang || 'zh-CN';
-const twikooVersion = siteConfig.comment?.twikoo?.version || '1.7.10';
-const twikooCdn = (siteConfig.comment?.twikoo?.cdn || 'https://cdn.jsdelivr.net/npm/twikoo@{version}/dist/twikoo.min.js').replace('{version}', twikooVersion);
-const twikooCdnMirror = (siteConfig.comment?.twikoo?.fallbackCdn || 'https://registry.npmmirror.com/twikoo@{version}/files/dist/twikoo.min.js').replace('{version}', twikooVersion);
+const shiyiConfig = siteConfig.liuli?.shiyi;
+const shiyiUrl = shiyiConfig?.url || '';
+const shiyiEnabled = shiyiConfig?.enabled !== false;
+const isConfigured = shiyiUrl.length > 0;
 ---
 
 <BaseLayout title="拾遗 - 留言板">
@@ -19,48 +17,59 @@ const twikooCdnMirror = (siteConfig.comment?.twikoo?.fallbackCdn || 'https://reg
         <p class="page-subtitle">留下一句话，点亮一片星光</p>
       </div>
 
-      <div class="messageboard-container">
-        <!-- 写下留言 (使用 Twikoo 组件) -->
-        <div class="mb-compose card">
-          <div class="mb-compose-header">
-            <i class="fa-solid fa-pen-nib"></i>
-            <span>写下留言</span>
-          </div>
-          <div class="mb-compose-body">
-            <Twikoo bare={true} />
-          </div>
-        </div>
-
-        <!-- 留言集锦 -->
-        <!-- <div class="mb-collection card">
-          <div class="mb-collection-header">
-            <div class="mb-collection-title">
-              <i class="fa-solid fa-comments"></i>
-              <span>留言集锦</span>
+      <div class="shiyi-container">
+        {!shiyiEnabled ? (
+          <div class="sy-not-configured card">
+            <div class="sy-nc-icon">
+              <i class="fa-solid fa-comment-slash"></i>
             </div>
-            <span class="mb-collection-count" id="mbCommentCount"></span>
+            <h3 class="sy-nc-title">留言功能已关闭</h3>
+            <p class="sy-nc-desc">请在 config.ts 中将 liuli.shiyi.enabled 设为 true 来启用。</p>
+            <div class="sy-nc-code">
+              <code>config.ts → liuli → shiyi → enabled: true</code>
+            </div>
           </div>
-          <div class="mb-cards-grid" id="mbCardsGrid"></div>
-          <div class="mb-empty" id="mbEmpty" style="display:none;">
-            <i class="fa-regular fa-comment-dots"></i>
-            <p>还没有留言，来做第一个吧~</p>
+        ) : isConfigured ? (
+          <!-- Yuamli iframe 嵌入 -->
+          <div class="sy-iframe-wrap card">
+            <div class="sy-toolbar">
+              <div class="sy-toolbar-left">
+                <i class="fa-solid fa-comment-dots"></i>
+                <span class="sy-url-text" id="syUrlDisplay">{shiyiUrl}</span>
+              </div>
+              <div class="sy-toolbar-right">
+                <button class="sy-refresh-btn" id="syRefreshBtn" title="刷新">
+                  <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <a href={shiyiUrl} target="_blank" rel="noopener" class="sy-open-btn" title="在新标签页打开">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+              </div>
+            </div>
+            <div class="sy-iframe-container">
+              <iframe
+                src={shiyiUrl}
+                class="sy-iframe"
+                id="syIframe"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"
+                loading="lazy"
+                title="留言板"
+              ></iframe>
+            </div>
           </div>
-          <div class="mb-loading" id="mbLoading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>正在加载留言...</span>
+        ) : (
+          <!-- 未配置提示 -->
+          <div class="sy-not-configured card">
+            <div class="sy-nc-icon">
+              <i class="fa-solid fa-comment-dots"></i>
+            </div>
+            <h3 class="sy-nc-title">尚未配置留言系统地址</h3>
+            <p class="sy-nc-desc">请在 config.ts 中的 liuli.shiyi.url 填入你的 Yuamli 留言系统地址。</p>
+            <div class="sy-nc-code">
+              <code>config.ts → liuli → shiyi → url: 'https://your-yuamli-url'</code>
+            </div>
           </div>
-          <div class="pagination" id="mbPagination"></div>
-        </div> -->
-
-        <!-- 悬浮回复卡片 -->
-        <div class="mb-reply-overlay" id="mbReplyOverlay">
-          <div class="mb-reply-floating card" id="mbReplyFloating">
-            <button class="mb-floating-close" id="mbFloatingClose" aria-label="关闭">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="mb-floating-content" id="mbFloatingContent"></div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   </div>
@@ -68,45 +77,44 @@ const twikooCdnMirror = (siteConfig.comment?.twikoo?.fallbackCdn || 'https://reg
 
 <style>
   .page-layout {
-    max-width: var(--max-width);
-    margin: 0 auto;
     display: flex;
-    gap: 20px;
-    padding: 28px 24px;
+    justify-content: center;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    gap: 24px;
   }
 
   .page-layout-centered {
-    justify-content: center;
+    min-height: calc(100vh - 60px);
+    padding: 24px 16px;
   }
 
   .page-main {
     flex: 1;
     min-width: 0;
-    max-width: 1100px;
   }
 
-  /* 页面题头 */
   .page-header {
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .page-title {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 6px;
-    position: relative;
-    padding-left: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .page-title::before {
     content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
     width: 4px;
-    height: 24px;
+    height: 22px;
     border-radius: 2px;
     background: var(--primary);
   }
@@ -117,840 +125,175 @@ const twikooCdnMirror = (siteConfig.comment?.twikoo?.fallbackCdn || 'https://reg
     padding-left: 14px;
   }
 
-  .messageboard-container {
+  .shiyi-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
 
-  /* ====== 写下留言 ====== */
-  .mb-compose {
+  .sy-iframe-wrap {
     padding: 0;
     overflow: hidden;
-  }
-
-  .mb-compose-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: var(--primary-alpha);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  .mb-compose-body {
-    padding: 16px;
-  }
-
-  /* ====== 留言集锦 ====== */
-  .mb-collection {
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .mb-collection-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    background: var(--primary-alpha);
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .mb-collection-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  .mb-collection-count {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    background: var(--bg-card);
-    padding: 2px 10px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-  }
-
-  /* ====== 留言卡片网格 ====== */
-  .mb-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding: 16px;
-  }
-
-  .mb-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 14px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    animation: fadeInUp 0.4s ease both;
     display: flex;
     flex-direction: column;
-    gap: 8px;
   }
 
-  .mb-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--primary-alpha-30);
-  }
-
-  .mb-card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mb-card-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--primary-alpha);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mb-card-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-  }
-
-  .mb-card-avatar-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 0.8rem;
-  }
-
-  .mb-card-nick {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .mb-card-text {
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-  }
-
-  .mb-card-footer {
+  .sy-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: auto;
-  }
-
-  .mb-card-time {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-  }
-
-  .mb-card-reply-count {
-    font-size: 0.72rem;
-    color: var(--primary);
+    padding: 8px 16px;
     background: var(--primary-alpha);
-    padding: 1px 6px;
-    border-radius: 8px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
   }
 
-  /* ====== 空状态 / 加载中 ====== */
-  .mb-empty {
-    text-align: center;
-    padding: 48px 24px;
+  .sy-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sy-toolbar-left i {
+    color: var(--primary);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .sy-url-text {
+    font-size: 0.82rem;
     color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .mb-empty i {
-    font-size: 3rem;
-    margin-bottom: 12px;
-    opacity: 0.3;
+  .sy-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .sy-refresh-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+  }
+
+  .sy-refresh-btn:hover {
+    background: var(--bg-input);
+    color: var(--primary);
+  }
+
+  .sy-open-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    text-decoration: none;
+  }
+
+  .sy-open-btn:hover {
+    background: var(--bg-input);
+    color: var(--primary);
+  }
+
+  .sy-iframe-container {
+    width: 100%;
+    height: 75vh;
+    min-height: 400px;
+    position: relative;
+    background: var(--bg-card);
+  }
+
+  .sy-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
     display: block;
   }
 
-  .mb-empty p {
-    font-size: 0.92rem;
-  }
-
-  .mb-loading {
-    text-align: center;
-    padding: 36px 24px;
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 0.9rem;
-  }
-
-  /* ====== 悬浮回复卡片 ====== */
-  .mb-reply-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(4px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .mb-reply-overlay.active {
-    display: flex;
-  }
-
-  .mb-reply-floating {
-    width: 100%;
-    max-width: 480px;
-    max-height: 80vh;
+  .sy-not-configured {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    animation: fadeInUp 0.3s ease;
-    position: relative;
-  }
-
-  .mb-floating-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all var(--transition-fast);
-    z-index: 2;
-  }
-
-  .mb-floating-close:hover {
-    color: var(--primary);
-    border-color: var(--primary);
-  }
-
-  .mb-floating-content {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-  }
-
-  .mb-floating-main {
-    margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px dashed var(--border-color);
-  }
-
-  .mb-floating-main-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .mb-floating-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--primary-alpha);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mb-floating-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-  }
-
-  .mb-floating-avatar-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
-  .mb-floating-meta {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .mb-floating-nick {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  .mb-floating-time {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-  }
-
-  .mb-floating-body {
-    font-size: 0.92rem;
-    color: var(--text-primary);
-    line-height: 1.7;
-    word-break: break-word;
-  }
-
-  .mb-floating-body :global(img) {
-    max-width: 100%;
-    border-radius: var(--radius-sm);
-  }
-
-  .mb-floating-body :global(p) {
-    margin: 0.3em 0;
-  }
-
-  .mb-floating-replies-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .mb-floating-reply {
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    background: var(--primary-alpha);
-    margin-bottom: 8px;
-    border-left: 3px solid var(--primary);
-  }
-
-  .mb-floating-reply-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-
-  .mb-floating-reply-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--primary-alpha);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mb-floating-reply-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-  }
-
-  .mb-floating-reply-avatar-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 0.55rem;
-  }
-
-  .mb-floating-reply-nick {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--primary);
-  }
-
-  .mb-floating-reply-badge {
-    font-size: 0.68rem;
-    padding: 1px 6px;
-    border-radius: 8px;
-    background: var(--primary);
-    color: #fff;
-    font-weight: 500;
-  }
-
-  .mb-floating-reply-time {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-  }
-
-  .mb-floating-reply-body {
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    line-height: 1.5;
-    word-break: break-word;
-  }
-
-  .mb-floating-reply-body :global(p) {
-    margin: 0.2em 0;
-  }
-
-  .mb-no-replies {
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    padding: 48px 24px;
     text-align: center;
-    padding: 12px;
   }
 
-  /* ====== 响应式 ====== */
+  .sy-nc-icon {
+    font-size: 2.5rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .sy-nc-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .sy-nc-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .sy-nc-code {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    font-size: 0.82rem;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+  }
+
   @media (max-width: 1024px) {
     .page-layout { flex-direction: column; }
   }
 
-  @media (max-width: 768px) {
-    .mb-cards-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
   @media (max-width: 640px) {
-    .mb-cards-grid {
-      grid-template-columns: 1fr;
-      gap: 10px;
-      padding: 12px;
-    }
-
-    .mb-reply-floating {
-      max-width: 100%;
-      max-height: 90vh;
-      border-radius: var(--radius-md);
+    .sy-iframe-container {
+      height: 60vh;
+      min-height: 300px;
     }
   }
 </style>
 
-<script define:vars={{ twikooEnvId, twikooLang, twikooCdn, twikooCdnMirror }} is:inline>
-  window.__yuamiTwikooConfig = {
-    envId: twikooEnvId,
-    lang: twikooLang,
-    cdn: twikooCdn,
-    cdnMirror: twikooCdnMirror,
-  };
-</script>
-
 <script>
-  let liuliAbortController = new AbortController();
-
   document.addEventListener('astro:page-load', () => {
-    const cardsGrid = document.getElementById('mbCardsGrid');
-    if (!cardsGrid) return;
+    const refreshBtn = document.getElementById('syRefreshBtn');
+    const iframe = document.getElementById('syIframe') as HTMLIFrameElement | null;
 
-    liuliAbortController.abort();
-    liuliAbortController = new AbortController();
-
-    const config = (window as any).__yuamiTwikooConfig || {};
-    const CARDS_PER_PAGE = 9;
-    const COMMENT_PATH = '/liuli';
-
-    const commentCountEl = document.getElementById('mbCommentCount');
-    const emptyEl = document.getElementById('mbEmpty');
-    const loadingEl = document.getElementById('mbLoading');
-    const paginationEl = document.getElementById('mbPagination');
-    const replyOverlay = document.getElementById('mbReplyOverlay');
-    const floatingContent = document.getElementById('mbFloatingContent');
-    const floatingClose = document.getElementById('mbFloatingClose');
-
-    let topLevelComments: any[] = [];
-    let repliesMap: Map<string, any[]> = new Map();
-    let currentPage = 1;
-
-    // ====== 工具函数 ======
-    function escapeHtml(text: string): string {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function stripHtml(html: string): string {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      return div.textContent || div.innerText || '';
-    }
-
-    function truncate(text: string, maxLen: number): string {
-      if (text.length <= maxLen) return text;
-      return text.substring(0, maxLen) + '...';
-    }
-
-    function formatTime(timestamp: number): string {
-      const d = new Date(timestamp);
-      const now = new Date();
-      const diff = now.getTime() - d.getTime();
-      if (diff < 60000) return '刚刚';
-      if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
-      if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
-      if (diff < 604800000) return Math.floor(diff / 86400000) + ' 天前';
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function getAvatarUrl(comment: any): string {
-      if (comment.avatar) return comment.avatar;
-      if (comment.mail_md5) return `https://gravatar.com/avatar/${comment.mail_md5}?d=mp&s=80`;
-      return '';
-    }
-
-    function getInitial(nick: string): string {
-      return (nick || '?').charAt(0).toUpperCase();
-    }
-
-    function renderAvatar(avatarUrl: string, initial: string, size: 'small' | 'large' | 'reply' = 'small'): string {
-      const fallbackClass = size === 'large' ? 'mb-floating-avatar-fallback' : (size === 'reply' ? 'mb-floating-reply-avatar-fallback' : 'mb-card-avatar-fallback');
-      const wrapClass = size === 'large' ? 'mb-floating-avatar' : (size === 'reply' ? 'mb-floating-reply-avatar' : 'mb-card-avatar');
-      if (avatarUrl) {
-        return `<div class="${wrapClass}"><img src="${avatarUrl}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="${fallbackClass}" style="display:none;">${escapeHtml(initial)}</div></div>`;
+    refreshBtn?.addEventListener('click', () => {
+      if (iframe) {
+        iframe.src = iframe.src;
       }
-      return `<div class="${wrapClass}"><div class="${fallbackClass}">${escapeHtml(initial)}</div></div>`;
-    }
-
-    // ====== 使用 Twikoo JS API 获取评论 ======
-    function waitForTwikooAndFetch(maxRetries = 20): void {
-      let retries = 0;
-      const interval = setInterval(() => {
-        retries++;
-        const twikoo = (window as any).twikoo;
-        if (twikoo && typeof twikoo.getComments === 'function') {
-          clearInterval(interval);
-          fetchComments(twikoo);
-        } else if (retries >= maxRetries) {
-          clearInterval(interval);
-          // Twikoo SDK 可能加载失败，尝试直接调 API
-          fetchCommentsViaApi();
-        }
-      }, 500);
-    }
-
-    async function fetchComments(twikoo: any) {
-      try {
-        const result = await twikoo.getComments({
-          envId: config.envId,
-          path: COMMENT_PATH,
-          pageSize: 100,
-          page: 1,
-        });
-        processComments(result);
-      } catch (e) {
-        console.warn('Twikoo getComments failed, fallback to API:', e);
-        fetchCommentsViaApi();
-      }
-    }
-
-    async function fetchCommentsViaApi() {
-      if (!config.envId) {
-        showEmpty();
-        return;
-      }
-
-      try {
-        const res = await fetch(config.envId, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'COMMENT_GET',
-            path: COMMENT_PATH,
-            pageSize: 100,
-            page: 1,
-          }),
-        });
-        const data = await res.json();
-        if (data.code === 0 && data.data) {
-          processComments(data.data);
-        } else {
-          showEmpty();
-        }
-      } catch (e) {
-        console.warn('API fetch failed:', e);
-        showEmpty();
-      }
-    }
-
-    function processComments(apiData: any) {
-      if (loadingEl) loadingEl.style.display = 'none';
-
-      // apiData 可能是数组或对象 { count, data }
-      let comments: any[] = [];
-      if (Array.isArray(apiData)) {
-        comments = apiData;
-      } else if (apiData.data && Array.isArray(apiData.data)) {
-        comments = apiData.data;
-      }
-
-      // 过滤垃圾评论
-      const allComments = comments.filter((c: any) => !c.isSpam);
-
-      // 分离顶级评论和回复
-      topLevelComments = [];
-      repliesMap.clear();
-
-      allComments.forEach((comment: any) => {
-        if (comment.rid && comment.rid !== '') {
-          const parentId = comment.rid;
-          if (!repliesMap.has(parentId)) {
-            repliesMap.set(parentId, []);
-          }
-          repliesMap.get(parentId)!.push(comment);
-        } else {
-          topLevelComments.push(comment);
-        }
-      });
-
-      // 检查嵌套回复（Twikoo有些版本把回复放在comment.reply里）
-      topLevelComments.forEach((comment: any) => {
-        if (comment.reply && Array.isArray(comment.reply) && comment.reply.length > 0) {
-          if (!repliesMap.has(comment._id)) {
-            repliesMap.set(comment._id, []);
-          }
-          comment.reply.forEach((r: any) => {
-            if (!repliesMap.get(comment._id)!.find((existing: any) => existing._id === r._id)) {
-              repliesMap.get(comment._id)!.push(r);
-            }
-          });
-        }
-      });
-
-      if (commentCountEl) {
-        commentCountEl.textContent = `${topLevelComments.length} 条留言`;
-      }
-
-      renderCards();
-    }
-
-    function showEmpty() {
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (emptyEl) emptyEl.style.display = 'block';
-      if (cardsGrid) cardsGrid.style.display = 'none';
-    }
-
-    // ====== 渲染留言卡片 ======
-    function renderCards() {
-      if (!cardsGrid) return;
-
-      if (topLevelComments.length === 0) {
-        showEmpty();
-        return;
-      }
-
-      if (emptyEl) emptyEl.style.display = 'none';
-      if (loadingEl) loadingEl.style.display = 'none';
-      cardsGrid.style.display = 'grid';
-
-      const totalPages = Math.max(1, Math.ceil(topLevelComments.length / CARDS_PER_PAGE));
-      if (currentPage > totalPages) currentPage = totalPages;
-
-      const start = (currentPage - 1) * CARDS_PER_PAGE;
-      const pageComments = topLevelComments.slice(start, start + CARDS_PER_PAGE);
-
-      cardsGrid.innerHTML = pageComments.map((comment: any, index: number) => {
-        const avatarUrl = getAvatarUrl(comment);
-        const initial = getInitial(comment.nick || '匿名');
-        const plainText = stripHtml(comment.comment || '');
-        const replyCount = (repliesMap.get(comment._id) || []).length;
-
-        return `
-          <div class="mb-card" data-comment-id="${comment._id}" style="animation-delay: ${index * 0.06}s">
-            <div class="mb-card-header">
-              ${renderAvatar(avatarUrl, initial)}
-              <span class="mb-card-nick">${escapeHtml(comment.nick || '匿名')}</span>
-            </div>
-            <p class="mb-card-text">${escapeHtml(truncate(plainText, 80))}</p>
-            <div class="mb-card-footer">
-              <span class="mb-card-time">${formatTime(comment.created)}</span>
-              ${replyCount > 0 ? `<span class="mb-card-reply-count">${replyCount} 条回复</span>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // 绑定卡片点击
-      cardsGrid.querySelectorAll('.mb-card').forEach(card => {
-        card.addEventListener('click', () => {
-          const commentId = (card as HTMLElement).dataset.commentId;
-          if (commentId) showReplyOverlay(commentId);
-        });
-      });
-
-      renderPagination(totalPages, currentPage);
-    }
-
-    // ====== 分页渲染 ======
-    function renderPagination(totalPages: number, curPage: number) {
-      if (!paginationEl) return;
-      if (totalPages <= 1) { paginationEl.classList.add('hidden'); return; }
-      paginationEl.classList.remove('hidden');
-
-      let html = '';
-      html += `<button class="page-btn ${curPage === 1 ? 'disabled' : ''}" data-action="prev"><i class="fa-solid fa-chevron-left"></i></button>`;
-
-      const maxVisible = 5;
-      let startPage = Math.max(1, curPage - Math.floor(maxVisible / 2));
-      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-      if (endPage - startPage + 1 < maxVisible) {
-        startPage = Math.max(1, endPage - maxVisible + 1);
-      }
-
-      if (startPage > 1) {
-        html += `<button class="page-btn" data-page="1">1</button>`;
-        if (startPage > 2) html += `<span class="page-ellipsis">...</span>`;
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        html += `<button class="page-btn ${i === curPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-      }
-
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) html += `<span class="page-ellipsis">...</span>`;
-        html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
-      }
-
-      html += `<button class="page-btn ${curPage === totalPages ? 'disabled' : ''}" data-action="next"><i class="fa-solid fa-chevron-right"></i></button>`;
-      paginationEl.innerHTML = html;
-    }
-
-    // 分页点击
-    paginationEl?.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest('.page-btn') as HTMLElement;
-      if (!btn || btn.classList.contains('disabled') || btn.classList.contains('active')) return;
-
-      const action = btn.dataset.action;
-      const page = btn.dataset.page;
-
-      if (action === 'prev') currentPage--;
-      else if (action === 'next') currentPage++;
-      else if (page) currentPage = parseInt(page);
-
-      renderCards();
-      const container = document.querySelector('.mb-collection');
-      if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-
-    // ====== 悬浮回复卡片 ======
-    function showReplyOverlay(commentId: string) {
-      const comment = topLevelComments.find((c: any) => c._id === commentId);
-      if (!comment || !floatingContent) return;
-
-      const replies = repliesMap.get(commentId) || [];
-      const avatarUrl = getAvatarUrl(comment);
-      const initial = getInitial(comment.nick || '匿名');
-
-      let html = `
-        <div class="mb-floating-main">
-          <div class="mb-floating-main-header">
-            ${renderAvatar(avatarUrl, initial, 'large')}
-            <div class="mb-floating-meta">
-              <div class="mb-floating-nick">${escapeHtml(comment.nick || '匿名')}</div>
-              <div class="mb-floating-time">${formatTime(comment.created)}</div>
-            </div>
-          </div>
-          <div class="mb-floating-body">${comment.comment || ''}</div>
-        </div>
-      `;
-
-      if (replies.length > 0) {
-        html += `
-          <div class="mb-floating-replies-title">
-            <i class="fa-solid fa-reply"></i>
-            回复 (${replies.length})
-          </div>
-        `;
-
-        replies.forEach((reply: any) => {
-          const replyAvatarUrl = getAvatarUrl(reply);
-          const replyInitial = getInitial(reply.nick || '匿名');
-          const isOwner = reply.isOwner || (reply.nick === 'Yuami');
-
-          html += `
-            <div class="mb-floating-reply">
-              <div class="mb-floating-reply-header">
-                ${renderAvatar(replyAvatarUrl, replyInitial, 'reply')}
-                <span class="mb-floating-reply-nick">${escapeHtml(reply.nick || '匿名')}</span>
-                ${isOwner ? '<span class="mb-floating-reply-badge">站长</span>' : ''}
-                <span class="mb-floating-reply-time">${formatTime(reply.created)}</span>
-              </div>
-              <div class="mb-floating-reply-body">${reply.comment || ''}</div>
-            </div>
-          `;
-        });
-      } else {
-        html += '<div class="mb-no-replies">暂无回复</div>';
-      }
-
-      floatingContent.innerHTML = html;
-
-      if (replyOverlay) replyOverlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function hideReplyOverlay() {
-      if (replyOverlay) replyOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-
-    floatingClose?.addEventListener('click', hideReplyOverlay);
-    replyOverlay?.addEventListener('click', (e) => {
-      if (e.target === replyOverlay) hideReplyOverlay();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') hideReplyOverlay();
-    });
-
-    // ====== 初始化：等待 Twikoo 加载后获取评论 ======
-    waitForTwikooAndFetch();
-
-    // 定期刷新评论卡片（每60秒）
-    setInterval(() => {
-      const twikoo = (window as any).twikoo;
-      if (twikoo && typeof twikoo.getComments === 'function') {
-        fetchComments(twikoo);
-      } else {
-        fetchCommentsViaApi();
-      }
-    }, 60000);
   });
 </script>

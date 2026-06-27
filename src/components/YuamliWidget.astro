@@ -1,0 +1,890 @@
+---
+/**
+ * Yuamli 留言系统组件
+ * 从 yuamli API 获取留言并展示，适配 Yuami 博客主题样式
+ * 支持游客留言（输入昵称即可）
+ */
+import { siteConfig } from '../../config';
+
+const yuamliConfig = siteConfig.liuli?.shiyi;
+const apiBase = yuamliConfig?.apiBase || '';
+const enabled = yuamliConfig?.enabled !== false;
+---
+
+{enabled && (
+  <div id="yuamli-container" data-api={apiBase}>
+    <!-- 留言表单 -->
+    <div class="yuamli-form-card">
+      <div class="yuamli-form-header">
+        <h3>留下你的足迹</h3>
+      </div>
+      <div class="yuamli-input-row">
+        <input type="text" id="yuamli-name" placeholder="你的昵称" maxlength="20" class="yuamli-name-input" />
+      </div>
+      <textarea id="yuamli-content" placeholder="写下你的留言..." maxlength="2000" rows="3" class="yuamli-content-input"></textarea>
+      <div class="yuamli-form-footer">
+        <span class="yuamli-char-count" id="yuamli-char-count">0/2000</span>
+        <button id="yuamli-submit" class="yuamli-submit-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          发送
+        </button>
+      </div>
+    </div>
+
+    <!-- 留言列表 -->
+    <div class="yuamli-list-header">
+      <h3>留言列表</h3>
+      <span id="yuamli-total" class="yuamli-total">0 条留言</span>
+    </div>
+    <div id="yuamli-comments" class="yuamli-comments">
+      <div class="yuamli-loading">
+        <div class="yuamli-spinner"></div>
+        <span>加载中...</span>
+      </div>
+    </div>
+
+    <!-- 回复浮层 -->
+    <div id="yuamli-reply-overlay" class="yuamli-reply-overlay">
+      <div class="yuamli-reply-card">
+        <div class="yuamli-reply-header">
+          <span id="yuamli-reply-title">回复留言</span>
+          <button id="yuamli-reply-close" class="yuamli-reply-close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="yuamli-input-row">
+          <input type="text" id="yuamli-reply-name" placeholder="你的昵称" maxlength="20" class="yuamli-name-input" />
+        </div>
+        <textarea id="yuamli-reply-content" placeholder="写下你的回复..." maxlength="2000" rows="3" class="yuamli-content-input"></textarea>
+        <div class="yuamli-form-footer">
+          <span class="yuamli-char-count" id="yuamli-reply-char-count">0/2000</span>
+          <button id="yuamli-reply-submit" class="yuamli-submit-btn">发送回复</button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+<style>
+  /* ====== Yuamli 留言系统样式 - 适配 Yuami 博客主题 ====== */
+  #yuamli-container {
+    --yuamli-primary: var(--primary, #7D98F5);
+    --yuamli-primary-light: var(--primary-light, #9DB3F7);
+    --yuamli-primary-alpha: var(--primary-alpha, rgba(125, 152, 245, 0.15));
+    --yuamli-bg-card: var(--bg-card, #ffffff);
+    --yuamli-bg-input: var(--bg-input, rgba(125, 152, 245, 0.08));
+    --yuamli-text-primary: var(--text-primary, #000000);
+    --yuamli-text-secondary: var(--text-secondary, #1a1a1a);
+    --yuamli-text-muted: var(--text-muted, #4a4a4a);
+    --yuamli-border: var(--border-color, rgba(125, 152, 245, 0.15));
+    --yuamli-shadow: var(--shadow-md, 0 4px 20px rgba(125, 152, 245, 0.12));
+    --yuamli-radius: 12px;
+    --yuamli-radius-sm: 8px;
+  }
+
+  /* 表单卡片 */
+  .yuamli-form-card {
+    background: var(--yuamli-bg-card);
+    border-radius: var(--yuamli-radius);
+    padding: 20px;
+    box-shadow: var(--yuamli-shadow);
+    border: 1px solid var(--yuamli-border);
+    margin-bottom: 24px;
+  }
+
+  .yuamli-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .yuamli-form-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--yuamli-text-primary);
+    margin: 0;
+  }
+
+  .yuamli-admin-link {
+    color: var(--yuamli-text-muted);
+    opacity: 0.5;
+    transition: opacity 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .yuamli-admin-link:hover {
+    opacity: 1;
+    color: var(--yuamli-primary);
+  }
+
+  .yuamli-input-row {
+    margin-bottom: 10px;
+  }
+
+  .yuamli-name-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--yuamli-border);
+    border-radius: var(--yuamli-radius-sm);
+    background: var(--yuamli-bg-input);
+    color: var(--yuamli-text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+
+  .yuamli-name-input:focus {
+    border-color: var(--yuamli-primary);
+    box-shadow: 0 0 0 3px var(--yuamli-primary-alpha);
+  }
+
+  .yuamli-content-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--yuamli-border);
+    border-radius: var(--yuamli-radius-sm);
+    background: var(--yuamli-bg-input);
+    color: var(--yuamli-text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+    box-sizing: border-box;
+    line-height: 1.6;
+  }
+
+  .yuamli-content-input:focus {
+    border-color: var(--yuamli-primary);
+    box-shadow: 0 0 0 3px var(--yuamli-primary-alpha);
+  }
+
+  .yuamli-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  .yuamli-char-count {
+    font-size: 12px;
+    color: var(--yuamli-text-muted);
+    opacity: 0.7;
+  }
+
+  .yuamli-submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 18px;
+    border: none;
+    border-radius: var(--yuamli-radius-sm);
+    background: var(--yuamli-primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .yuamli-submit-btn:hover {
+    opacity: 0.9;
+  }
+
+  .yuamli-submit-btn:active {
+    transform: scale(0.97);
+  }
+
+  .yuamli-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* 列表 */
+  .yuamli-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .yuamli-list-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--yuamli-text-primary);
+    margin: 0;
+  }
+
+  .yuamli-total {
+    font-size: 13px;
+    color: var(--yuamli-text-muted);
+  }
+
+  .yuamli-comments {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* 加载状态 */
+  .yuamli-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 40px;
+    color: var(--yuamli-text-muted);
+    font-size: 14px;
+  }
+
+  .yuamli-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--yuamli-primary-alpha);
+    border-top-color: var(--yuamli-primary);
+    border-radius: 50%;
+    animation: yuamli-spin 0.6s linear infinite;
+  }
+
+  @keyframes yuamli-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* 留言项 */
+  .yuamli-comment {
+    background: var(--yuamli-bg-card);
+    border-radius: var(--yuamli-radius);
+    padding: 16px;
+    border: 1px solid var(--yuamli-border);
+    transition: box-shadow 0.2s;
+  }
+
+  .yuamli-comment:hover {
+    box-shadow: var(--yuamli-shadow);
+  }
+
+  .yuamli-comment-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .yuamli-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--yuamli-primary-alpha);
+    color: var(--yuamli-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .yuamli-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .yuamli-comment-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .yuamli-comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .yuamli-comment-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--yuamli-text-primary);
+  }
+
+  .yuamli-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .yuamli-badge-github {
+    background: var(--yuamli-primary-alpha);
+    color: var(--yuamli-primary);
+  }
+
+  .yuamli-badge-pinned {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+  }
+
+  .yuamli-badge-featured {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+  }
+
+  .yuamli-comment-time {
+    font-size: 12px;
+    color: var(--yuamli-text-muted);
+    opacity: 0.7;
+    margin-left: auto;
+  }
+
+  .yuamli-comment-content {
+    font-size: 14px;
+    color: var(--yuamli-text-secondary);
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .yuamli-comment-reply-to {
+    font-size: 12px;
+    color: var(--yuamli-text-muted);
+    margin-top: 4px;
+  }
+
+  .yuamli-comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .yuamli-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--yuamli-text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .yuamli-action-btn:hover {
+    background: var(--yuamli-primary-alpha);
+    color: var(--yuamli-primary);
+  }
+
+  /* 回复列表 */
+  .yuamli-replies {
+    margin-top: 12px;
+    margin-left: 48px;
+    padding-left: 14px;
+    border-left: 2px solid var(--yuamli-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .yuamli-reply {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .yuamli-reply-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--yuamli-primary-alpha);
+    color: var(--yuamli-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .yuamli-reply-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .yuamli-reply-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--yuamli-text-primary);
+    margin-right: 4px;
+  }
+
+  .yuamli-reply-content {
+    font-size: 13px;
+    color: var(--yuamli-text-secondary);
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .yuamli-reply-time {
+    font-size: 11px;
+    color: var(--yuamli-text-muted);
+    opacity: 0.6;
+  }
+
+  /* 回复浮层 */
+  .yuamli-reply-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .yuamli-reply-overlay.active {
+    display: flex;
+  }
+
+  .yuamli-reply-card {
+    background: var(--yuamli-bg-card, #fff);
+    border-radius: var(--yuamli-radius, 12px);
+    padding: 20px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  }
+
+  .yuamli-reply-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .yuamli-reply-header span {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--yuamli-text-primary, #000);
+  }
+
+  .yuamli-reply-close {
+    border: none;
+    background: transparent;
+    color: var(--yuamli-text-muted, #666);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+  }
+
+  .yuamli-reply-close:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* 空状态 */
+  .yuamli-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--yuamli-text-muted);
+    font-size: 14px;
+  }
+
+  .yuamli-empty svg {
+    opacity: 0.3;
+    margin-bottom: 8px;
+  }
+
+  /* 折叠 */
+  .yuamli-collapse-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    color: var(--yuamli-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .yuamli-collapse-btn:hover {
+    color: var(--yuamli-primary);
+  }
+
+  @media (max-width: 768px) {
+    .yuamli-replies {
+      margin-left: 0;
+    }
+    .yuamli-comment-time {
+      display: none;
+    }
+  }
+</style>
+
+<script is:inline define:vars={{ apiBase }}>
+  (function() {
+    const container = document.getElementById('yuamli-container');
+    if (!container) return;
+
+    let commentsData = [];
+    let replyTarget = null;
+
+    // ====== 工具函数 ======
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function getInitial(name) {
+      return (name || '?').charAt(0).toUpperCase();
+    }
+
+    function formatTime(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = (now - d) / 1000;
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+      if (diff < 2592000) return Math.floor(diff / 86400) + ' 天前';
+      return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function getAvatar(author) {
+      if (author.avatar && author.avatar.startsWith('http')) {
+        return `<img src="${escapeHtml(author.avatar)}" alt="${escapeHtml(author.name)}" />`;
+      }
+      return escapeHtml(getInitial(author.name));
+    }
+
+    // ====== 加载留言 ======
+    async function fetchComments() {
+      const listEl = document.getElementById('yuamli-comments');
+      try {
+        const res = await fetch(`${apiBase}/api/comments/guest`);
+        const data = await res.json();
+        commentsData = data.comments || [];
+        document.getElementById('yuamli-total').textContent = `${data.total || 0} 条留言`;
+        renderComments();
+      } catch (err) {
+        listEl.innerHTML = '<div class="yuamli-empty"><p>加载失败，请稍后重试</p></div>';
+      }
+    }
+
+    function renderComments() {
+      const listEl = document.getElementById('yuamli-comments');
+      if (commentsData.length === 0) {
+        listEl.innerHTML = `
+          <div class="yuamli-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p>还没有留言，快来抢沙发吧~</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = commentsData.map(c => renderComment(c)).join('');
+
+      // 绑定回复按钮
+      listEl.querySelectorAll('[data-reply-to]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-reply-to');
+          const name = this.getAttribute('data-reply-name');
+          openReply({ id, name });
+        });
+      });
+    }
+
+    function renderComment(c) {
+      const badges = [];
+      if (c.author.type === 'github') badges.push('<span class="yuamli-badge yuamli-badge-github">GitHub</span>');
+      if (c.isPinned) badges.push('<span class="yuamli-badge yuamli-badge-pinned">置顶</span>');
+      if (c.isFeatured) badges.push('<span class="yuamli-badge yuamli-badge-featured">精华</span>');
+
+      let repliesHtml = '';
+      if (c.replies && c.replies.length > 0) {
+        const visibleReplies = c.replies.slice(0, 3);
+        const hiddenCount = c.replies.length - 3;
+        repliesHtml = `
+          <div class="yuamli-replies">
+            ${visibleReplies.map(r => renderReply(r)).join('')}
+            ${hiddenCount > 0 ? `<button class="yuamli-collapse-btn" data-expand="${c.id}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              展开更多回复 (${hiddenCount})
+            </button>` : ''}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="yuamli-comment" data-id="${c.id}">
+          <div class="yuamli-comment-top">
+            <div class="yuamli-avatar">${getAvatar(c.author)}</div>
+            <div class="yuamli-comment-body">
+              <div class="yuamli-comment-meta">
+                <span class="yuamli-comment-name">${escapeHtml(c.author.name)}</span>
+                ${badges.join('')}
+                <span class="yuamli-comment-time">${formatTime(c.createdAt)}</span>
+              </div>
+              <div class="yuamli-comment-content">${escapeHtml(c.content)}</div>
+              ${c.replyTo ? `<div class="yuamli-comment-reply-to">@${escapeHtml(c.replyTo.name)}</div>` : ''}
+              <div class="yuamli-comment-actions">
+                <button class="yuamli-action-btn" data-reply-to="${c.id}" data-reply-name="${escapeHtml(c.author.name)}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                  回复
+                </button>
+              </div>
+              ${repliesHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReply(r) {
+      return `
+        <div class="yuamli-reply">
+          <div class="yuamli-reply-avatar">${escapeHtml(getInitial(r.author.name))}</div>
+          <div class="yuamli-reply-body">
+            <span class="yuamli-reply-name">${escapeHtml(r.author.name)}</span>
+            <span class="yuamli-reply-content">${escapeHtml(r.content)}</span>
+            <div class="yuamli-reply-time">${formatTime(r.createdAt)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ====== 提交留言 ======
+    const submitBtn = document.getElementById('yuamli-submit');
+    const nameInput = document.getElementById('yuamli-name');
+    const contentInput = document.getElementById('yuamli-content');
+    const charCount = document.getElementById('yuamli-char-count');
+
+    contentInput.addEventListener('input', function() {
+      charCount.textContent = `${this.value.length}/2000`;
+    });
+
+    submitBtn.addEventListener('click', async function() {
+      const name = nameInput.value.trim();
+      const content = contentInput.value.trim();
+
+      if (!name) {
+        nameInput.focus();
+        showToast('请输入昵称');
+        return;
+      }
+      if (!content) {
+        contentInput.focus();
+        showToast('请输入留言内容');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="yuamli-spinner"></div> 发送中...';
+
+      try {
+        const res = await fetch(`${apiBase}/api/comments/guest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, content }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          contentInput.value = '';
+          charCount.textContent = '0/2000';
+          showToast('留言成功！', 'success');
+          await fetchComments();
+        } else {
+          showToast(data.message || '留言失败');
+        }
+      } catch (err) {
+        showToast('网络错误，请稍后重试');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> 发送';
+      }
+    });
+
+    // ====== 回复功能 ======
+    const replyOverlay = document.getElementById('yuamli-reply-overlay');
+    const replyClose = document.getElementById('yuamli-reply-close');
+    const replySubmit = document.getElementById('yuamli-reply-submit');
+    const replyName = document.getElementById('yuamli-reply-name');
+    const replyContent = document.getElementById('yuamli-reply-content');
+    const replyCharCount = document.getElementById('yuamli-reply-char-count');
+
+    function openReply(target) {
+      replyTarget = target;
+      document.getElementById('yuamli-reply-title').textContent = `回复 @${target.name}`;
+      replyContent.value = '';
+      replyCharCount.textContent = '0/2000';
+      replyOverlay.classList.add('active');
+      // 同步昵称
+      replyName.value = nameInput.value;
+      setTimeout(() => replyContent.focus(), 100);
+    }
+
+    function closeReply() {
+      replyOverlay.classList.remove('active');
+      replyTarget = null;
+    }
+
+    replyClose.addEventListener('click', closeReply);
+    replyOverlay.addEventListener('click', function(e) {
+      if (e.target === replyOverlay) closeReply();
+    });
+
+    replyContent.addEventListener('input', function() {
+      replyCharCount.textContent = `${this.value.length}/2000`;
+    });
+
+    replySubmit.addEventListener('click', async function() {
+      if (!replyTarget) return;
+      const name = replyName.value.trim();
+      const content = replyContent.value.trim();
+
+      if (!name) {
+        replyName.focus();
+        showToast('请输入昵称');
+        return;
+      }
+      if (!content) {
+        replyContent.focus();
+        showToast('请输入回复内容');
+        return;
+      }
+
+      replySubmit.disabled = true;
+      replySubmit.textContent = '发送中...';
+
+      try {
+        const res = await fetch(`${apiBase}/api/comments/guest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            content,
+            parentId: replyTarget.id,
+            replyTo: { id: replyTarget.id, name: replyTarget.name },
+          }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          // 同步昵称到主表单
+          nameInput.value = name;
+          closeReply();
+          showToast('回复成功！', 'success');
+          await fetchComments();
+        } else {
+          showToast(data.message || '回复失败');
+        }
+      } catch (err) {
+        showToast('网络错误，请稍后重试');
+      } finally {
+        replySubmit.disabled = false;
+        replySubmit.textContent = '发送回复';
+      }
+    });
+
+    // ====== 展开/折叠回复 ======
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-expand]');
+      if (!btn) return;
+      const commentId = btn.getAttribute('data-expand');
+      const comment = commentsData.find(c => c.id === commentId);
+      if (!comment || !comment.replies) return;
+
+      const repliesContainer = btn.parentElement;
+      const isExpanded = btn.getAttribute('data-expanded') === 'true';
+
+      if (isExpanded) {
+        // 折叠
+        repliesContainer.innerHTML = `
+          ${comment.replies.slice(0, 3).map(r => renderReply(r)).join('')}
+          <button class="yuamli-collapse-btn" data-expand="${commentId}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            展开更多回复 (${comment.replies.length - 3})
+          </button>
+        `;
+        btn.removeAttribute('data-expanded');
+      } else {
+        // 展开
+        repliesContainer.innerHTML = `
+          ${comment.replies.map(r => renderReply(r)).join('')}
+          <button class="yuamli-collapse-btn" data-expand="${commentId}" data-expanded="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            收起回复
+          </button>
+        `;
+      }
+    });
+
+    // ====== Toast 提示 ======
+    function showToast(msg, type) {
+      const existing = document.getElementById('yuamli-toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'yuamli-toast';
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 10000;
+        background: ${type === 'success' ? '#10b981' : '#ef4444'};
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: yuamli-toast-in 0.3s ease;
+      `;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // 添加 toast 动画
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes yuamli-toast-in {
+        from { opacity: 0; transform: translate(-50%, -10px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // ====== 初始化 ======
+    fetchComments();
+
+    // 每60秒刷新
+    setInterval(fetchComments, 60000);
+  })();
+</script>

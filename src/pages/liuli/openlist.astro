@@ -2,7 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { siteConfig } from '../../../config';
 
-const openListUrl = siteConfig.liuli?.openListUrl || '';
+const caiyunConfig = siteConfig.liuli?.caiyun;
+const openListUrl = caiyunConfig?.url || '';
+const caiyunEnabled = caiyunConfig?.enabled !== false;
 const isConfigured = openListUrl.length > 0;
 ---
 
@@ -16,7 +18,18 @@ const isConfigured = openListUrl.length > 0;
       </div>
 
       <div class="openlist-container">
-        {isConfigured ? (
+        {!caiyunEnabled ? (
+          <div class="ol-not-configured card">
+            <div class="ol-nc-icon">
+              <i class="fa-solid fa-cloud-slash"></i>
+            </div>
+            <h3 class="ol-nc-title">采云功能已关闭</h3>
+            <p class="ol-nc-desc">请在 config.ts 中将 liuli.caiyun.enabled 设为 true 来启用。</p>
+            <div class="ol-nc-code">
+              <code>config.ts → liuli → caiyun → enabled: true</code>
+            </div>
+          </div>
+        ) : isConfigured ? (
           <!-- Open List iframe 嵌入 -->
           <div class="ol-iframe-wrap card">
             <div class="ol-toolbar">
@@ -50,10 +63,10 @@ const isConfigured = openListUrl.length > 0;
             <div class="ol-nc-icon">
               <i class="fa-solid fa-cloud-arrow-up"></i>
             </div>
-            <h3 class="ol-nc-title">尚未配置共享链接</h3>
-            <p class="ol-nc-desc">请在 config.ts 中的 liuli.openListUrl 填入你的 Open List 共享链接地址。</p>
+            <h3 class="ol-nc-title">尚未配置网盘地址</h3>
+            <p class="ol-nc-desc">请在 config.ts 中的 liuli.caiyun.url 填入你的 OpenList 共享链接地址。</p>
             <div class="ol-nc-code">
-              <code>config.ts → liuli → openListUrl: 'https://your-openlist-url'</code>
+              <code>config.ts → liuli → caiyun → url: 'https://your-openlist-url'</code>
             </div>
           </div>
         )}

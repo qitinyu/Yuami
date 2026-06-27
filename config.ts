@@ -142,10 +142,9 @@ export const siteConfig = {
   // ========== 站点公告 ==========
   siteAnnouncements: {
     enabled: true,
-    items: [ 
-      { date: '2026-06-23', text: '博客更新v2.0.5.2版，优化轩窗轮播作者区、精简旅记详情、移除琉璃侧栏插件！' },
-      { date: '2026-06-23', text: '博客更新v2.0.5.1版，恢复琉璃版块、修复旅记详情404、移除博文详情左侧插件栏！' },
-      { date: '2026-06-23', text: '博客更新v2.0.5版，重构轩窗布局、新增微言版块、引导页改为瀑布式！' },
+    items: [  
+      { date: '2026-06-27', text: '博客更新v2.0.6版，增加/修改一篇文章|修复拾遗版块部分问题！' },
+      { date: '2026-06-25', text: '博客更新v2.0.5版，优化轩窗轮播作者区、精简旅记详情、移除琉璃侧栏插件！' },
     ],
   },
 
@@ -250,11 +249,23 @@ export const siteConfig = {
   },
 
   // ========== 琉璃版块配置 ==========
-  // openListUrl: 采云子版块嵌入的 OpenList 共享链接地址
-  //   填入你的 OpenList 公开分享链接（如 'https://your-openlist.example.com/share/abc'）
-  //   留空时采云页会显示"未配置共享链接"的占位提示
+  // 琉璃版块包含「拾遗」(留言系统) 和「采云」(网盘分享) 两个子页面
+  // 每个子页面可独立控制开启/关闭，并配置对应的服务地址
   liuli: {
-    openListUrl: 'http://open.yqamma.eu.cc',  // ★ 在此填入你的 OpenList 共享链接
+    // 拾遗 - 留言板（iframe 嵌入 Yuamli 留言系统）
+    // enabled: 是否启用留言系统（false 时拾遗页面显示关闭提示）
+    // url: Yuamli 留言系统地址（部署在 Vercel 的域名）
+    shiyi: {
+      enabled: true,
+      url: 'https://yuamli.8872388.xyz',
+    },
+    // 采云 - 网盘分享（iframe 嵌入 OpenList）
+    // enabled: 是否启用采云页面（false 时页面显示关闭提示）
+    // url: OpenList 共享链接地址
+    caiyun: {
+      enabled: true,
+      url: 'http://open.yqamma.eu.cc',
+    },
   },
 
   // ========== 轩窗(首页)轮播图配置 ==========
